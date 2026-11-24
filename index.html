@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>UI 용어집</title>
+<meta name="description" content="바이브코딩 때 사람과 AI가 화면을 같은 이름으로 부르게 하는 업무 화면 UI·모션 용어 62개. 움직이는 예시, 헷갈리는 짝, 요청 문장.">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="parts.css">
+<style>
+/* 2단계 페이지 틀: terms.json을 읽어 격자 보기 / 목록 + 큰 미리보기, 검색과 태그 필터. 색 값은 시범과 같다 */
+:root {
+  --bg: #f4f5f2; --panel: #ffffff; --ink: #16181b; --muted: #5d636b; --line: #dfe2dc;
+  --accent: #0b7a63; --accent-soft: #e0f1ec; --mark: #e2553f; --mark-soft: #fbe6e1;
+  --when: #8a5a00; --when-soft: #fbf0d8; --stage: #eceee9; --shade: rgb(16 18 20 / 45%);
+  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121416; --panel: #1a1d20; --ink: #eceee9; --muted: #9aa19a; --line: #2c3033;
+    --accent: #3cc3a2; --accent-soft: #15312b; --mark: #ff7a64; --mark-soft: #3a1f1a;
+    --when: #f0bd5a; --when-soft: #352a14; --stage: #202427; --shade: rgb(0 0 0 / 60%);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121416; --panel: #1a1d20; --ink: #eceee9; --muted: #9aa19a; --line: #2c3033;
+  --accent: #3cc3a2; --accent-soft: #15312b; --mark: #ff7a64; --mark-soft: #3a1f1a;
+  --when: #f0bd5a; --when-soft: #352a14; --stage: #202427; --shade: rgb(0 0 0 / 60%);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+img { max-width: 100%; }
+body {
+  margin: 0;
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 24px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; line-height: 1.25; }
+h1 { font-size: clamp(26px, 4vw, 36px); font-weight: 700; letter-spacing: -0.02em; }
+p { margin: 0; }
+a { color: inherit; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; color: var(--accent); text-transform: uppercase; }
+.lead { color: var(--muted); max-width: 62ch; }
+header { display: grid; gap: 10px; }
+.mono { font-family: var(--font-mono); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* 도구 줄: 검색, 보기 바꾸기, 필터 */
+.tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.search { flex: 1 1 260px; min-width: 0; font: inherit; font-size: 15px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); color: var(--ink); }
+.search:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.views { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; background: var(--panel); }
+.views button { font: inherit; font-size: 13.5px; padding: 8px 14px; border: 0; background: none; color: var(--muted); cursor: pointer; }
+.views button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.filterbox { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 4px 14px; }
+.filterbox summary { cursor: pointer; font-size: 13.5px; color: var(--accent); font-weight: 500; padding: 8px 0; }
+.frows { display: grid; gap: 10px; padding: 4px 0 12px; }
+.frow { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 8px; align-items: start; }
+.frow > span { font-size: 12px; color: var(--muted); padding-top: 5px; }
+.fopts { display: flex; flex-wrap: wrap; gap: 6px; }
+.fopt { font: inherit; font-size: 13px; padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); color: var(--ink); cursor: pointer; }
+.fopt small { color: var(--muted); font-family: var(--font-mono); font-size: 11px; margin-left: 3px; }
+.fopt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+.statusline { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-size: 13px; color: var(--muted); }
+.linkbtn { font: inherit; font-size: 13px; border: 0; background: none; color: var(--accent); cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 3px; }
+
+/* 격자 보기 */
+.groups { display: grid; gap: 28px; }
+.group { display: grid; gap: 10px; }
+.group h2 { font-size: 13px; font-weight: 500; color: var(--muted); font-family: var(--font-mono); letter-spacing: 0.02em; }
+.group h2 b { color: var(--ink); font-family: var(--font-body); font-size: 15px; margin-right: 6px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.card { display: grid; gap: 6px; align-content: start; text-decoration: none; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 15px; min-width: 0; transition: border-color 150ms ease-out, transform 150ms ease-out; }
+.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.card .nm { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
+.card .nm b { font-size: 17px; letter-spacing: -0.01em; }
+.card .nm span { font-size: 13px; color: var(--muted); }
+.card p { font-size: 13.5px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip { font-size: 11.5px; padding: 1px 8px; border-radius: 999px; background: var(--stage); color: var(--muted); }
+.chip.use { background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+.empty { background: var(--panel); border: 1px dashed var(--line); border-radius: 12px; padding: 36px 20px; text-align: center; display: grid; gap: 8px; justify-items: center; color: var(--muted); }
+.empty b { color: var(--ink); font-size: 16px; }
+
+/* 목록 + 큰 미리보기 */
+.split { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 16px; align-items: start; }
+.list { list-style: none; margin: 0; padding: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; display: grid; gap: 2px; position: sticky; top: max(12px, env(safe-area-inset-top, 0px)); max-height: calc(100vh - 24px); overflow-y: auto; }
+.list a { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 8px; text-decoration: none; padding: 7px 10px; border-radius: 8px; }
+.list a:hover { background: var(--stage); }
+.list a[aria-current="true"] { background: var(--accent-soft); }
+.list a[aria-current="true"] b { color: var(--accent); }
+.list b { font-size: 14px; }
+.list span { font-size: 12.5px; color: var(--muted); }
+.list .pth { grid-column: 1 / -1; font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+.pane { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px; min-width: 0; }
+@media (max-width: 879px) {
+  .split { grid-template-columns: 1fr; }
+  .list { position: static; max-height: none; }
+  .pane { display: none; }
+}
+
+/* 용어 카드 한 장 (미리보기 칸과 창이 같이 쓴다) */
+.term { display: grid; gap: 18px; }
+.term .path { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.term .name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.term .name h2 { font-size: 28px; letter-spacing: -0.02em; }
+.term .name span { font-size: 16px; color: var(--muted); font-weight: 500; }
+.term .one { font-size: 15.5px; max-width: 62ch; }
+.aka { font-size: 13px; color: var(--muted); }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+.sec { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.label { font-size: 12px; color: var(--muted); font-weight: 500; }
+.ex { display: grid; gap: 8px; }
+.scene-row { display: flex; gap: 10px; align-items: center; }
+.scene-row input { flex: 1; min-width: 0; accent-color: var(--accent); }
+.scene-out { font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--muted); }
+.ctls { display: grid; gap: 12px; align-content: start; }
+.ctl-k { font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: baseline; }
+.ctl-k b { font-family: var(--font-mono); font-weight: 600; color: var(--ink); font-size: 12px; }
+.opts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.opt { font: inherit; font-size: 13px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--ink); cursor: pointer; }
+.opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+.ctls input[type="range"] { width: 100%; accent-color: var(--accent); margin-top: 4px; }
+.stage { min-height: 150px; background: var(--stage); border-radius: 10px; display: grid; place-items: center; text-align: center; padding: 18px; font-size: 13px; color: var(--muted); }
+.ctl { display: grid; grid-template-columns: minmax(90px, auto) minmax(0, 1fr); gap: 4px 12px; font-size: 13.5px; margin: 0; }
+.ctl dt { font-family: var(--font-mono); font-size: 12px; color: var(--muted); padding-top: 2px; }
+.ctl dd { margin: 0; }
+.pairs { display: grid; gap: 6px; font-size: 13.5px; margin: 0; padding: 0; list-style: none; }
+.pairs li { display: grid; grid-template-columns: minmax(110px, auto) minmax(0, 1fr); gap: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+.pairs b { font-weight: 500; }
+.pairs a { color: var(--accent); text-underline-offset: 3px; }
+.wrong { display: grid; gap: 8px; font-size: 13.5px; }
+.wrong div { display: grid; grid-template-columns: auto 1fr; gap: 8px; }
+.wrong i { font-style: normal; font-family: var(--font-mono); font-size: 12px; padding-top: 2px; }
+.wrong .x { color: var(--mark); }
+.wrong .o { color: var(--accent); }
+.prompt { background: var(--stage); border-radius: 10px; padding: 14px; display: grid; gap: 10px; }
+.prompt p { font-size: 14.5px; line-height: 1.75; }
+.slot { border-radius: 4px; padding: 1px 4px; }
+.slot.when { background: var(--when-soft); color: var(--when); }
+.slot.what { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.slot.how { background: var(--mark-soft); color: var(--mark); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; }
+.btn { font: inherit; font-size: 13px; padding: 7px 14px; border-radius: 8px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; font-weight: 500; }
+.note { font-size: 12.5px; color: var(--muted); }
+
+/* 창 (격자 보기, 좁은 화면의 목록 보기) */
+dialog { width: min(820px, 100% - 24px); max-height: calc(100% - 24px); padding: 0; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); color: var(--ink); }
+dialog::backdrop { background: var(--shade); }
+.dlg-top { position: sticky; top: 0; display: flex; justify-content: flex-end; padding: 10px 12px 0; background: linear-gradient(var(--panel) 70%, transparent); z-index: 1; }
+.dlg-body { padding: 0 22px 24px; }
+@media (max-width: 600px) { .dlg-body { padding: 0 16px 20px; } }
+
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+.tabs button { font: inherit; font-size: 15px; padding: 8px 14px; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; background: none; color: var(--muted); cursor: pointer; }
+.tabs button[aria-pressed="true"] { color: var(--ink); font-weight: 700; border-bottom-color: var(--accent); }
+.termsview { display: grid; gap: 24px; }
+.screensview { display: grid; gap: 14px; }
+.scbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.scbar .opt[disabled] { opacity: 0.5; cursor: default; }
+.scbar .opt small { color: var(--muted); font-size: 11px; margin-left: 4px; }
+.termtoggle { margin-left: auto; display: inline-flex; gap: 8px; align-items: center; font-size: 14px; cursor: pointer; padding: 6px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); }
+.termtoggle input { accent-color: var(--accent); width: 17px; height: 17px; }
+@media (max-width: 600px) { .termtoggle { margin-left: 0; } }
+.hiddenterms { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; font-size: 13px; color: var(--muted); }
+.hiddenterms button { font: inherit; font-size: 12.5px; padding: 2px 9px; border-radius: 999px; border: 1px dashed var(--mark); background: var(--mark-soft); color: var(--mark); cursor: pointer; }
+footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } .card:hover { transform: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">UI Vocabulary · 업무 화면</span>
+    <h1>UI 용어집</h1>
+    <p class="lead">바이브코딩을 할 때 사람과 AI가 화면을 같은 이름으로 부르게 하는 용어집입니다. 용어를 누르면 헷갈리는 짝, 틀리기 쉬운 말, 그대로 복사해 쓸 요청 문장이 나옵니다.</p>
+  </header>
+
+  <nav class="tabs" aria-label="보기 고르기">
+    <button type="button" data-tab="terms" aria-pressed="true">용어</button>
+    <button type="button" data-tab="screens" aria-pressed="false">조합 화면</button>
+  </nav>
+  <div id="termsview" class="termsview">
+  <div class="tools">
+    <input class="search" id="q" type="search" placeholder="이름, 한국어, 다른 이름으로 찾기" aria-label="용어 찾기" autocomplete="off">
+    <div class="views" role="group" aria-label="보기">
+      <button type="button" data-view="grid" aria-pressed="true">격자</button>
+      <button type="button" data-view="list" aria-pressed="false">목록</button>
+    </div>
+  </div>
+  <details class="filterbox" id="filterbox">
+    <summary id="filtersum">필터</summary>
+    <div class="frows" id="frows"></div>
+  </details>
+  <div class="statusline"><span id="count" role="status"></span><button class="linkbtn" id="reset" type="button" hidden>필터와 검색 지우기</button></div>
+
+  <div class="groups" id="grid"></div>
+  <div class="split" id="listview" hidden>
+    <ol class="list" id="list"></ol>
+    <div class="pane" id="pane"></div>
+  </div>
+
+  </div>
+  <section id="screensview" class="screensview" hidden></section>
+  <footer>용어 <span id="total"></span>개 · 데이터는 <code>terms.json</code>, 조합 화면은 <code>recipes.json</code>입니다. 용어마다 움직이는 예시가 있고, 조합 화면 5개가 용어 62개를 한 번씩 씁니다. 코드는 MIT, 글은 CC BY 4.0 · <a href="https://github.com/whitejo401/ui-labs">GitHub</a> · <a href="llms.txt">llms.txt</a></footer>
+</div>
+
+<dialog id="dlg" aria-label="용어">
+  <div class="dlg-top"><button class="btn" type="button" id="dlg-close">닫기</button></div>
+  <div class="dlg-body" id="dlg-body"></div>
+</dialog>
+
+<script src="parts.js"></script>
+<script src="screen-issue-list.js"></script>
+<script src="screen-issue-detail.js"></script>
+<script src="screen-dashboard.js"></script>
+<script src="screen-work-board.js"></script>
+<script src="screen-request-form.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var slot = function (k, s) { return '<span class="slot ' + k + '">' + esc(s) + '</span>'; };
+
+  // 태그 값 순서는 wiki/ui-labs-terms-data-format.md와 같다
+  var FILTERS = [
+    { key: 'group', label: '묶음', values: ['구조', '표현', '움직임', '만들기'], of: function (t) { return [t.path[0]]; } },
+    { key: 'purpose', label: '목적', values: ['입력', '길찾기', '보여 주기', '피드백', '주의', '기다림', '접근성'], of: function (t) { return t.tags.purpose; } },
+    { key: 'use', label: '쓰임', values: ['업무 화면', '소개·랜딩', '놀이'], of: function (t) { return t.tags.use; } },
+    { key: 'trigger', label: '시작 조건', values: ['항상', '클릭 뒤', '마우스 올림', '초점', '입력 중', '불러올 때', '스크롤', '끌 때', '값이 바뀔 때', '단축키'], of: function (t) { return t.tags.trigger; } },
+    { key: 'build', label: '난이도', values: ['CSS', 'CSS + JS 조금', 'JS 많이'], of: function (t) { return [t.tags.build]; } }
+  ];
+  var TERMS = [], BY_ID = {}, BY_NAME = {};
+  var picked = {}, view = 'grid', current = null, tab = 'terms', RECIPES = [], screen = null, screenId = 'issue-list';
+  var wide = window.matchMedia('(min-width: 880px)');
+
+  // 요청 문장: 언제 + 무엇 + 동사. 어떻게. 움직임·만들기 갈래는 "적용해줘"
+  function fillHow(t, vals) {
+    var s = t.prompt.how;
+    for (var i = 0; i < 2; i++) s = s.replace(/\{(\w+)\}/g, function (m, k) {
+      if (!vals || !(k in vals)) return m;
+      var ph = t.phrases && t.phrases[k];
+      return ph && (String(vals[k]) in ph) ? ph[String(vals[k])] : String(vals[k]);
+    });
+    return s;
+  }
+  function promptHTML(t, vals) {
+    var verb = (t.path[0] === '움직임' || t.path[0] === '만들기') ? ' 적용해줘. ' : ' 넣어줘. ';
+    return slot('when', t.prompt.when) + ' ' + slot('what', t.prompt.what) + verb + slot('how', fillHow(t, vals));
+  }
+
+  function chipsHTML(t) {
+    return t.tags.use.map(function (u) { return '<span class="chip use">' + esc(u) + '</span>'; }).join('') +
+      t.tags.purpose.map(function (p) { return '<span class="chip">' + esc(p) + '</span>'; }).join('') +
+      '<span class="chip">' + esc(t.tags.trigger.join(' · ')) + '</span><span class="chip">' + esc(t.tags.build) + '</span>';
+  }
+
+  function isRange(v) { return v.length === 2 && typeof v[0] === 'number'; }
+  function ctrlValue(v) { return isRange(v) ? v[0] + ' ~ ' + v[1] : v.map(esc).join(' / '); }
+  function stepOf(v) { var d = v[1] - v[0]; return d >= 1000 ? 100 : d >= 300 ? 50 : d >= 100 ? 10 : 1; }
+
+  function hasScene(t) { return !!(window.UI && UI.scenes[t.id] && t.defaults); }
+  // 조절판: 장면이 있는 용어는 고르는 단추와 막대, 없는 용어는 값 목록만
+  function ctlHTML(t) {
+    if (!hasScene(t)) return '<dl class="ctl">' + Object.keys(t.controls).map(function (k) { return '<dt>' + esc(k) + '</dt><dd>' + ctrlValue(t.controls[k]) + '</dd>'; }).join('') + '</dl>';
+    return '<div class="ctls">' + Object.keys(t.controls).map(function (k) {
+      var v = t.controls[k], d = t.defaults[k], name = esc((t.control_ko && t.control_ko[k]) || k);
+      if (isRange(v)) return '<label class="ctl-one"><span class="ctl-k">' + name + ' <b data-out="' + k + '">' + d + '</b></span>' +
+        '<input type="range" data-k="' + k + '" min="' + v[0] + '" max="' + v[1] + '" step="' + stepOf(v) + '" value="' + d + '"></label>';
+      return '<div class="ctl-one"><span class="ctl-k">' + name + '</span><div class="opts">' + v.map(function (o) {
+        return '<button type="button" class="opt" data-k="' + k + '" data-v="' + esc(o) + '" aria-pressed="' + (String(o) === String(d)) + '">' + esc(o) + '</button>';
+      }).join('') + '</div></div>';
+    }).join('') + '</div>';
+  }
+
+  function termHTML(t) {
+    var scene = hasScene(t);
+    var pairs = t.pairs.map(function (x) {
+      var to = BY_NAME[x.name];
+      var nm = to ? '<a href="#' + to.id + '" data-id="' + to.id + '">' + esc(x.name) + '</a>' : '<b>' + esc(x.name) + '</b>';
+      return '<li>' + nm + '<span>' + esc(x.diff) + '</span></li>';
+    }).join('');
+    var wrong = t.wrong.map(function (w) { return '<div><i class="x">✕</i><span>"' + esc(w.say) + '" → ' + esc(w.risk) + '</span></div>'; }).join('');
+    return '<article class="term" aria-labelledby="h-' + t.id + '">' +
+      '<div class="path">' + esc(t.path.join(' › ')) + '</div>' +
+      '<div class="name"><h2 id="h-' + t.id + '">' + esc(t.name) + '</h2><span>' + esc(t.ko) + '</span></div>' +
+      '<p class="one">' + esc(t.one) + '</p>' +
+      (t.aka.length ? '<p class="aka">다른 이름: ' + t.aka.map(esc).join(', ') + '</p>' : '') +
+      '<div class="chips">' + chipsHTML(t) + '</div>' +
+      '<div class="cols">' +
+        '<div class="sec"><span class="label">예시</span>' + (scene
+          ? '<div class="ex" data-example><div class="u u-stage"></div>' +
+            '<div class="scene-row"><button class="btn" type="button" data-play>다시 재생</button><input type="range" min="0" max="1000" step="1" value="0" aria-label="장면 막대 (시간 값 t)"></div>' +
+            '<span class="scene-out" role="status"></span></div>'
+          : '<div class="stage">움직이는 예시는 이 용어가 들어가는 조합 화면 묶음에서 넣습니다.</div>') +
+          (t.states ? '<div class="chips"><span class="label">상태</span>' + t.states.map(function (s) { return '<span class="chip">' + esc(s) + '</span>'; }).join('') + '</div>' : '') + '</div>' +
+        '<div class="sec"><span class="label">조절판' + (scene ? ' · 바꾸면 예시와 요청 문장이 같이 바뀝니다' : '') + '</span>' + ctlHTML(t) + '</div>' +
+      '</div>' +
+      '<div class="sec prompt"><span class="label">요청 문장</span><p>' + promptHTML(t, t.defaults) + '</p>' +
+        '<div class="legend"><span class="slot when">언제</span><span class="slot what">무엇</span><span class="slot how">어떻게</span></div>' +
+        '<div class="row"><button class="btn" type="button" data-copy>문장 복사</button><span class="note" role="status"></span></div></div>' +
+      '<div class="cols">' +
+        '<div class="sec"><span class="label">헷갈리는 짝</span><ul class="pairs">' + pairs + '</ul></div>' +
+        '<div class="sec wrong"><span class="label">틀리기 쉬운 말</span>' + wrong + '<div><i class="o">○</i><span>' + esc(t.right) + '</span></div></div>' +
+      '</div>' +
+    '</article>';
+  }
+
+  function matches(t) {
+    var words = $('q').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    var hay = [t.id, t.name, t.ko, t.one].concat(t.aka).join(' ').toLowerCase();
+    var hayTight = hay.replace(/\s+/g, '');
+    if (!words.every(function (w) { return hay.indexOf(w) >= 0 || hayTight.indexOf(w) >= 0; })) return false;
+    return FILTERS.every(function (f) {
+      var on = picked[f.key];
+      if (!on || !on.length) return true;
+      var have = f.of(t);
+      return on.some(function (v) { return have.indexOf(v) >= 0; });
+    });
+  }
+
+  function cardHTML(t) {
+    return '<a class="card" href="#' + t.id + '" data-id="' + t.id + '">' +
+      '<span class="nm"><b>' + esc(t.name) + '</b><span>' + esc(t.ko) + '</span></span>' +
+      '<p>' + esc(t.one) + '</p><span class="chips">' + chipsHTML(t) + '</span></a>';
+  }
+
+  function emptyHTML() {
+    return '<div class="empty"><b>맞는 용어가 없습니다</b><span>찾는 말을 줄이거나 필터를 지워 보세요.</span>' +
+      '<button class="btn" type="button" data-reset>필터와 검색 지우기</button></div>';
+  }
+
+  function render() {
+    var shown = TERMS.filter(matches);
+    var active = $('q').value.trim() || FILTERS.some(function (f) { return picked[f.key] && picked[f.key].length; });
+    $('count').textContent = TERMS.length + '개 중 ' + shown.length + '개';
+    $('reset').hidden = !active;
+    var n = FILTERS.reduce(function (a, f) { return a + ((picked[f.key] || []).length); }, 0);
+    $('filtersum').textContent = n ? '필터 (' + n + '개 고름)' : '필터';
+
+    if (view === 'grid') {
+      var groups = [], seen = {};
+      shown.forEach(function (t) {
+        var k = t.path[0] + ' › ' + t.path[1];
+        if (!seen[k]) { seen[k] = { head: t.path, items: [] }; groups.push(seen[k]); }
+        seen[k].items.push(t);
+      });
+      $('grid').innerHTML = shown.length ? groups.map(function (g) {
+        return '<section class="group"><h2><b>' + esc(g.head[1]) + '</b>' + esc(g.head[0]) + ' · ' + g.items.length + '</h2>' +
+          '<div class="cards">' + g.items.map(cardHTML).join('') + '</div></section>';
+      }).join('') : emptyHTML();
+    } else {
+      $('list').innerHTML = shown.map(function (t) {
+        return '<li><a href="#' + t.id + '" data-id="' + t.id + '"' + (current === t.id ? ' aria-current="true"' : '') + '>' +
+          '<b>' + esc(t.name) + '</b><span>' + esc(t.ko) + '</span><span class="pth">' + esc(t.path.join(' › ')) + '</span></a></li>';
+      }).join('');
+      $('list').hidden = !shown.length;
+      if (!shown.length) $('pane').innerHTML = emptyHTML();
+      else if (!current || !shown.some(function (t) { return t.id === current; })) showInPane(shown[0].id);
+    }
+  }
+
+  function setView(v) {
+    view = v;
+    document.querySelectorAll('[data-view]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-view') === v)); });
+    $('grid').hidden = v !== 'grid';
+    $('listview').hidden = v !== 'list';
+    render();
+  }
+
+  function showInPane(id) {
+    current = id;
+    $('pane').innerHTML = termHTML(BY_ID[id]);
+    mountExample($('pane'), BY_ID[id]);
+    document.querySelectorAll('#list a').forEach(function (a) {
+      if (a.getAttribute('data-id') === id) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
+    });
+  }
+
+  // 용어 열기: 넓은 화면의 목록 보기는 오른쪽 칸, 그 밖은 창
+  function openTerm(id) {
+    if (!BY_ID[id]) return;
+    if (tab === 'terms' && view === 'list' && wide.matches) {
+      showInPane(id);
+      if ($('pane').getBoundingClientRect().top < 0) $('pane').scrollIntoView({ block: 'start' });
+    } else {
+      $('dlg-body').innerHTML = termHTML(BY_ID[id]);
+      if (!$('dlg').open) $('dlg').showModal();
+      $('dlg').scrollTop = 0;
+      mountExample($('dlg-body'), BY_ID[id]);
+    }
+  }
+
+  // 움직이는 예시: 장면 막대(t 0~1), 다시 재생, 조절판. 한 번에 하나만 살아 있다
+  var live = null;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  function mountExample(root, t) {
+    if (live) { live.stop(); live = null; }
+    var box = root.querySelector('[data-example]');
+    if (!box) return;
+    var stage = box.querySelector('.u-stage'), range = box.querySelector('input[type="range"]'), out = box.querySelector('.scene-out');
+    var vals = JSON.parse(JSON.stringify(t.defaults)), sc = null, cur = 0, raf = null, timer = null;
+    function show(nt) {
+      cur = Math.max(0, Math.min(1, nt)); range.value = Math.round(cur * 1000);
+      var info = sc.at(cur);
+      out.textContent = 't ' + cur.toFixed(2) + ' · ' + Math.round(cur * sc.ms) + 'ms' + (info ? ' · ' + info : '');
+    }
+    function stop() { cancelAnimationFrame(raf); clearTimeout(timer); raf = timer = null; }
+    function play() {
+      stop();
+      var start = performance.now();
+      (function step() {
+        stop();
+        var p = Math.min(1, (performance.now() - start) / sc.ms);
+        show(p);
+        if (p < 1) { raf = requestAnimationFrame(step); timer = setTimeout(step, 50); }
+      })();
+    }
+    function build() { stage.innerHTML = ''; sc = UI.scenes[t.id](stage, vals); }
+    function start() { build(); if (reduce.matches) show(sc.rest || 0.5); else play(); }
+    range.addEventListener('input', function () { stop(); show(range.value / 1000); });
+    box.querySelector('[data-play]').addEventListener('click', play);
+    root.querySelectorAll('.opt[data-k]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var k = b.getAttribute('data-k'), list = t.controls[k];
+        vals[k] = list.filter(function (o) { return String(o) === b.getAttribute('data-v'); })[0];
+        root.querySelectorAll('.opt[data-k="' + k + '"]').forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+        changed();
+      });
+    });
+    root.querySelectorAll('.ctls input[data-k]').forEach(function (r) {
+      r.addEventListener('input', function () {
+        var k = r.getAttribute('data-k'); vals[k] = +r.value;
+        root.querySelector('[data-out="' + k + '"]').textContent = r.value;
+        changed();
+      });
+    });
+    function changed() { root.querySelector('.prompt p').innerHTML = promptHTML(t, vals); start(); }
+    start();
+    live = { stop: stop };
+  }
+
+  function setHash(id) { try { history.replaceState(null, '', id ? '#' + id : location.pathname + location.search); } catch (e) {} }
+
+  function buildFilters() {
+    $('frows').innerHTML = FILTERS.map(function (f) {
+      var opts = f.values.map(function (v) {
+        var c = TERMS.filter(function (t) { return f.of(t).indexOf(v) >= 0; }).length;
+        return c ? '<button class="fopt" type="button" aria-pressed="false" data-f="' + f.key + '" data-v="' + esc(v) + '">' + esc(v) + '<small>' + c + '</small></button>' : '';
+      }).join('');
+      return '<div class="frow"><span>' + f.label + '</span><div class="fopts">' + opts + '</div></div>';
+    }).join('');
+  }
+
+  function resetAll() {
+    $('q').value = ''; picked = {};
+    document.querySelectorAll('.fopt').forEach(function (b) { b.setAttribute('aria-pressed', 'false'); });
+    render();
+  }
+
+  document.addEventListener('click', function (e) {
+    // 조합 화면은 자기 사건을 따로 다룬다. 눌린 단추가 다시 그려져 문서에서 빠진 경우도 건너뛴다
+    if (!document.contains(e.target) || e.target.closest('#screenroot')) return;
+    var a = e.target.closest('a[data-id]');
+    if (a) { e.preventDefault(); openTerm(a.getAttribute('data-id')); setHash(a.getAttribute('data-id')); return; }
+    var f = e.target.closest('.fopt');
+    if (f) {
+      var k = f.getAttribute('data-f'), v = f.getAttribute('data-v'), on = picked[k] || (picked[k] = []);
+      var i = on.indexOf(v);
+      if (i >= 0) on.splice(i, 1); else on.push(v);
+      f.setAttribute('aria-pressed', String(i < 0));
+      render(); return;
+    }
+    var tb = e.target.closest('[data-tab]');
+    if (tb) { showTab(tb.getAttribute('data-tab')); setHash(tab === 'screens' ? 's-' + screenId : ''); return; }
+    var vb = e.target.closest('[data-view]');
+    if (vb) { setView(vb.getAttribute('data-view')); return; }
+    if (e.target.closest('[data-reset]') || e.target.id === 'reset') { resetAll(); return; }
+    var cb = e.target.closest('[data-copy]');
+    if (cb) {
+      var msg = cb.nextElementSibling, p = cb.closest('.prompt').querySelector('p');
+      var done = function () { msg.textContent = '복사했습니다.'; setTimeout(function () { msg.textContent = ''; }, 1800); };
+      var fallback = function () { var r = document.createRange(); r.selectNodeContents(p); var s = getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = '문장을 골라 두었습니다. 복사하세요.'; };
+      try { navigator.clipboard.writeText(p.textContent).then(done, fallback); } catch (err) { fallback(); }
+    }
+  });
+  $('q').addEventListener('input', render);
+  $('dlg-close').addEventListener('click', function () { $('dlg').close(); });
+  $('dlg').addEventListener('click', function (e) { if (e.target === $('dlg')) $('dlg').close(); });
+  $('dlg').addEventListener('close', function () { setHash(tab === 'screens' ? 's-' + screenId : ''); if (live) { live.stop(); live = null; } });
+  function route() {
+    var h = location.hash.slice(1);
+    if (h.indexOf('s-') === 0) { if (UI.screens[h.slice(2)]) screenId = h.slice(2); showTab('screens'); } else if (h) openTerm(h);
+  }
+  window.addEventListener('hashchange', route);
+
+  /* ───── 조합 화면 ───── */
+  function showTab(name) {
+    tab = name;
+    document.querySelectorAll('[data-tab]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-tab') === name)); });
+    $('termsview').hidden = name !== 'terms';
+    $('screensview').hidden = name !== 'screens';
+    if (name === 'screens') mountScreen();
+  }
+  // 조합 화면 하나를 붙인다. 다른 화면으로 바꾸면 앞 화면을 걷어 낸다
+  function mountScreen() {
+    if (screen && screen.id === screenId) return;
+    if (screen) { screen.destroy(); screen = null; }
+    var r = RECIPES.filter(function (x) { return x.id === screenId; })[0];
+    if (!r) return;
+    var names = r.terms.map(function (id) { return BY_ID[id].name; }).sort(function (a, b) { return b.length - a.length; });
+    var promptHtml = esc(r.prompt);
+    names.forEach(function (n) { promptHtml = promptHtml.split(esc(n)).join('\u0000' + n + '\u0001'); });
+    promptHtml = promptHtml.replace(/\u0000/g, '<span class="slot what">').replace(/\u0001/g, '</span>');
+    $('screensview').innerHTML =
+      '<p class="lead">용어 여러 개를 엮어 만든 업무 화면입니다. 실제로 눌러 볼 수 있습니다. "용어 보기"를 켜면 부품마다 용어 이름이 붙고, 이름을 누르면 그 용어 카드가 열립니다.</p>' +
+      '<div class="scbar">' + RECIPES.map(function (x) {
+        return '<button type="button" class="opt" data-recipe="' + x.id + '" aria-pressed="' + (x.id === r.id) + '"' + (x.ready ? '' : ' disabled') + '>' + esc(x.name) + '<small>' + x.terms.length + '개' + (x.ready ? '' : ' · 준비 중') + '</small></button>';
+      }).join('') + '<label class="termtoggle"><input type="checkbox" id="labels-on"> 용어 보기</label></div>' +
+      '<div id="screenroot"></div>' +
+      '<div class="hiddenterms" id="hiddenterms" hidden></div>' +
+      '<div class="sec prompt"><span class="label">이 화면을 만드는 요청 문장 · 용어 ' + r.terms.length + '개</span><p>' + promptHtml + '</p>' +
+        '<div class="row"><button class="btn" type="button" data-copy>문장 복사</button><span class="note" role="status"></span></div></div>';
+    screen = UI.screens[r.id]($('screenroot'), {
+      termName: function (id) { return BY_ID[id] ? BY_ID[id].name : id; },
+      openTerm: function (id) { openTerm(id); setHash(id); },
+      onLabels: function (seen) {
+        var miss = r.terms.filter(function (id) { return seen.indexOf(id) < 0; });
+        $('hiddenterms').hidden = !miss.length;
+        $('hiddenterms').innerHTML = '지금 화면에 없는 용어:' + miss.map(function (id) { return '<button type="button" data-demo="' + id + '">' + esc(BY_ID[id].name) + ' 보이기</button>'; }).join('');
+      }
+    });
+    screen.id = r.id;
+    $('labels-on').addEventListener('change', function () { screen.setLabels(this.checked); if (!this.checked) $('hiddenterms').hidden = true; });
+    $('screensview').querySelectorAll('[data-recipe]').forEach(function (b) {
+      b.addEventListener('click', function () { if (b.disabled) return; screenId = b.getAttribute('data-recipe'); setHash('s-' + screenId); mountScreen(); });
+    });
+    $('hiddenterms').addEventListener('click', function (e) { var b = e.target.closest('[data-demo]'); if (b) screen.demo(b.getAttribute('data-demo')); });
+  }
+
+  function getJSON(u) { return fetch(u).then(function (r) { if (!r.ok) throw new Error(u + ' ' + r.status); return r.json(); }); }
+  Promise.all([getJSON('terms.json'), getJSON('recipes.json')]).then(function (res) {
+    var data = res[0]; RECIPES = res[1];
+    TERMS = data;
+    TERMS.forEach(function (t) { BY_ID[t.id] = t; BY_NAME[t.name] = t; });
+    $('total').textContent = TERMS.length;
+    buildFilters();
+    if (wide.matches) $('filterbox').open = true;
+    setView('grid');
+    if (location.hash.length > 1) route();
+  }).catch(function (err) {
+    $('grid').innerHTML = '<div class="empty"><b>용어 데이터를 읽지 못했습니다</b><span>terms.json을 불러오지 못했습니다 (' + esc(err.message) + '). 파일을 직접 열었다면 웹 서버로 열어 주세요.</span></div>';
+  });
+})();
+</script>
+</body>
+</html>

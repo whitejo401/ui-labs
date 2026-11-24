@@ -1,0 +1,4900 @@
+[
+  {
+    "id": "text-field",
+    "name": "Text Field",
+    "ko": "입력칸",
+    "path": [
+      "구조",
+      "화면과 입력",
+      "텍스트"
+    ],
+    "one": "글자를 한 줄 또는 여러 줄 적는 칸. 이름표, 도움말, 오류 문구가 함께 붙는다",
+    "aka": [
+      "Input",
+      "Text Input",
+      "입력 필드"
+    ],
+    "tags": {
+      "purpose": [
+        "입력"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "label": [
+        "위에 고정",
+        "Floating Label"
+      ],
+      "help": [
+        "없음",
+        "아래 도움말"
+      ]
+    },
+    "control_ko": {
+      "label": "이름표",
+      "help": "도움말"
+    },
+    "defaults": {
+      "label": "위에 고정",
+      "help": "아래 도움말"
+    },
+    "phrases": {
+      "label": {
+        "위에 고정": "이름표는 위에 고정",
+        "Floating Label": "이름표는 칸 안에 있다가 적기 시작하면 위로 작게 올라가는 Floating Label"
+      },
+      "help": {
+        "없음": "",
+        "아래 도움말": ", 칸 아래 도움말 한 줄"
+      }
+    },
+    "states": [
+      "기본",
+      "초점",
+      "오류",
+      "비활성"
+    ],
+    "pairs": [
+      {
+        "name": "Textarea",
+        "diff": "여러 줄 입력. 적는 만큼 높이가 늘기도 한다"
+      },
+      {
+        "name": "Combobox",
+        "diff": "적으면 후보 목록이 뜬다"
+      },
+      {
+        "name": "Search Bar",
+        "diff": "찾기 전용. 돋보기와 지우기 단추가 붙는다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "입력창 하나 만들어줘",
+        "risk": "이름표 없이 placeholder만 있는 칸이 나와, 적기 시작하면 무엇을 적는 칸인지 사라진다"
+      }
+    ],
+    "right": "\"이름표는 칸 위에 고정, 도움말은 아래, 오류는 칸 아래 빨간 글\"처럼 이름표 위치를 말한다",
+    "prompt": {
+      "when": "이슈 만들기 화면에",
+      "what": "Text Field",
+      "how": "제목 칸: {label}{help}, 오류면 테두리와 글을 빨간색으로"
+    }
+  },
+  {
+    "id": "search-bar",
+    "name": "Search Bar",
+    "ko": "검색창",
+    "path": [
+      "구조",
+      "화면과 입력",
+      "텍스트"
+    ],
+    "one": "목록이나 화면 전체를 찾는 입력칸. 적는 동안 결과가 바뀌기도 한다",
+    "aka": [
+      "Search Input",
+      "검색 필드"
+    ],
+    "tags": {
+      "purpose": [
+        "길찾기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "입력 중"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "mode": [
+        "적는 대로 거르기",
+        "Enter로 찾기"
+      ],
+      "debounce_ms": [
+        150,
+        500
+      ]
+    },
+    "control_ko": {
+      "mode": "찾는 때",
+      "debounce_ms": "기다림(ms)"
+    },
+    "defaults": {
+      "mode": "적는 대로 거르기",
+      "debounce_ms": 300
+    },
+    "phrases": {
+      "mode": {
+        "적는 대로 거르기": "적는 대로 {debounce_ms}ms 뒤 목록을 거르고",
+        "Enter로 찾기": "Enter를 누르면 목록을 거르고"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Combobox",
+        "diff": "값을 고르는 칸. 고른 값이 칸에 남는다"
+      },
+      {
+        "name": "Command Palette",
+        "diff": "화면 이동과 동작까지 찾는다. 단축키로 연다"
+      },
+      {
+        "name": "Filter",
+        "diff": "정해 둔 조건으로 거른다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "검색 기능 넣어줘",
+        "risk": "검색 결과 페이지가 따로 생기거나 Enter를 눌러야만 찾게 될 수 있다"
+      }
+    ],
+    "right": "\"목록 위 Search Bar, 적는 대로 300ms 뒤 거르기, 지우기(×) 단추\"처럼 자리와 거르는 때를 말한다",
+    "prompt": {
+      "when": "이슈 목록 위에",
+      "what": "Search Bar",
+      "how": "돋보기 아이콘과 지우기(×) 단추, {mode}, 결과가 없으면 Empty State"
+    }
+  },
+  {
+    "id": "inline-validation",
+    "name": "Inline Validation",
+    "ko": "입력 즉시 검사",
+    "path": [
+      "구조",
+      "화면과 입력",
+      "텍스트"
+    ],
+    "one": "칸을 벗어나거나 적는 동안 바로 옳고 그름을 칸 아래에 알려 준다",
+    "aka": [
+      "Field Validation",
+      "실시간 검증"
+    ],
+    "tags": {
+      "purpose": [
+        "피드백"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "입력 중"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "timing": [
+        "칸을 벗어날 때",
+        "적는 동안",
+        "제출할 때"
+      ]
+    },
+    "control_ko": {
+      "timing": "검사 때"
+    },
+    "defaults": {
+      "timing": "칸을 벗어날 때"
+    },
+    "phrases": {
+      "timing": {
+        "칸을 벗어날 때": "칸을 벗어날 때 검사해서",
+        "적는 동안": "적다가 300ms 멈추면 검사해서",
+        "제출할 때": "제출을 누를 때 검사해서"
+      }
+    },
+    "states": [
+      "맞음",
+      "틀림",
+      "검사 중"
+    ],
+    "pairs": [
+      {
+        "name": "Error State",
+        "diff": "화면이나 영역 전체가 실패한 경우"
+      },
+      {
+        "name": "Toast",
+        "diff": "저장 결과를 잠깐 알린다. 칸 오류를 Toast로 알리면 어느 칸인지 모른다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "입력값 검증해줘",
+        "risk": "제출한 뒤 alert 창으로 오류를 한꺼번에 띄울 수 있다"
+      }
+    ],
+    "right": "\"칸을 벗어날 때 그 칸 아래에 이유와 고칠 방법을\"처럼 때와 자리를 말한다",
+    "prompt": {
+      "when": "이메일 칸에",
+      "what": "Inline Validation",
+      "how": "{timing} 형식이 틀리면 칸 아래에 \"example@company.com 형식으로 적어 주세요\"를 빨간 글로, 고치면 바로 지우기"
+    }
+  },
+  {
+    "id": "select",
+    "name": "Select",
+    "ko": "선택 상자",
+    "path": [
+      "구조",
+      "화면과 입력",
+      "고르기"
+    ],
+    "one": "눌러서 펼친 목록에서 하나를 고르는 칸. 직접 적을 수는 없다",
+    "aka": [
+      "Select Box",
+      "셀렉트 박스"
+    ],
+    "tags": {
+      "purpose": [
+        "입력"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "look": [
+        "브라우저 기본",
+        "직접 그린 목록"
+      ]
+    },
+    "control_ko": {
+      "look": "꼴"
+    },
+    "defaults": {
+      "look": "브라우저 기본"
+    },
+    "phrases": {
+      "look": {
+        "브라우저 기본": "브라우저 기본 select로",
+        "직접 그린 목록": "직접 그린 목록(키보드 위아래·Enter·Esc 지원)으로"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Combobox",
+        "diff": "적어서 후보를 좁힌다. 고를 것이 많을 때"
+      },
+      {
+        "name": "Radio Group",
+        "diff": "선택지를 모두 펼쳐 둔다. 5개 이하일 때"
+      },
+      {
+        "name": "Dropdown Menu",
+        "diff": "값이 아니라 동작을 고른다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "드롭다운 만들어줘",
+        "risk": "값을 고르는 Select인지 동작을 고르는 Dropdown Menu인지 갈린다"
+      }
+    ],
+    "right": "\"우선순위를 고르는 Select, 고른 값이 칸에 남게\"처럼 무엇을 고르는지 말한다",
+    "prompt": {
+      "when": "이슈 편집 화면에",
+      "what": "Select",
+      "how": "우선순위(긴급·높음·보통·낮음) 중 하나를 {look} 고르게, 기본값은 보통, 고른 값이 칸에 남게"
+    }
+  },
+  {
+    "id": "combobox",
+    "name": "Combobox",
+    "ko": "검색해 고르기",
+    "path": [
+      "구조",
+      "화면과 입력",
+      "고르기"
+    ],
+    "one": "적으면 후보가 좁혀지는 선택 칸. 고를 것이 많을 때 Select 대신 쓴다",
+    "aka": [
+      "Autocomplete",
+      "Typeahead",
+      "자동완성"
+    ],
+    "tags": {
+      "purpose": [
+        "입력"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "입력 중"
+      ],
+      "build": "JS 많이"
+    },
+    "controls": {
+      "multi": [
+        "하나",
+        "여러 개(칩)"
+      ],
+      "create": [
+        "목록에서만",
+        "새 값 만들기 허용"
+      ]
+    },
+    "control_ko": {
+      "multi": "고르는 수",
+      "create": "새 값"
+    },
+    "defaults": {
+      "multi": "여러 개(칩)",
+      "create": "목록에서만"
+    },
+    "phrases": {
+      "multi": {
+        "하나": "한 명만 고르고",
+        "여러 개(칩)": "여러 명이면 칩으로 쌓고"
+      },
+      "create": {
+        "목록에서만": "목록에 없는 이름은 받지 않기",
+        "새 값 만들기 허용": "목록에 없으면 \"'…' 새로 추가\" 줄 보이기"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Select",
+        "diff": "적을 수 없고 목록에서만 고른다"
+      },
+      {
+        "name": "Search Bar",
+        "diff": "결과를 거를 뿐 값을 고르지 않는다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "자동완성 넣어줘",
+        "risk": "검색어 추천만 뜨고 고른 값이 저장되지 않는 검색창이 될 수 있다"
+      }
+    ],
+    "right": "\"Combobox로, 적으면 후보가 좁혀지고 위아래 화살표와 Enter로 고르게\"처럼 고르는 방법까지 말한다",
+    "prompt": {
+      "when": "담당자 칸에",
+      "what": "Combobox",
+      "how": "이름을 적으면 사람 목록이 좁혀지고, 키보드 위아래와 Enter로 고르고, {multi}, {create}"
+    }
+  },
+  {
+    "id": "checkbox",
+    "name": "Checkbox",
+    "ko": "체크박스",
+    "path": [
+      "구조",
+      "화면과 입력",
+      "고르기"
+    ],
+    "one": "여러 개를 켜고 끄는 네모 칸. 표에서는 행 고르기에 쓴다",
+    "aka": [
+      "체크 상자"
+    ],
+    "tags": {
+      "purpose": [
+        "입력"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "header": [
+        "표 머리 전체 선택",
+        "없음"
+      ]
+    },
+    "control_ko": {
+      "header": "머리줄"
+    },
+    "defaults": {
+      "header": "표 머리 전체 선택"
+    },
+    "phrases": {
+      "header": {
+        "표 머리 전체 선택": "머리줄 체크는 전체 선택, 일부만 고르면 indeterminate(—), ",
+        "없음": ""
+      }
+    },
+    "states": [
+      "꺼짐",
+      "켜짐",
+      "일부(indeterminate)",
+      "비활성"
+    ],
+    "pairs": [
+      {
+        "name": "Toggle Switch",
+        "diff": "누르는 즉시 적용된다. Checkbox는 보통 저장을 눌러야 적용된다"
+      },
+      {
+        "name": "Radio Group",
+        "diff": "하나만 고른다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "전체 선택 체크 넣어줘",
+        "risk": "일부만 골랐을 때의 중간 상태(—)가 빠질 수 있다"
+      }
+    ],
+    "right": "\"표 머리 Checkbox, 일부만 골랐으면 indeterminate(—)\"처럼 중간 상태를 말한다",
+    "prompt": {
+      "when": "이슈 표의 각 행에",
+      "what": "Checkbox",
+      "how": "{header}행을 고르면 Bulk Action Bar가 나타나게"
+    }
+  },
+  {
+    "id": "radio-group",
+    "name": "Radio Group",
+    "ko": "라디오 버튼",
+    "path": [
+      "구조",
+      "화면과 입력",
+      "고르기"
+    ],
+    "one": "보이는 선택지 중 하나만 고르는 동그라미 묶음",
+    "aka": [
+      "Radio Button",
+      "라디오"
+    ],
+    "tags": {
+      "purpose": [
+        "입력"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "direction": [
+        "세로",
+        "가로"
+      ]
+    },
+    "control_ko": {
+      "direction": "놓는 방향"
+    },
+    "defaults": {
+      "direction": "세로"
+    },
+    "phrases": {
+      "direction": {
+        "세로": "세로로",
+        "가로": "가로로"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Select",
+        "diff": "선택지를 접어 둔다. 많을 때"
+      },
+      {
+        "name": "Segmented Control",
+        "diff": "붙은 단추 모양. 보기나 기간을 바꿀 때"
+      },
+      {
+        "name": "Checkbox",
+        "diff": "여러 개를 고른다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "옵션 선택 버튼 만들어줘",
+        "risk": "단추 묶음, Select, Checkbox 중 무엇이 나올지 모른다"
+      }
+    ],
+    "right": "\"Radio Group, 세로 배치, 기본 선택 하나\"처럼 이름과 기본값을 말한다",
+    "prompt": {
+      "when": "알림 설정 화면에",
+      "what": "Radio Group",
+      "how": "\"모두·멘션만·끔\" 세 개를 {direction}, 기본은 멘션만, 고르면 아래 설명 문구가 바뀌게, 화살표 키로 옮기기"
+    }
+  },
+  {
+    "id": "toggle-switch",
+    "name": "Toggle Switch",
+    "ko": "켜고 끄기 스위치",
+    "path": [
+      "구조",
+      "화면과 입력",
+      "고르기"
+    ],
+    "one": "누르는 즉시 설정이 켜지거나 꺼지는 스위치. 저장 단추가 따로 없다",
+    "aka": [
+      "Switch",
+      "스위치"
+    ],
+    "tags": {
+      "purpose": [
+        "입력"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "label": [
+        "왼쪽",
+        "오른쪽"
+      ],
+      "duration_ms": [
+        100,
+        300
+      ]
+    },
+    "control_ko": {
+      "label": "이름 자리",
+      "duration_ms": "길이(ms)"
+    },
+    "defaults": {
+      "label": "왼쪽",
+      "duration_ms": 150
+    },
+    "phrases": {
+      "label": {
+        "왼쪽": "이름은 왼쪽, 스위치는 오른쪽 끝에 두고",
+        "오른쪽": "스위치를 앞에 두고 이름은 오른쪽에 두고"
+      }
+    },
+    "states": [
+      "꺼짐",
+      "켜짐",
+      "저장 중",
+      "비활성"
+    ],
+    "pairs": [
+      {
+        "name": "Checkbox",
+        "diff": "저장 단추와 함께 쓰는 선택"
+      },
+      {
+        "name": "Segmented Control",
+        "diff": "둘보다 많은 선택"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "설정 on/off 버튼 넣어줘",
+        "risk": "누를 때마다 글자만 바뀌는 단추가 나와 지금 상태인지 누를 동작인지 헷갈린다"
+      }
+    ],
+    "right": "\"Toggle Switch, 누르는 즉시 저장, 저장 중에는 잠깐 비활성\"처럼 저장 시점을 말한다",
+    "prompt": {
+      "when": "설정 화면의 메일 알림 줄에",
+      "what": "Toggle Switch",
+      "how": "{label} 누르는 즉시 저장, 손잡이가 {duration_ms}ms ease-out으로 미끄러지고, 실패하면 원래대로 돌리고 Toast로 알리기"
+    }
+  },
+  {
+    "id": "segmented-control",
+    "name": "Segmented Control",
+    "ko": "세그먼트 버튼",
+    "path": [
+      "구조",
+      "화면과 입력",
+      "고르기"
+    ],
+    "one": "붙어 있는 단추 몇 개 중 하나를 골라 보기나 기간을 바꾼다",
+    "aka": [
+      "Button Group",
+      "토글 버튼 그룹"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "indicator": [
+        "배경이 미끄러짐",
+        "즉시 바뀜"
+      ],
+      "count": [
+        2,
+        5
+      ]
+    },
+    "control_ko": {
+      "indicator": "고른 칸 표시",
+      "count": "칸 수"
+    },
+    "defaults": {
+      "indicator": "배경이 미끄러짐",
+      "count": 3
+    },
+    "phrases": {
+      "indicator": {
+        "배경이 미끄러짐": "고른 칸 배경이 200ms ease-out으로 미끄러지고",
+        "즉시 바뀜": "고른 칸 배경이 바로 바뀌고"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Tabs",
+        "diff": "아래 내용 영역 전체를 바꾼다"
+      },
+      {
+        "name": "Radio Group",
+        "diff": "폼 안에서 값을 고른다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "기간 선택 탭 만들어줘",
+        "risk": "아래에 탭 내용 영역이 따로 생긴다"
+      }
+    ],
+    "right": "\"Segmented Control로 7일·30일·90일, 고른 칸 배경이 미끄러지게\"처럼 말한다",
+    "prompt": {
+      "when": "대시보드 오른쪽 위에",
+      "what": "Segmented Control",
+      "how": "기간을 고르는 {count}칸(예: 7일·30일·90일), {indicator}, 고르면 아래 차트가 바뀌게"
+    }
+  },
+  {
+    "id": "date-picker",
+    "name": "Date Picker",
+    "ko": "날짜 고르기",
+    "path": [
+      "구조",
+      "화면과 입력",
+      "고르기"
+    ],
+    "one": "달력을 펼쳐 날짜나 기간을 고르는 칸",
+    "aka": [
+      "Calendar Picker",
+      "Date Range Picker",
+      "달력 선택"
+    ],
+    "tags": {
+      "purpose": [
+        "입력"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "JS 많이"
+    },
+    "controls": {
+      "mode": [
+        "날짜 하나",
+        "기간"
+      ],
+      "presets": [
+        "없음",
+        "오늘·이번 주·이번 달"
+      ]
+    },
+    "control_ko": {
+      "mode": "고르는 것",
+      "presets": "빠른 선택"
+    },
+    "defaults": {
+      "mode": "기간",
+      "presets": "오늘·이번 주·이번 달"
+    },
+    "phrases": {
+      "mode": {
+        "날짜 하나": "날짜 하나를 고르고",
+        "기간": "기간 모드로 시작일과 종료일을 고르고"
+      },
+      "presets": {
+        "없음": "",
+        "오늘·이번 주·이번 달": "왼쪽에 \"오늘·이번 주·이번 달\" 빠른 선택, "
+      }
+    },
+    "pairs": [
+      {
+        "name": "input type=date",
+        "diff": "브라우저 기본 달력. 모양을 바꾸기 어렵다"
+      },
+      {
+        "name": "Text Field",
+        "diff": "날짜를 직접 적는다. 형식 오류가 잦다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "날짜 선택 넣어줘",
+        "risk": "기간이 필요한데 날짜 하나만 고르는 칸이 나올 수 있다"
+      }
+    ],
+    "right": "\"Date Picker 기간 모드, 왼쪽에 빠른 선택\"처럼 하나인지 기간인지 말한다",
+    "prompt": {
+      "when": "보고서 필터 줄에",
+      "what": "Date Picker",
+      "how": "{mode}, {presets}주는 월요일부터"
+    }
+  },
+  {
+    "id": "file-drop-zone",
+    "name": "File Drop Zone",
+    "ko": "파일 끌어 놓기 칸",
+    "path": [
+      "구조",
+      "화면과 입력",
+      "파일"
+    ],
+    "one": "파일을 끌어다 놓거나 눌러서 올리는 영역. 올리는 중 진행을 보여 준다",
+    "aka": [
+      "Dropzone",
+      "File Upload",
+      "파일 업로드"
+    ],
+    "tags": {
+      "purpose": [
+        "입력"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "끌 때"
+      ],
+      "build": "JS 많이"
+    },
+    "controls": {
+      "multiple": [
+        "하나",
+        "여러 개"
+      ],
+      "limit": [
+        "크기 제한 표시",
+        "없음"
+      ]
+    },
+    "control_ko": {
+      "multiple": "파일 수",
+      "limit": "크기 제한"
+    },
+    "defaults": {
+      "multiple": "여러 개",
+      "limit": "크기 제한 표시"
+    },
+    "phrases": {
+      "multiple": {
+        "하나": "파일 하나만 받고",
+        "여러 개": "여러 파일을 한 번에 받고"
+      },
+      "limit": {
+        "크기 제한 표시": ", 영역 안에 \"10MB까지\"를 적고 넘는 파일에만 오류",
+        "없음": ""
+      }
+    },
+    "states": [
+      "기다림",
+      "끌어 올림",
+      "올리는 중",
+      "완료",
+      "실패"
+    ],
+    "pairs": [
+      {
+        "name": "input type=file",
+        "diff": "\"파일 선택\" 단추만 있는 기본 칸"
+      },
+      {
+        "name": "Drag and Drop",
+        "diff": "화면 안 항목을 옮긴다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "파일 업로드 기능 넣어줘",
+        "risk": "\"파일 선택\" 단추 하나만 나오고 끌어 놓기와 진행 표시가 빠진다"
+      }
+    ],
+    "right": "\"File Drop Zone: 점선 영역, 끌어 올리면 강조, 파일마다 진행 막대\"처럼 말한다",
+    "prompt": {
+      "when": "이슈 첨부 칸에",
+      "what": "File Drop Zone",
+      "how": "점선 테두리 영역, {multiple}, 파일을 끌어 올리면 테두리와 배경을 강조, 놓으면 파일마다 Progress Bar{limit}"
+    }
+  },
+  {
+    "id": "app-shell",
+    "name": "App Shell",
+    "ko": "앱 틀",
+    "path": [
+      "구조",
+      "레이아웃",
+      "틀"
+    ],
+    "one": "머리줄, 사이드바, 본문 영역으로 이뤄진 업무 화면의 고정된 뼈대",
+    "aka": [
+      "Admin Layout",
+      "Layout Shell",
+      "관리자 레이아웃"
+    ],
+    "tags": {
+      "purpose": [
+        "길찾기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "sidebar": [
+        "펼침",
+        "접힘"
+      ],
+      "header": [
+        "있음",
+        "없음"
+      ]
+    },
+    "control_ko": {
+      "sidebar": "사이드바",
+      "header": "머리줄"
+    },
+    "defaults": {
+      "sidebar": "펼침",
+      "header": "있음"
+    },
+    "phrases": {
+      "sidebar": {
+        "펼침": "왼쪽 Sidebar 240px(접으면 64px)",
+        "접힘": "왼쪽 Sidebar는 아이콘만 64px(펼치면 240px)"
+      },
+      "header": {
+        "있음": "위 머리줄 56px 고정",
+        "없음": "머리줄 없이"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Sidebar Navigation",
+        "diff": "틀 안의 왼쪽 메뉴 부분만"
+      },
+      {
+        "name": "Hero Section",
+        "diff": "소개 페이지 맨 위의 큰 첫 화면"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "관리자 페이지처럼 만들어줘",
+        "risk": "흔한 대시보드 템플릿이 통째로 나온다"
+      }
+    ],
+    "right": "\"App Shell: 머리줄 56px, 사이드바 240px(접으면 64px), 본문만 스크롤\"처럼 치수를 말한다",
+    "prompt": {
+      "when": "모든 업무 화면에",
+      "what": "App Shell",
+      "how": "{header}, {sidebar}, 본문만 스크롤, 휴대폰 폭에서는 사이드바를 Drawer로"
+    }
+  },
+  {
+    "id": "sidebar-navigation",
+    "name": "Sidebar Navigation",
+    "ko": "사이드바 메뉴",
+    "path": [
+      "구조",
+      "레이아웃",
+      "틀"
+    ],
+    "one": "왼쪽에 세로로 늘어선 메뉴. 접어서 아이콘만 남기기도 한다",
+    "aka": [
+      "Side Nav",
+      "LNB",
+      "왼쪽 메뉴"
+    ],
+    "tags": {
+      "purpose": [
+        "길찾기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "collapse": [
+        "펼침",
+        "아이콘만"
+      ],
+      "group": [
+        "없음",
+        "묶음 제목"
+      ]
+    },
+    "control_ko": {
+      "collapse": "처음 모양",
+      "group": "묶음"
+    },
+    "defaults": {
+      "collapse": "펼침",
+      "group": "없음"
+    },
+    "phrases": {
+      "collapse": {
+        "펼침": "처음엔 펼쳐 두고 아래 접기 단추로 아이콘만 남기고",
+        "아이콘만": "처음부터 아이콘만 남기고 아래 단추로 펼치고"
+      },
+      "group": {
+        "없음": "",
+        "묶음 제목": "메뉴를 묶음 제목(작업·설정) 아래로 나누고, "
+      }
+    },
+    "pairs": [
+      {
+        "name": "Tabs",
+        "diff": "같은 화면 안을 나눈다"
+      },
+      {
+        "name": "Drawer",
+        "diff": "필요할 때 밀려 나왔다 닫힌다"
+      },
+      {
+        "name": "Top Navigation",
+        "diff": "가로로 늘어선 메뉴(GNB)"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "왼쪽 메뉴 만들어줘",
+        "risk": "지금 위치 표시나 접기가 빠질 수 있다"
+      }
+    ],
+    "right": "\"지금 메뉴는 배경으로 표시, 접으면 아이콘만 남고 툴팁으로 이름\"처럼 말한다",
+    "prompt": {
+      "when": "앱 왼쪽에",
+      "what": "Sidebar Navigation",
+      "how": "아이콘+이름 메뉴, {group}지금 메뉴는 배경 강조, {collapse}, 아이콘만일 때는 마우스를 올리면 Tooltip으로 이름"
+    }
+  },
+  {
+    "id": "sticky-header",
+    "name": "Sticky Header",
+    "ko": "고정 머리줄",
+    "path": [
+      "구조",
+      "레이아웃",
+      "틀"
+    ],
+    "one": "스크롤해도 화면 위에 붙어 있는 머리줄. 표의 제목 행에도 쓴다",
+    "aka": [
+      "Sticky Table Header",
+      "고정 헤더"
+    ],
+    "tags": {
+      "purpose": [
+        "길찾기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "스크롤"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "shadow": [
+        "붙으면 그림자",
+        "늘 선만"
+      ]
+    },
+    "control_ko": {
+      "shadow": "붙은 뒤"
+    },
+    "defaults": {
+      "shadow": "붙으면 그림자"
+    },
+    "phrases": {
+      "shadow": {
+        "붙으면 그림자": "붙은 뒤에만 아래에 옅은 그림자",
+        "늘 선만": "아래에는 늘 얇은 선만"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Fixed Header",
+        "diff": "처음부터 화면에 붙어 있다. Sticky는 자기 자리까지 스크롤된 뒤 붙는다"
+      },
+      {
+        "name": "App Shell",
+        "diff": "머리줄이 틀의 일부로 늘 고정된다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "헤더 고정해줘",
+        "risk": "position: fixed로 본문을 가리거나 표 제목 행은 빠진다"
+      }
+    ],
+    "right": "\"Sticky Header로 표 제목 행을 붙이고, 붙은 뒤에만 그림자\"처럼 무엇을 붙일지 말한다",
+    "prompt": {
+      "when": "긴 이슈 표를 스크롤할 때",
+      "what": "Sticky Header",
+      "how": "표 제목 행을 position: sticky로 위에 붙이고, {shadow}"
+    }
+  },
+  {
+    "id": "breadcrumb",
+    "name": "Breadcrumb",
+    "ko": "이동 경로",
+    "path": [
+      "구조",
+      "레이아웃",
+      "길찾기"
+    ],
+    "one": "홈 › 프로젝트 › 이슈처럼 지금 위치까지의 경로를 보여 주고 위로 돌아가게 한다",
+    "aka": [
+      "Breadcrumbs",
+      "경로 표시"
+    ],
+    "tags": {
+      "purpose": [
+        "길찾기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "separator": [
+        "›",
+        "/"
+      ],
+      "collapse": [
+        "다 보임",
+        "가운데를 …로"
+      ]
+    },
+    "control_ko": {
+      "separator": "구분자",
+      "collapse": "길 때"
+    },
+    "defaults": {
+      "separator": "›",
+      "collapse": "가운데를 …로"
+    },
+    "phrases": {
+      "collapse": {
+        "다 보임": "길어도 다 보이게",
+        "가운데를 …로": "길면 가운데를 …로"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Tabs",
+        "diff": "같은 수준의 화면 사이를 옮긴다"
+      },
+      {
+        "name": "Back Button",
+        "diff": "바로 앞 화면 하나로만 돌아간다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "상단에 경로 표시해줘",
+        "risk": "주소(URL)를 그대로 찍거나 누를 수 없는 글만 나올 수 있다"
+      }
+    ],
+    "right": "\"홈 › 프로젝트 › 이슈 #12, 마지막 칸만 누를 수 없게\"처럼 예를 들어 말한다",
+    "prompt": {
+      "when": "이슈 상세 화면 제목 위에",
+      "what": "Breadcrumb",
+      "how": "\"홈 {separator} 프로젝트 {separator} 이슈 #12\", 앞 칸들은 링크, 마지막 칸은 굵은 글로 누를 수 없게, {collapse}"
+    }
+  },
+  {
+    "id": "tabs",
+    "name": "Tabs",
+    "ko": "탭",
+    "path": [
+      "구조",
+      "레이아웃",
+      "길찾기"
+    ],
+    "one": "같은 화면 안의 내용을 이름표로 나눠 하나씩 보여 준다",
+    "aka": [
+      "Tab Bar",
+      "탭 메뉴"
+    ],
+    "tags": {
+      "purpose": [
+        "길찾기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "indicator": [
+        "밑줄이 미끄러짐",
+        "즉시 바뀜"
+      ],
+      "overflow": [
+        "가로 스크롤",
+        "더보기 메뉴"
+      ]
+    },
+    "control_ko": {
+      "indicator": "고른 탭 표시",
+      "overflow": "넘칠 때"
+    },
+    "defaults": {
+      "indicator": "밑줄이 미끄러짐",
+      "overflow": "가로 스크롤"
+    },
+    "phrases": {
+      "indicator": {
+        "밑줄이 미끄러짐": "고른 탭 밑줄이 200ms ease-out으로 미끄러지고",
+        "즉시 바뀜": "고른 탭 밑줄이 바로 옮겨 가고"
+      },
+      "overflow": {
+        "가로 스크롤": "탭이 넘치면 가로로 스크롤",
+        "더보기 메뉴": "탭이 넘치면 남는 탭을 \"더보기 ▾\" 메뉴로"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Segmented Control",
+        "diff": "작은 보기 바꾸기 단추"
+      },
+      {
+        "name": "Accordion",
+        "diff": "세로로 접고 편다"
+      },
+      {
+        "name": "Sidebar Navigation",
+        "diff": "다른 화면으로 옮긴다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "탭으로 나눠줘",
+        "risk": "탭을 바꿔도 주소가 그대로라 새로고침하면 첫 탭으로 돌아갈 수 있다"
+      }
+    ],
+    "right": "\"고른 탭 밑줄이 미끄러지고, 주소의 #이름으로 탭을 기억\"처럼 말한다",
+    "prompt": {
+      "when": "이슈 상세의 본문 위에",
+      "what": "Tabs",
+      "how": "\"내용·댓글·기록\" 세 탭, {indicator}, 키보드 좌우 화살표로 옮기기, {overflow}"
+    }
+  },
+  {
+    "id": "master-detail",
+    "name": "Master-Detail",
+    "ko": "목록-상세 나눠 보기",
+    "path": [
+      "구조",
+      "레이아웃",
+      "나누기"
+    ],
+    "one": "왼쪽 목록에서 고르면 오른쪽에 상세가 열리는 두 칸 화면",
+    "aka": [
+      "Split View",
+      "List-Detail",
+      "목록 상세"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "ratio": [
+        "3:7",
+        "4:6"
+      ],
+      "mobile": [
+        "상세를 새 화면으로",
+        "상세를 Drawer로"
+      ]
+    },
+    "control_ko": {
+      "ratio": "나누는 비율",
+      "mobile": "휴대폰 폭"
+    },
+    "defaults": {
+      "ratio": "4:6",
+      "mobile": "상세를 새 화면으로"
+    },
+    "phrases": {
+      "ratio": {
+        "3:7": "왼쪽 목록 3 : 오른쪽 상세 7",
+        "4:6": "왼쪽 목록 4 : 오른쪽 상세 6"
+      },
+      "mobile": {
+        "상세를 새 화면으로": "휴대폰 폭에서는 상세를 새 화면으로",
+        "상세를 Drawer로": "휴대폰 폭에서는 상세를 Drawer로"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Drawer",
+        "diff": "목록 위에 겹쳐 뜨고 닫으면 사라진다"
+      },
+      {
+        "name": "Modal Dialog",
+        "diff": "뒤를 막는다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "목록 누르면 상세 보여줘",
+        "risk": "새 페이지로 넘어가 목록 위치를 잃는다"
+      }
+    ],
+    "right": "\"Master-Detail: 왼쪽 목록은 그대로, 오른쪽에 상세, 고른 행 강조\"처럼 말한다",
+    "prompt": {
+      "when": "이슈 목록에서 행을 누르면",
+      "what": "Master-Detail",
+      "how": "{ratio}, 고른 행 배경 강조, {mobile}"
+    }
+  },
+  {
+    "id": "card-grid",
+    "name": "Card Grid",
+    "ko": "카드 격자",
+    "path": [
+      "구조",
+      "레이아웃",
+      "나누기"
+    ],
+    "one": "같은 모양의 카드를 격자로 늘어놓는 배치. 폭에 따라 열 수가 바뀐다",
+    "aka": [
+      "Grid Layout",
+      "Gallery",
+      "카드 목록"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면",
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "min_width_px": [
+        200,
+        320
+      ],
+      "gap_px": [
+        8,
+        24
+      ]
+    },
+    "control_ko": {
+      "min_width_px": "카드 최소 폭(px)",
+      "gap_px": "간격(px)"
+    },
+    "defaults": {
+      "min_width_px": 240,
+      "gap_px": 16
+    },
+    "pairs": [
+      {
+        "name": "Data Table",
+        "diff": "항목을 줄로 비교한다"
+      },
+      {
+        "name": "Bento Grid",
+        "diff": "크기가 다른 칸을 섞은 소개용 격자"
+      },
+      {
+        "name": "Masonry",
+        "diff": "높이가 다른 카드를 벽돌처럼 쌓는다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "카드로 보여줘",
+        "risk": "열 수가 고정되어 좁은 화면에서 카드가 짓눌린다"
+      }
+    ],
+    "right": "\"카드 최소 폭 240px, 폭에 맞춰 열 수가 바뀌게\"처럼 최소 폭을 말한다",
+    "prompt": {
+      "when": "프로젝트 목록 화면에",
+      "what": "Card Grid",
+      "how": "카드 최소 폭 {min_width_px}px, auto-fill로 열 수가 폭에 따라 바뀌고, 카드 높이는 내용에 맞추고 간격 {gap_px}px"
+    }
+  },
+  {
+    "id": "data-table",
+    "name": "Data Table",
+    "ko": "데이터 표",
+    "path": [
+      "구조",
+      "컴포넌트",
+      "데이터"
+    ],
+    "one": "정렬, 필터, 행 고르기가 되는 업무용 표",
+    "aka": [
+      "Table",
+      "Data Grid",
+      "그리드"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "JS 많이"
+    },
+    "controls": {
+      "density": [
+        "넓게",
+        "촘촘하게"
+      ],
+      "sort": [
+        "머리 눌러 정렬",
+        "없음"
+      ],
+      "select": [
+        "체크박스",
+        "없음"
+      ]
+    },
+    "control_ko": {
+      "density": "행 간격",
+      "sort": "정렬",
+      "select": "고르기"
+    },
+    "defaults": {
+      "density": "넓게",
+      "sort": "머리 눌러 정렬",
+      "select": "체크박스"
+    },
+    "phrases": {
+      "density": {
+        "넓게": "행 높이 48px",
+        "촘촘하게": "행 높이 36px"
+      },
+      "sort": {
+        "머리 눌러 정렬": "머리를 눌러 정렬(화살표 표시)",
+        "없음": "정렬 없이"
+      },
+      "select": {
+        "체크박스": "맨 앞에 Checkbox 열",
+        "없음": "고르기 열 없이"
+      }
+    },
+    "states": [
+      "불러오는 중",
+      "빈 표",
+      "고른 행"
+    ],
+    "pairs": [
+      {
+        "name": "Card Grid",
+        "diff": "항목을 카드로 훑어본다"
+      },
+      {
+        "name": "Spreadsheet Grid",
+        "diff": "셀을 엑셀처럼 바로 고친다"
+      },
+      {
+        "name": "List",
+        "diff": "열 없이 한 줄씩"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "표로 보여줘",
+        "risk": "정렬, 고정 머리줄, 숫자 오른쪽 정렬이 빠진 단순 table이 나온다"
+      }
+    ],
+    "right": "\"머리 눌러 정렬, Sticky Header, 숫자 열은 오른쪽 정렬과 tabular-nums\"처럼 말한다",
+    "prompt": {
+      "when": "이슈 목록 화면에",
+      "what": "Data Table",
+      "how": "열은 번호·제목·상태·담당자·수정일, {density}, {sort}, {select}, 머리줄 고정, 행에 마우스를 올리면 배경, 숫자는 오른쪽 정렬"
+    }
+  },
+  {
+    "id": "pagination",
+    "name": "Pagination",
+    "ko": "쪽 나누기",
+    "path": [
+      "구조",
+      "컴포넌트",
+      "데이터"
+    ],
+    "one": "긴 목록을 쪽으로 나누고 쪽 번호로 넘긴다",
+    "aka": [
+      "페이지네이션",
+      "페이징"
+    ],
+    "tags": {
+      "purpose": [
+        "길찾기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "style": [
+        "쪽 번호",
+        "이전·다음만"
+      ],
+      "page_size": [
+        "20",
+        "50",
+        "100"
+      ]
+    },
+    "control_ko": {
+      "style": "꼴",
+      "page_size": "쪽당 개수"
+    },
+    "defaults": {
+      "style": "쪽 번호",
+      "page_size": "20"
+    },
+    "phrases": {
+      "style": {
+        "쪽 번호": "이전·다음과 쪽 번호(지금 쪽 앞뒤 2개, 나머지 …)",
+        "이전·다음만": "이전·다음 단추만"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Infinite Scroll",
+        "diff": "끝에 닿으면 저절로 더 불러온다"
+      },
+      {
+        "name": "Load More",
+        "diff": "\"더 보기\" 단추로 이어 붙인다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "페이지 나눠줘",
+        "risk": "전체 개수와 지금 범위가 안 보이거나, 쪽이 많으면 번호가 한 줄을 넘친다"
+      }
+    ],
+    "right": "\"1–20 / 342건, 지금 쪽 앞뒤 2개만 번호, 나머지는 …\"처럼 말한다",
+    "prompt": {
+      "when": "이슈 표 아래에",
+      "what": "Pagination",
+      "how": "왼쪽에 \"1–{page_size} / 342건\", 오른쪽에 {style}, 쪽당 개수 20·50·100 고르기(기본 {page_size})"
+    }
+  },
+  {
+    "id": "kanban-board",
+    "name": "Kanban Board",
+    "ko": "칸반 보드",
+    "path": [
+      "구조",
+      "컴포넌트",
+      "데이터"
+    ],
+    "one": "상태별 세로 칸에 카드를 두고 끌어서 상태를 바꾼다",
+    "aka": [
+      "Board View",
+      "칸반"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "끌 때"
+      ],
+      "build": "JS 많이"
+    },
+    "controls": {
+      "count": [
+        "칸별 개수 표시",
+        "없음"
+      ],
+      "collapse": [
+        "칸 접기",
+        "없음"
+      ]
+    },
+    "control_ko": {
+      "count": "칸별 개수",
+      "collapse": "칸 접기"
+    },
+    "defaults": {
+      "count": "칸별 개수 표시",
+      "collapse": "없음"
+    },
+    "phrases": {
+      "count": {
+        "칸별 개수 표시": ", 칸 제목 옆에 개수",
+        "없음": ""
+      },
+      "collapse": {
+        "칸 접기": ", 칸 제목의 단추를 누르면 좁은 세로 띠로 접기",
+        "없음": ""
+      }
+    },
+    "pairs": [
+      {
+        "name": "Data Table",
+        "diff": "같은 항목을 줄로 본다"
+      },
+      {
+        "name": "Card Grid",
+        "diff": "상태 칸 없이 늘어놓는다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "칸반처럼 만들어줘",
+        "risk": "끌어 놓기 없이 칸만 나누거나, 놓을 자리 표시가 없어 어디에 떨어질지 모른다"
+      }
+    ],
+    "right": "\"상태별 칸, 끌면 놓일 자리에 빈 틀, 놓으면 상태 저장\"처럼 말한다",
+    "prompt": {
+      "when": "업무 보드 화면에",
+      "what": "Kanban Board",
+      "how": "\"할 일·진행 중·검토·완료\" 칸{count}{collapse}, 카드를 끌면 놓일 자리에 빈 틀, 놓으면 상태를 바로 저장(Optimistic Update)"
+    }
+  },
+  {
+    "id": "activity-timeline",
+    "name": "Activity Timeline",
+    "ko": "활동 기록",
+    "path": [
+      "구조",
+      "컴포넌트",
+      "데이터"
+    ],
+    "one": "누가 언제 무엇을 바꿨는지 시간순으로 쌓아 보여 준다",
+    "aka": [
+      "Activity Feed",
+      "History",
+      "변경 이력"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "order": [
+        "최신이 위",
+        "오래된 것이 위"
+      ],
+      "group": [
+        "날짜별 묶음",
+        "없음"
+      ]
+    },
+    "control_ko": {
+      "order": "순서",
+      "group": "묶음"
+    },
+    "defaults": {
+      "order": "최신이 위",
+      "group": "날짜별 묶음"
+    },
+    "phrases": {
+      "group": {
+        "날짜별 묶음": "날짜별로 묶고",
+        "없음": "묶지 않고"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Comment Thread",
+        "diff": "사람이 쓴 댓글만"
+      },
+      {
+        "name": "Audit Log",
+        "diff": "모든 변경을 표로 남기는 관리용 기록"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "변경 기록 보여줘",
+        "risk": "누가·언제·무엇을이 한 줄에 섞인 로그 표가 나온다"
+      }
+    ],
+    "right": "\"세로 선 위에 점, 줄마다 누가 무엇을 바꿈 · 3분 전\"처럼 한 줄의 모양을 말한다",
+    "prompt": {
+      "when": "이슈 상세의 기록 탭에",
+      "what": "Activity Timeline",
+      "how": "세로 선과 점, 줄마다 \"누가 무엇을 바꿈 · 상대 시간\", {group}, {order}"
+    }
+  },
+  {
+    "id": "bulk-action-bar",
+    "name": "Bulk Action Bar",
+    "ko": "일괄 작업 막대",
+    "path": [
+      "구조",
+      "컴포넌트",
+      "데이터"
+    ],
+    "one": "여러 행을 고르면 나타나 한꺼번에 지우기, 옮기기 등을 하게 한다",
+    "aka": [
+      "Selection Bar",
+      "Batch Actions",
+      "일괄 처리 막대"
+    ],
+    "tags": {
+      "purpose": [
+        "입력"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "값이 바뀔 때"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "position": [
+        "표 위에 겹침",
+        "화면 아래 떠 있음"
+      ],
+      "enter": [
+        "slide",
+        "fade"
+      ]
+    },
+    "control_ko": {
+      "position": "자리",
+      "enter": "나타나기"
+    },
+    "defaults": {
+      "position": "화면 아래 떠 있음",
+      "enter": "slide"
+    },
+    "phrases": {
+      "position": {
+        "표 위에 겹침": "표 머리줄 위에 겹쳐",
+        "화면 아래 떠 있음": "화면 아래 가운데에서"
+      },
+      "enter": {
+        "slide": "slide-in으로 올라와",
+        "fade": "fade-in으로 나타나"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Dropdown Menu",
+        "diff": "행 하나의 동작 목록"
+      },
+      {
+        "name": "Toolbar",
+        "diff": "늘 보이는 단추 줄"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "여러 개 선택해서 삭제되게 해줘",
+        "risk": "체크해도 아무 표시가 없고 삭제 단추가 늘 떠 있을 수 있다"
+      }
+    ],
+    "right": "\"하나라도 고르면 아래에서 올라와 N개 선택 · 동작 · 선택 해제\"처럼 나타나는 때를 말한다",
+    "prompt": {
+      "when": "표에서 행을 하나 이상 고르면",
+      "what": "Bulk Action Bar",
+      "how": "{position} {enter} \"N개 선택됨 · 상태 바꾸기 · 지우기 · 선택 해제\", 지우기는 Confirm Dialog 뒤에"
+    }
+  },
+  {
+    "id": "modal-dialog",
+    "name": "Modal Dialog",
+    "ko": "모달 대화상자",
+    "path": [
+      "구조",
+      "컴포넌트",
+      "겹쳐 뜨는 창"
+    ],
+    "one": "뒤 화면을 막고 가운데 뜨는 창. 답하거나 닫아야 돌아간다",
+    "aka": [
+      "Modal",
+      "Dialog",
+      "팝업",
+      "레이어 팝업"
+    ],
+    "tags": {
+      "purpose": [
+        "주의"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "size": [
+        "작게",
+        "보통",
+        "크게"
+      ],
+      "enter": [
+        "fade + scale",
+        "fade"
+      ],
+      "close": [
+        "바깥 누르면 닫힘",
+        "단추로만"
+      ]
+    },
+    "control_ko": {
+      "size": "크기",
+      "enter": "나타나기",
+      "close": "닫기"
+    },
+    "defaults": {
+      "size": "보통",
+      "enter": "fade + scale",
+      "close": "단추로만"
+    },
+    "phrases": {
+      "size": {
+        "작게": "폭 400px",
+        "보통": "폭 560px",
+        "크게": "폭 800px"
+      },
+      "enter": {
+        "fade + scale": "fade + scale(0.96→1) 200ms로",
+        "fade": "fade 200ms로"
+      },
+      "close": {
+        "바깥 누르면 닫힘": "Esc, ×, 바깥을 누르면 닫고",
+        "단추로만": "Esc와 ×로만 닫고(바깥을 눌러도 안 닫힘)"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Drawer",
+        "diff": "옆에서 나온다. 뒤를 보면서 쓴다"
+      },
+      {
+        "name": "Popover",
+        "diff": "뒤를 막지 않는다"
+      },
+      {
+        "name": "Confirm Dialog",
+        "diff": "예·아니요만 짧게 묻는 Modal"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "팝업 띄워줘",
+        "risk": "새 브라우저 창(window.open)이나 Toast가 나올 수 있다"
+      }
+    ],
+    "right": "\"Modal Dialog: 뒤를 어둡게 막고 가운데, Esc와 ×로 닫고, 초점은 창 안에\"처럼 말한다",
+    "prompt": {
+      "when": "\"새 이슈\" 단추를 누르면",
+      "what": "Modal Dialog",
+      "how": "뒤를 반투명하게 덮고 가운데에 {size} 창을 {enter}, {close}, 열려 있는 동안 키보드 초점은 창 안에서만"
+    }
+  },
+  {
+    "id": "confirm-dialog",
+    "name": "Confirm Dialog",
+    "ko": "확인 대화상자",
+    "path": [
+      "구조",
+      "컴포넌트",
+      "겹쳐 뜨는 창"
+    ],
+    "one": "지우기처럼 되돌리기 어려운 일 전에 한 번 더 묻는 작은 모달",
+    "aka": [
+      "Alert Dialog",
+      "Confirm",
+      "확인 창"
+    ],
+    "tags": {
+      "purpose": [
+        "주의"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "tone": [
+        "위험(빨간 단추)",
+        "보통"
+      ],
+      "typing": [
+        "없음",
+        "이름을 적어야 지움"
+      ]
+    },
+    "control_ko": {
+      "tone": "분위기",
+      "typing": "확인 입력"
+    },
+    "defaults": {
+      "tone": "위험(빨간 단추)",
+      "typing": "없음"
+    },
+    "phrases": {
+      "tone": {
+        "위험(빨간 단추)": "빨간 \"지우기\"",
+        "보통": "강조 색 \"지우기\""
+      },
+      "typing": {
+        "없음": "",
+        "이름을 적어야 지움": ", 이슈 번호를 적어야 지우기 단추가 켜지게"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Undo",
+        "diff": "먼저 하고 되돌릴 기회를 준다. 확인보다 덜 막는다"
+      },
+      {
+        "name": "Modal Dialog",
+        "diff": "입력이 있는 큰 창"
+      },
+      {
+        "name": "confirm()",
+        "diff": "브라우저 기본 창. 꾸밀 수 없다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "삭제 전에 확인창 띄워줘",
+        "risk": "\"확인/취소\" 단추만 있어 무엇을 지우는지 안 보인다"
+      }
+    ],
+    "right": "\"제목에 대상 이름, 단추는 빨간 지우기와 취소\"처럼 대상과 단추 글을 말한다",
+    "prompt": {
+      "when": "이슈 지우기를 누르면",
+      "what": "Confirm Dialog",
+      "how": "제목 \"이슈 #12를 지울까요?\", 되돌릴 수 없다는 한 줄, 단추는 {tone}와 \"취소\", 처음 초점은 취소에{typing}"
+    }
+  },
+  {
+    "id": "drawer",
+    "name": "Drawer",
+    "ko": "서랍 패널",
+    "path": [
+      "구조",
+      "컴포넌트",
+      "겹쳐 뜨는 창"
+    ],
+    "one": "화면 옆에서 밀려 나오는 패널. 목록을 둔 채 상세나 편집을 연다",
+    "aka": [
+      "Side Panel",
+      "Sheet",
+      "Off-canvas",
+      "서랍"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "side": [
+        "오른쪽",
+        "왼쪽",
+        "아래(Bottom Sheet)"
+      ],
+      "width_px": [
+        320,
+        640
+      ],
+      "overlay": [
+        "뒤를 옅게 덮음",
+        "뒤를 그대로"
+      ]
+    },
+    "control_ko": {
+      "side": "나오는 쪽",
+      "width_px": "폭(px)",
+      "overlay": "뒤 화면"
+    },
+    "defaults": {
+      "side": "오른쪽",
+      "width_px": 480,
+      "overlay": "뒤를 옅게 덮음"
+    },
+    "phrases": {
+      "side": {
+        "오른쪽": "오른쪽에서 폭 {width_px}px 패널이",
+        "왼쪽": "왼쪽에서 폭 {width_px}px 패널이",
+        "아래(Bottom Sheet)": "아래에서 Bottom Sheet가"
+      },
+      "overlay": {
+        "뒤를 옅게 덮음": "뒤 목록은 옅게 덮어 보이게",
+        "뒤를 그대로": "뒤 목록은 덮지 않고 그대로 누를 수 있게"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Modal Dialog",
+        "diff": "가운데에 뜨고 뒤를 막는다"
+      },
+      {
+        "name": "Master-Detail",
+        "diff": "상세 칸이 늘 자리를 차지한다"
+      },
+      {
+        "name": "Bottom Sheet",
+        "diff": "휴대폰 아래에서 올라오는 Drawer"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "사이드 팝업 띄워줘",
+        "risk": "가운데 Modal이나 사이드바 메뉴가 나올 수 있다"
+      }
+    ],
+    "right": "\"오른쪽에서 480px 패널이 밀려 나오고 뒤 목록은 보이게\"처럼 방향과 폭을 말한다",
+    "prompt": {
+      "when": "목록에서 행을 누르면",
+      "what": "Drawer",
+      "how": "{side} 250ms ease-out으로 밀려 나오고, {overlay}, Esc나 바깥을 누르면 닫기"
+    }
+  },
+  {
+    "id": "popover",
+    "name": "Popover",
+    "ko": "팝오버",
+    "path": [
+      "구조",
+      "컴포넌트",
+      "겹쳐 뜨는 창"
+    ],
+    "one": "누른 자리 옆에 붙어 뜨는 작은 창. 안에 단추나 입력칸을 둘 수 있다",
+    "aka": [
+      "Flyout",
+      "팝오버"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "placement": [
+        "아래",
+        "위",
+        "오른쪽"
+      ],
+      "arrow": [
+        "꼬리 있음",
+        "없음"
+      ]
+    },
+    "control_ko": {
+      "placement": "자리",
+      "arrow": "꼬리"
+    },
+    "defaults": {
+      "placement": "아래",
+      "arrow": "꼬리 있음"
+    },
+    "phrases": {
+      "placement": {
+        "아래": "아래에",
+        "위": "위에",
+        "오른쪽": "오른쪽에"
+      },
+      "arrow": {
+        "꼬리 있음": "누른 곳을 가리키는 꼬리를 달고",
+        "없음": "꼬리 없이"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Tooltip",
+        "diff": "설명 글만, 마우스를 올리면 뜬다"
+      },
+      {
+        "name": "Dropdown Menu",
+        "diff": "동작 목록만"
+      },
+      {
+        "name": "Modal Dialog",
+        "diff": "뒤를 막는다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "툴팁에 버튼 넣어줘",
+        "risk": "마우스를 떼면 사라져 단추를 누를 수 없다"
+      }
+    ],
+    "right": "\"Popover: 눌러서 열고, 안에 단추, 바깥이나 Esc로 닫기\"처럼 여는 방법을 말한다",
+    "prompt": {
+      "when": "담당자 아바타를 누르면",
+      "what": "Popover",
+      "how": "{placement} 붙어 뜨는 작은 창에 이름·메일·\"이슈 보기\" 단추, {arrow}, 화면 끝이면 반대쪽으로 뒤집고, 바깥을 누르거나 Esc로 닫기"
+    }
+  },
+  {
+    "id": "tooltip",
+    "name": "Tooltip",
+    "ko": "툴팁",
+    "path": [
+      "구조",
+      "컴포넌트",
+      "겹쳐 뜨는 창"
+    ],
+    "one": "마우스를 올리거나 초점이 가면 뜨는 짧은 설명 글. 누를 것은 넣지 않는다",
+    "aka": [
+      "Hint",
+      "말풍선"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "마우스 올림",
+        "초점"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "delay_ms": [
+        0,
+        700
+      ],
+      "placement": [
+        "위",
+        "아래",
+        "오른쪽"
+      ]
+    },
+    "control_ko": {
+      "delay_ms": "기다림(ms)",
+      "placement": "자리"
+    },
+    "defaults": {
+      "delay_ms": 300,
+      "placement": "위"
+    },
+    "phrases": {
+      "placement": {
+        "위": "위쪽에",
+        "아래": "아래쪽에",
+        "오른쪽": "오른쪽에"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Popover",
+        "diff": "눌러서 열고 안에 단추를 둘 수 있다"
+      },
+      {
+        "name": "title 속성",
+        "diff": "브라우저 기본 설명. 늦게 뜨고 꾸밀 수 없다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "마우스 올리면 설명 나오게",
+        "risk": "title 속성만 써서 늦게 뜨고, 키보드와 휴대폰에서는 안 보인다"
+      }
+    ],
+    "right": "\"Tooltip: 300ms 뒤 위에, 키보드 초점에도, 짧은 글만\"처럼 말한다",
+    "prompt": {
+      "when": "아이콘 단추에 마우스를 올리거나 초점이 가면",
+      "what": "Tooltip",
+      "how": "{delay_ms}ms 뒤 {placement} 짧은 이름표를 fade-in 120ms로, 화면 끝이면 반대쪽으로, 안에 누를 것은 넣지 않기"
+    }
+  },
+  {
+    "id": "dropdown-menu",
+    "name": "Dropdown Menu",
+    "ko": "드롭다운 메뉴",
+    "path": [
+      "구조",
+      "컴포넌트",
+      "겹쳐 뜨는 창"
+    ],
+    "one": "단추(⋯ 등)를 누르면 펼쳐지는 동작 목록. 값을 고르는 Select와 다르다",
+    "aka": [
+      "Action Menu",
+      "Kebab Menu",
+      "Context Menu",
+      "더보기 메뉴"
+    ],
+    "tags": {
+      "purpose": [
+        "입력"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "icon": [
+        "⋯",
+        "⋮",
+        "단추 글"
+      ],
+      "danger": [
+        "맨 아래 빨간 항목",
+        "없음"
+      ]
+    },
+    "control_ko": {
+      "icon": "여는 단추",
+      "danger": "위험 항목"
+    },
+    "defaults": {
+      "icon": "⋯",
+      "danger": "맨 아래 빨간 항목"
+    },
+    "phrases": {
+      "icon": {
+        "⋯": "⋯ 단추를",
+        "⋮": "⋮ 단추를",
+        "단추 글": "\"더 보기 ▾\" 단추를"
+      },
+      "danger": {
+        "맨 아래 빨간 항목": ", 선 아래 빨간 \"지우기\"",
+        "없음": ""
+      }
+    },
+    "pairs": [
+      {
+        "name": "Select",
+        "diff": "값을 고른다"
+      },
+      {
+        "name": "Context Menu",
+        "diff": "오른쪽 클릭으로 연다"
+      },
+      {
+        "name": "Popover",
+        "diff": "무엇이든 담는 작은 창"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "점 세 개 메뉴 넣어줘",
+        "risk": "아이콘만 있고 메뉴가 펼쳐지지 않거나 키보드로 고를 수 없다"
+      }
+    ],
+    "right": "\"⋯ 단추를 누르면 동작 목록, 지우기는 선 아래 빨간 글\"처럼 항목과 순서를 말한다",
+    "prompt": {
+      "when": "표의 각 행 오른쪽 끝에",
+      "what": "Dropdown Menu",
+      "how": "{icon} 누르면 \"편집·복제·옮기기\" 목록{danger}, 위아래 화살표와 Enter로 고르고 Esc로 닫기"
+    }
+  },
+  {
+    "id": "command-palette",
+    "name": "Command Palette",
+    "ko": "명령 팔레트",
+    "path": [
+      "구조",
+      "컴포넌트",
+      "겹쳐 뜨는 창"
+    ],
+    "one": "단축키로 여는 검색창에서 화면 이동과 동작을 이름으로 찾아 실행한다",
+    "aka": [
+      "Cmd+K",
+      "Quick Switcher",
+      "Spotlight"
+    ],
+    "tags": {
+      "purpose": [
+        "길찾기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "단축키"
+      ],
+      "build": "JS 많이"
+    },
+    "controls": {
+      "shortcut": [
+        "Ctrl/Cmd+K",
+        "/"
+      ],
+      "groups": [
+        "이동·동작·최근 묶음",
+        "한 목록"
+      ]
+    },
+    "control_ko": {
+      "shortcut": "여는 키",
+      "groups": "묶음"
+    },
+    "defaults": {
+      "shortcut": "Ctrl/Cmd+K",
+      "groups": "이동·동작·최근 묶음"
+    },
+    "phrases": {
+      "groups": {
+        "이동·동작·최근 묶음": "결과를 \"이동·동작·최근\"으로 묶고",
+        "한 목록": "결과를 한 목록으로 보이고"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Search Bar",
+        "diff": "목록 안을 거른다"
+      },
+      {
+        "name": "Combobox",
+        "diff": "값을 고른다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "단축키로 여는 검색창 만들어줘",
+        "risk": "검색 결과 페이지로 넘어가는 일반 검색이 나올 수 있다"
+      }
+    ],
+    "right": "\"Ctrl+K로 가운데 열리고, 적으면 화면과 동작이 묶음별로 좁혀지고, Enter로 실행\"처럼 말한다",
+    "prompt": {
+      "when": "어느 화면에서든 단축키로",
+      "what": "Command Palette",
+      "how": "{shortcut}를 누르면 가운데 위쪽에 검색 칸과 결과 목록, {groups}, 위아래와 Enter로 실행, 오른쪽에 각 동작의 단축키 표시"
+    }
+  },
+  {
+    "id": "toast",
+    "name": "Toast",
+    "ko": "토스트",
+    "path": [
+      "구조",
+      "컴포넌트",
+      "알림"
+    ],
+    "one": "하던 일을 막지 않고 구석에 잠깐 떴다가 사라지는 짧은 알림",
+    "aka": [
+      "Snackbar",
+      "잠깐 뜨는 알림"
+    ],
+    "tags": {
+      "purpose": [
+        "피드백"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "position": [
+        "아래 오른쪽",
+        "아래 가운데",
+        "위 가운데"
+      ],
+      "enter": [
+        "slide",
+        "fade",
+        "scale"
+      ],
+      "duration_ms": [
+        100,
+        600
+      ],
+      "hold_s": [
+        2,
+        8
+      ],
+      "undo": [
+        "넣기",
+        "빼기"
+      ]
+    },
+    "control_ko": {
+      "position": "위치",
+      "enter": "나타나기",
+      "duration_ms": "길이(ms)",
+      "hold_s": "떠 있는 시간(초)",
+      "undo": "되돌리기"
+    },
+    "defaults": {
+      "position": "아래 오른쪽",
+      "enter": "slide",
+      "duration_ms": 200,
+      "hold_s": 4,
+      "undo": "넣기"
+    },
+    "phrases": {
+      "enter": {
+        "slide": "slide-in",
+        "fade": "fade-in",
+        "scale": "scale-in"
+      },
+      "undo": {
+        "넣기": ", 되돌리기 단추",
+        "빼기": ""
+      }
+    },
+    "states": [
+      "성공",
+      "오류",
+      "정보"
+    ],
+    "pairs": [
+      {
+        "name": "Snackbar",
+        "diff": "Material의 이름. 단추 하나를 붙인다"
+      },
+      {
+        "name": "Banner",
+        "diff": "닫을 때까지 남는다. 계속 알아야 할 것"
+      },
+      {
+        "name": "Modal Dialog",
+        "diff": "뒤를 막고 답할 때까지 남는다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "알림 팝업 띄워줘",
+        "risk": "가운데 Modal이 떠서 하던 일을 막을 수 있다"
+      }
+    ],
+    "right": "\"Toast로, 아래 오른쪽, 4초 뒤 사라지게\"처럼 이름과 위치, 시간을 함께 말한다",
+    "prompt": {
+      "when": "이슈 저장 버튼을 누르면",
+      "what": "Toast",
+      "how": "화면 {position}에 {enter}({duration_ms}ms, ease-out)으로 나타나고 {hold_s}초 뒤 사라지게, 상태는 왼쪽 점 색으로{undo}"
+    }
+  },
+  {
+    "id": "banner",
+    "name": "Banner",
+    "ko": "알림 띠",
+    "path": [
+      "구조",
+      "컴포넌트",
+      "알림"
+    ],
+    "one": "화면 위나 영역 위에 걸려 닫을 때까지 남는 알림 줄",
+    "aka": [
+      "Alert",
+      "Callout",
+      "공지 띠"
+    ],
+    "tags": {
+      "purpose": [
+        "주의"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "dismiss": [
+        "닫기 단추",
+        "닫을 수 없음"
+      ],
+      "scope": [
+        "화면 맨 위",
+        "영역 위"
+      ]
+    },
+    "control_ko": {
+      "dismiss": "닫기",
+      "scope": "자리"
+    },
+    "defaults": {
+      "dismiss": "닫기 단추",
+      "scope": "화면 맨 위"
+    },
+    "phrases": {
+      "dismiss": {
+        "닫기 단추": ", 오른쪽에 \"자세히\" 링크와 닫기 ×, 닫으면 다시 안 보이게",
+        "닫을 수 없음": ", 오른쪽에 \"자세히\" 링크, 점검이 끝날 때까지 닫을 수 없게"
+      },
+      "scope": {
+        "화면 맨 위": "본문 맨 위에 가로 전체로",
+        "영역 위": "해당 카드 영역 위에"
+      }
+    },
+    "states": [
+      "정보",
+      "경고",
+      "위험",
+      "성공"
+    ],
+    "pairs": [
+      {
+        "name": "Toast",
+        "diff": "잠깐 떴다 사라진다"
+      },
+      {
+        "name": "Modal Dialog",
+        "diff": "뒤를 막고 답을 받는다"
+      },
+      {
+        "name": "Inline Validation",
+        "diff": "칸 하나의 오류"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "상단에 공지 띄워줘",
+        "risk": "몇 초 뒤 사라지는 Toast가 나와 놓칠 수 있다"
+      }
+    ],
+    "right": "\"Banner: 화면 맨 위 경고 색 띠, 닫기 전까지 남고, 오른쪽에 할 일 링크\"처럼 말한다",
+    "prompt": {
+      "when": "점검 예정이 있을 때",
+      "what": "Banner",
+      "how": "{scope} 경고 색 띠, 아이콘과 \"11월 30일 22시부터 점검\"{dismiss}"
+    }
+  },
+  {
+    "id": "badge",
+    "name": "Badge",
+    "ko": "배지",
+    "path": [
+      "구조",
+      "컴포넌트",
+      "알림"
+    ],
+    "one": "아이콘이나 메뉴 옆에 붙는 작은 숫자나 점. 새 것이 있음을 알린다",
+    "aka": [
+      "Notification Badge",
+      "Counter",
+      "빨간 점"
+    ],
+    "tags": {
+      "purpose": [
+        "주의"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "값이 바뀔 때"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "style": [
+        "숫자",
+        "점만"
+      ],
+      "max": [
+        "99+",
+        "9+"
+      ]
+    },
+    "control_ko": {
+      "style": "꼴",
+      "max": "최대"
+    },
+    "defaults": {
+      "style": "숫자",
+      "max": "99+"
+    },
+    "phrases": {
+      "style": {
+        "숫자": "빨간 둥근 숫자",
+        "점만": "숫자 없는 빨간 점"
+      },
+      "max": {
+        "99+": "99가 넘으면 \"99+\"",
+        "9+": "9가 넘으면 \"9+\""
+      }
+    },
+    "pairs": [
+      {
+        "name": "Status Pill",
+        "diff": "항목의 상태 이름을 담은 꼬리표"
+      },
+      {
+        "name": "Tag / Chip",
+        "diff": "분류 이름표. 누르거나 지울 수 있다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "알림 개수 표시해줘",
+        "risk": "숫자가 커지면 원이 찌그러지거나 0일 때도 남는다"
+      }
+    ],
+    "right": "\"아이콘 오른쪽 위, 99 넘으면 99+, 0이면 숨김\"처럼 끝값을 말한다",
+    "prompt": {
+      "when": "머리줄 알림 아이콘에",
+      "what": "Badge",
+      "how": "오른쪽 위에 {style}, {max}, 0이면 숨기고, 숫자가 늘면 한 번 scale 1→1.2→1로 튀기"
+    }
+  },
+  {
+    "id": "accordion",
+    "name": "Accordion",
+    "ko": "아코디언",
+    "path": [
+      "구조",
+      "컴포넌트",
+      "접기·단계"
+    ],
+    "one": "제목을 누르면 아래 내용이 펴지고 접히는 묶음",
+    "aka": [
+      "Collapse",
+      "Disclosure",
+      "접기 펼치기"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "multiple": [
+        "하나만 펼침",
+        "여러 개 펼침"
+      ],
+      "duration_ms": [
+        150,
+        400
+      ]
+    },
+    "control_ko": {
+      "multiple": "펼침",
+      "duration_ms": "길이(ms)"
+    },
+    "defaults": {
+      "multiple": "여러 개 펼침",
+      "duration_ms": 200
+    },
+    "phrases": {
+      "multiple": {
+        "하나만 펼침": "하나를 펼치면 다른 것은 접히게",
+        "여러 개 펼침": "여러 개를 동시에 펼 수 있게"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Tabs",
+        "diff": "가로로 나눠 하나씩 보여 준다"
+      },
+      {
+        "name": "details/summary",
+        "diff": "브라우저 기본 접기. 움직임 없이 바로 펴진다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "접었다 폈다 되게 해줘",
+        "risk": "높이가 움직임 없이 툭 바뀌거나 화살표가 돌지 않는다"
+      }
+    ],
+    "right": "\"제목 줄 전체를 눌러 펴고, 높이가 200ms로 늘고, 화살표가 90도 돈다\"처럼 말한다",
+    "prompt": {
+      "when": "설정 화면의 고급 설정 묶음에",
+      "what": "Accordion",
+      "how": "제목 줄 전체가 단추, 펼치면 높이가 {duration_ms}ms ease-out으로 늘고 오른쪽 화살표가 90도 돌고, {multiple}"
+    }
+  },
+  {
+    "id": "stepper",
+    "name": "Stepper",
+    "ko": "단계 표시",
+    "path": [
+      "구조",
+      "컴포넌트",
+      "접기·단계"
+    ],
+    "one": "여러 단계로 나뉜 입력에서 지금 몇 번째 단계인지 보여 준다",
+    "aka": [
+      "Step Progress",
+      "Wizard",
+      "단계 진행"
+    ],
+    "tags": {
+      "purpose": [
+        "길찾기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "값이 바뀔 때"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "direction": [
+        "가로",
+        "세로"
+      ],
+      "clickable": [
+        "지난 단계 누르기",
+        "누를 수 없음"
+      ]
+    },
+    "control_ko": {
+      "direction": "놓는 방향",
+      "clickable": "지난 단계"
+    },
+    "defaults": {
+      "direction": "가로",
+      "clickable": "지난 단계 누르기"
+    },
+    "phrases": {
+      "direction": {
+        "가로": "가로 배치",
+        "세로": "세로 배치"
+      },
+      "clickable": {
+        "지난 단계 누르기": "지난 단계는 체크 아이콘과 눌러서 돌아가기",
+        "누를 수 없음": "지난 단계는 체크 아이콘만(눌러도 돌아가지 않음)"
+      }
+    },
+    "states": [
+      "지난 단계",
+      "지금 단계",
+      "남은 단계",
+      "오류 단계"
+    ],
+    "pairs": [
+      {
+        "name": "Progress Bar",
+        "diff": "얼마나 됐는지만 보여 준다"
+      },
+      {
+        "name": "Tabs",
+        "diff": "순서 없이 오간다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "단계별 입력 화면 만들어줘",
+        "risk": "단계 표시 없이 다음 단추만 있어 얼마나 남았는지 모른다"
+      }
+    ],
+    "right": "\"위에 1 기본 정보 · 2 첨부 · 3 확인, 지난 단계는 체크\"처럼 단계 이름을 말한다",
+    "prompt": {
+      "when": "여러 단계로 나뉜 신청 화면 위에",
+      "what": "Stepper",
+      "how": "\"1 기본 정보 · 2 첨부 · 3 확인\" {direction}, {clickable}, 지금 단계는 강조 색, 넘어갈 때 단계 사이 선이 채워지기"
+    }
+  },
+  {
+    "id": "skeleton",
+    "name": "Skeleton",
+    "ko": "뼈대 로딩",
+    "path": [
+      "구조",
+      "상태",
+      "불러오는 중"
+    ],
+    "one": "내용이 올 자리에 회색 틀을 먼저 그려 두고 불러오면 바꿔 끼운다",
+    "aka": [
+      "Skeleton Screen",
+      "Placeholder Loading",
+      "뼈대 화면"
+    ],
+    "tags": {
+      "purpose": [
+        "기다림"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "불러올 때"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "shimmer": [
+        "빛이 지나감",
+        "깜빡임(pulse)",
+        "멈춤"
+      ],
+      "min_ms": [
+        0,
+        500
+      ]
+    },
+    "control_ko": {
+      "shimmer": "움직임",
+      "min_ms": "최소 표시(ms)"
+    },
+    "defaults": {
+      "shimmer": "빛이 지나감",
+      "min_ms": 300
+    },
+    "phrases": {
+      "shimmer": {
+        "빛이 지나감": "1.5초마다 왼쪽에서 오른쪽으로 옅은 빛이 지나가고",
+        "깜빡임(pulse)": "1.5초마다 옅어졌다 진해지고",
+        "멈춤": "움직임 없이 회색으로 두고"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Spinner",
+        "diff": "모양 없이 도는 원. 짧거나 올 모양을 모를 때"
+      },
+      {
+        "name": "Progress Bar",
+        "diff": "얼마나 됐는지 알 때"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "로딩 중 표시해줘",
+        "risk": "화면 가운데 Spinner 하나만 돌아 무엇이 올지 모른다"
+      }
+    ],
+    "right": "\"표 행 모양 회색 틀 5줄, 빛이 지나가게\"처럼 틀의 모양을 말한다",
+    "prompt": {
+      "when": "이슈 표를 불러오는 동안",
+      "what": "Skeleton",
+      "how": "실제 행 높이와 같은 회색 틀 5줄, {shimmer}, 빨리 불러와도 {min_ms}ms는 보여서 깜빡이지 않게, 동작 줄이기면 멈춘 회색"
+    }
+  },
+  {
+    "id": "spinner",
+    "name": "Spinner",
+    "ko": "빙글 로딩",
+    "path": [
+      "구조",
+      "상태",
+      "불러오는 중"
+    ],
+    "one": "얼마나 걸릴지 모를 때 도는 작은 원",
+    "aka": [
+      "Loader",
+      "Loading Indicator",
+      "로딩 원"
+    ],
+    "tags": {
+      "purpose": [
+        "기다림"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "불러올 때"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "size_px": [
+        12,
+        40
+      ],
+      "delay_ms": [
+        0,
+        500
+      ]
+    },
+    "control_ko": {
+      "size_px": "크기(px)",
+      "delay_ms": "보이기 전 기다림(ms)"
+    },
+    "defaults": {
+      "size_px": 16,
+      "delay_ms": 300
+    },
+    "pairs": [
+      {
+        "name": "Skeleton",
+        "diff": "올 내용의 모양을 먼저 보여 준다"
+      },
+      {
+        "name": "Loading Button",
+        "diff": "단추 안에서 돈다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "로딩 아이콘 넣어줘",
+        "risk": "짧게 끝나는 일에도 바로 떠서 깜빡거린다"
+      }
+    ],
+    "right": "\"300ms 넘게 걸릴 때만, 16px, 옆에 불러오는 중\"처럼 뜨는 때를 말한다",
+    "prompt": {
+      "when": "저장 요청이 오래 걸릴 때",
+      "what": "Spinner",
+      "how": "{delay_ms}ms가 넘게 걸릴 때만 {size_px}px 원을 0.8초에 한 바퀴, 옆에 \"저장 중\" 글, 스크린리더에도 읽히게(role=status)"
+    }
+  },
+  {
+    "id": "progress-bar",
+    "name": "Progress Bar",
+    "ko": "진행 막대",
+    "path": [
+      "구조",
+      "상태",
+      "불러오는 중"
+    ],
+    "one": "얼마나 됐는지 알 때 차오르는 막대",
+    "aka": [
+      "Progress Indicator",
+      "Loading Bar",
+      "진행률"
+    ],
+    "tags": {
+      "purpose": [
+        "기다림"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "값이 바뀔 때"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "mode": [
+        "정해진 값",
+        "모름(왔다 갔다)"
+      ],
+      "label": [
+        "% 표시",
+        "없음"
+      ]
+    },
+    "control_ko": {
+      "mode": "진행률",
+      "label": "숫자"
+    },
+    "defaults": {
+      "mode": "정해진 값",
+      "label": "% 표시"
+    },
+    "phrases": {
+      "mode": {
+        "정해진 값": "높이 4px 막대가 진행률만큼 차고",
+        "모름(왔다 갔다)": "높이 4px 막대 안에서 짧은 띠가 오가고(진행률을 모를 때)"
+      },
+      "label": {
+        "% 표시": ", 오른쪽에 \"64%\"",
+        "없음": ""
+      }
+    },
+    "pairs": [
+      {
+        "name": "Spinner",
+        "diff": "얼마나 남았는지 모를 때"
+      },
+      {
+        "name": "Stepper",
+        "diff": "단계 수로 나눈 진행"
+      },
+      {
+        "name": "Top Loading Bar",
+        "diff": "화면 맨 위의 가는 막대"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "진행 상태 보여줘",
+        "risk": "Spinner만 돌아 얼마나 남았는지 모른다"
+      }
+    ],
+    "right": "\"막대가 진행률만큼 차고 오른쪽에 64%\"처럼 숫자 표시를 말한다",
+    "prompt": {
+      "when": "파일을 올리는 동안",
+      "what": "Progress Bar",
+      "how": "파일 이름 아래 {mode}{label}, 끝나면 체크로 바뀌기"
+    }
+  },
+  {
+    "id": "empty-state",
+    "name": "Empty State",
+    "ko": "빈 화면",
+    "path": [
+      "구조",
+      "상태",
+      "비었거나 막힘"
+    ],
+    "one": "보여 줄 것이 없을 때 이유와 첫 할 일을 알려 주는 화면",
+    "aka": [
+      "Zero State",
+      "No Data",
+      "빈 목록"
+    ],
+    "tags": {
+      "purpose": [
+        "피드백"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "불러올 때"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "kind": [
+        "처음이라 없음",
+        "검색 결과 없음",
+        "다 끝냄"
+      ],
+      "art": [
+        "작은 그림",
+        "아이콘만"
+      ]
+    },
+    "control_ko": {
+      "kind": "경우",
+      "art": "그림"
+    },
+    "defaults": {
+      "kind": "처음이라 없음",
+      "art": "작은 그림"
+    },
+    "phrases": {
+      "kind": {
+        "처음이라 없음": "\"아직 이슈가 없습니다\", 아래 \"첫 이슈 만들기\" 단추",
+        "검색 결과 없음": "\"'환불'에 맞는 이슈가 없습니다\", 아래 \"필터 지우기\" 단추",
+        "다 끝냄": "\"남은 이슈가 없습니다\", 아래 \"닫힌 이슈 보기\" 링크"
+      },
+      "art": {
+        "작은 그림": "작은 그림",
+        "아이콘만": "흐린 아이콘 하나"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Error State",
+        "diff": "불러오기에 실패한 경우"
+      },
+      {
+        "name": "Skeleton",
+        "diff": "아직 불러오는 중"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "데이터 없으면 없다고 표시해줘",
+        "risk": "\"데이터가 없습니다\" 한 줄만 나와 다음에 무엇을 할지 모른다"
+      }
+    ],
+    "right": "\"이유 한 줄과 첫 할 일 단추\"처럼 다음 행동을 함께 말한다",
+    "prompt": {
+      "when": "이슈 목록이 비었을 때",
+      "what": "Empty State",
+      "how": "가운데에 {art}, {kind}"
+    }
+  },
+  {
+    "id": "error-state",
+    "name": "Error State",
+    "ko": "오류 화면",
+    "path": [
+      "구조",
+      "상태",
+      "비었거나 막힘"
+    ],
+    "one": "불러오지 못했을 때 무엇이 잘못됐고 어떻게 다시 할지 알려 주는 화면",
+    "aka": [
+      "Error Page",
+      "에러 화면",
+      "실패 표시"
+    ],
+    "tags": {
+      "purpose": [
+        "피드백"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "불러올 때"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "scope": [
+        "영역 하나",
+        "화면 전체"
+      ],
+      "retry": [
+        "다시 시도 단추",
+        "없음"
+      ]
+    },
+    "control_ko": {
+      "scope": "범위",
+      "retry": "다시 시도"
+    },
+    "defaults": {
+      "scope": "영역 하나",
+      "retry": "다시 시도 단추"
+    },
+    "phrases": {
+      "scope": {
+        "영역 하나": "다른 카드는 그대로 두고 그 카드 안에만",
+        "화면 전체": "화면 가운데에 크게"
+      },
+      "retry": {
+        "다시 시도 단추": ", \"다시 시도\" 단추(누르면 Spinner)",
+        "없음": ""
+      }
+    },
+    "pairs": [
+      {
+        "name": "Empty State",
+        "diff": "성공했지만 내용이 없다"
+      },
+      {
+        "name": "Toast",
+        "diff": "방금 한 일이 실패했음을 잠깐 알린다"
+      },
+      {
+        "name": "Inline Validation",
+        "diff": "칸 하나의 입력 오류"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "에러 처리해줘",
+        "risk": "빨간 글로 오류 코드만 찍히거나 화면 전체가 하얗게 빈다"
+      }
+    ],
+    "right": "\"실패한 영역에만, 이유와 다시 시도 단추\"처럼 범위와 할 일을 말한다",
+    "prompt": {
+      "when": "차트 데이터를 불러오지 못하면",
+      "what": "Error State",
+      "how": "{scope} 경고 아이콘, \"차트를 불러오지 못했습니다\", 짧은 이유{retry}"
+    }
+  },
+  {
+    "id": "disabled",
+    "name": "Disabled",
+    "ko": "비활성",
+    "path": [
+      "구조",
+      "상태",
+      "비었거나 막힘"
+    ],
+    "one": "지금은 누를 수 없는 상태. 흐리게 보이고 이유를 툴팁 등으로 알린다",
+    "aka": [
+      "Inactive",
+      "비활성화",
+      "회색 처리"
+    ],
+    "tags": {
+      "purpose": [
+        "피드백"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "reason": [
+        "툴팁으로 이유",
+        "이유 없음"
+      ],
+      "focus": [
+        "초점 받음(aria-disabled)",
+        "초점 안 받음"
+      ]
+    },
+    "control_ko": {
+      "reason": "이유",
+      "focus": "초점"
+    },
+    "defaults": {
+      "reason": "툴팁으로 이유",
+      "focus": "초점 받음(aria-disabled)"
+    },
+    "phrases": {
+      "reason": {
+        "툴팁으로 이유": ", 마우스나 초점이 가면 Tooltip으로 빠진 칸 이름",
+        "이유 없음": ""
+      },
+      "focus": {
+        "초점 받음(aria-disabled)": "aria-disabled로 초점은 받게",
+        "초점 안 받음": "disabled로 초점도 받지 않게"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Read-only",
+        "diff": "볼 수는 있고 고칠 수 없다. 흐리게 하지 않는다"
+      },
+      {
+        "name": "Hidden",
+        "diff": "아예 숨긴다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "조건 안 되면 버튼 막아줘",
+        "risk": "흐린 단추만 있고 왜 못 누르는지 알 수 없다"
+      }
+    ],
+    "right": "\"흐리게 하고, 마우스를 올리면 Tooltip으로 이유\"처럼 이유를 보여 줄 곳을 말한다",
+    "prompt": {
+      "when": "필수 칸이 비어 있으면",
+      "what": "Disabled",
+      "how": "저장 단추를 흐리게(투명도 0.5) 하고 {focus}{reason}"
+    }
+  },
+  {
+    "id": "number-ticker",
+    "name": "Number Ticker",
+    "ko": "숫자 카운트업",
+    "path": [
+      "표현",
+      "글자",
+      "바뀌기"
+    ],
+    "one": "숫자가 0이나 이전 값에서 목표 값까지 빠르게 올라가며 바뀌는 효과",
+    "aka": [
+      "Count-up",
+      "CountUp"
+    ],
+    "tags": {
+      "purpose": [
+        "주의"
+      ],
+      "use": [
+        "업무 화면",
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "불러올 때",
+        "스크롤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "duration_ms": [
+        400,
+        3000
+      ],
+      "easing": [
+        "ease-out",
+        "linear",
+        "ease-in-out",
+        "spring"
+      ],
+      "start": [
+        "불러올 때",
+        "스크롤해서 보일 때"
+      ],
+      "comma": [
+        "넣기",
+        "빼기"
+      ]
+    },
+    "control_ko": {
+      "duration_ms": "길이(ms)",
+      "easing": "곡선",
+      "start": "시작",
+      "comma": "천 단위 쉼표"
+    },
+    "defaults": {
+      "duration_ms": 1200,
+      "easing": "ease-out",
+      "start": "불러올 때",
+      "comma": "넣기"
+    },
+    "phrases": {
+      "easing": {
+        "ease-out": "ease-out으로",
+        "linear": "linear(일정한 속도)로",
+        "ease-in-out": "ease-in-out으로",
+        "spring": "spring(살짝 넘쳤다 돌아오게)으로"
+      },
+      "start": {
+        "불러올 때": "화면을 불러올 때 ",
+        "스크롤해서 보일 때": "스크롤해서 화면에 보일 때 "
+      },
+      "comma": {
+        "넣기": ", 천 단위 쉼표",
+        "빼기": ""
+      }
+    },
+    "pairs": [
+      {
+        "name": "Split-flap",
+        "diff": "칸마다 판이 넘어가며 바뀐다"
+      },
+      {
+        "name": "Text Scramble",
+        "diff": "뒤섞인 글자가 맞춰진다"
+      },
+      {
+        "name": "Odometer",
+        "diff": "자릿수가 위아래로 굴러간다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "숫자 애니메이션 넣어줘",
+        "risk": "굴러가는 Odometer나 깜빡임이 나올 수 있다"
+      }
+    ],
+    "right": "\"Number Ticker로 0부터 목표 값까지 1.2초, ease-out\"처럼 시작 값과 길이를 말한다",
+    "prompt": {
+      "when": "대시보드 합계 숫자에",
+      "what": "Number Ticker",
+      "how": "{start}0부터 목표 값까지 {duration_ms}ms 동안 {easing} 올라가게, tabular-nums{comma}, 동작 줄이기면 바로 최종 값"
+    }
+  },
+  {
+    "id": "truncation",
+    "name": "Truncation",
+    "ko": "말줄임",
+    "path": [
+      "표현",
+      "글자",
+      "표기"
+    ],
+    "one": "칸보다 긴 글을 …로 자르고 전체는 툴팁이나 펼치기로 보여 준다",
+    "aka": [
+      "Ellipsis",
+      "Text Overflow",
+      "Line Clamp",
+      "말줄임표"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "lines": [
+        1,
+        3
+      ],
+      "full": [
+        "Tooltip",
+        "펼치기 단추"
+      ]
+    },
+    "control_ko": {
+      "lines": "줄 수",
+      "full": "전체 보기"
+    },
+    "defaults": {
+      "lines": 1,
+      "full": "Tooltip"
+    },
+    "phrases": {
+      "full": {
+        "Tooltip": "잘린 경우에만 마우스를 올리면 Tooltip으로 전체 제목",
+        "펼치기 단추": "잘린 경우에만 끝에 \"더 보기\" 단추로 펼치기"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Line Clamp",
+        "diff": "여러 줄에서 자른다"
+      },
+      {
+        "name": "Wrap",
+        "diff": "줄을 바꿔 다 보여 준다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "글 길면 잘라줘",
+        "risk": "글자 수로 잘라 단어 중간이 끊기거나 전체를 볼 방법이 없다"
+      }
+    ],
+    "right": "\"칸 폭에서 CSS로 …, 마우스를 올리면 전체\"처럼 자르는 기준과 전체 보기를 말한다",
+    "prompt": {
+      "when": "표의 제목 열에서",
+      "what": "Truncation",
+      "how": "{lines}줄을 넘으면 …로 자르고(1줄은 text-overflow: ellipsis, 여러 줄은 line-clamp), {full}"
+    }
+  },
+  {
+    "id": "relative-time",
+    "name": "Relative Time",
+    "ko": "상대 시간",
+    "path": [
+      "표현",
+      "글자",
+      "표기"
+    ],
+    "one": "\"3분 전\", \"어제\"처럼 지금 기준으로 적은 시간. 정확한 시각은 툴팁으로 둔다",
+    "aka": [
+      "Time Ago",
+      "Humanized Time",
+      "상대 시각"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "switch_after": [
+        "7일 뒤 날짜로",
+        "늘 상대 시간"
+      ],
+      "live": [
+        "1분마다 갱신",
+        "고정"
+      ]
+    },
+    "control_ko": {
+      "switch_after": "오래된 때",
+      "live": "갱신"
+    },
+    "defaults": {
+      "switch_after": "7일 뒤 날짜로",
+      "live": "1분마다 갱신"
+    },
+    "phrases": {
+      "switch_after": {
+        "7일 뒤 날짜로": "7일이 넘으면 \"11월 17일\"",
+        "늘 상대 시간": "오래돼도 \"3주 전\"처럼 상대 시간으로"
+      },
+      "live": {
+        "1분마다 갱신": "1분마다 갱신",
+        "고정": "화면을 열 때 한 번만 계산"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Absolute Time",
+        "diff": "\"2026-11-24 14:05\"처럼 정확한 시각"
+      },
+      {
+        "name": "Countdown",
+        "diff": "남은 시간이 줄어든다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "시간 보기 좋게 표시해줘",
+        "risk": "\"3 minutes ago\"처럼 영어로 나오거나 정확한 시각을 볼 방법이 없다"
+      }
+    ],
+    "right": "\"3분 전, 7일이 넘으면 날짜, 마우스를 올리면 정확한 시각\"처럼 바꾸는 기준을 말한다",
+    "prompt": {
+      "when": "활동 기록과 표의 수정일에",
+      "what": "Relative Time",
+      "how": "\"방금·3분 전·어제\" 한국어로, {switch_after}, {live}, 마우스를 올리면 Tooltip으로 \"2026-11-24 14:05\""
+    }
+  },
+  {
+    "id": "kpi-card",
+    "name": "KPI Card",
+    "ko": "지표 카드",
+    "path": [
+      "표현",
+      "그림·숫자·아이콘",
+      "지표"
+    ],
+    "one": "큰 숫자 하나와 이름, 지난 기간 대비 변화를 담은 카드",
+    "aka": [
+      "Stat Card",
+      "Metric Tile",
+      "Scorecard",
+      "지표 타일"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면",
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "불러올 때"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "delta": [
+        "지난 기간 대비 ▲▼",
+        "없음"
+      ],
+      "spark": [
+        "Sparkline 붙임",
+        "없음"
+      ]
+    },
+    "control_ko": {
+      "delta": "비교",
+      "spark": "추이"
+    },
+    "defaults": {
+      "delta": "지난 기간 대비 ▲▼",
+      "spark": "Sparkline 붙임"
+    },
+    "phrases": {
+      "delta": {
+        "지난 기간 대비 ▲▼": "·\"지난달보다 ▲12%\"(좋은 방향은 초록, 나쁜 방향은 빨강, 화살표와 부호를 함께)",
+        "없음": ""
+      },
+      "spark": {
+        "Sparkline 붙임": "·작은 Sparkline",
+        "없음": ""
+      }
+    },
+    "pairs": [
+      {
+        "name": "Number Ticker",
+        "diff": "숫자가 올라가는 움직임"
+      },
+      {
+        "name": "Sparkline",
+        "diff": "흐름만 그린 작은 선"
+      },
+      {
+        "name": "Card",
+        "diff": "무엇이든 담는 틀"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "대시보드 숫자 카드 만들어줘",
+        "risk": "숫자만 크고 기간이나 비교가 없어 많은지 적은지 모른다"
+      }
+    ],
+    "right": "\"이름, 큰 숫자, 지난달보다 ▲12%, 기간\"처럼 비교 대상을 말한다",
+    "prompt": {
+      "when": "대시보드 맨 위 줄에",
+      "what": "KPI Card",
+      "how": "카드 4개, 각각 이름·큰 숫자(tabular-nums){delta}{spark}"
+    }
+  },
+  {
+    "id": "sparkline",
+    "name": "Sparkline",
+    "ko": "작은 추이선",
+    "path": [
+      "표현",
+      "그림·숫자·아이콘",
+      "지표"
+    ],
+    "one": "축 없이 글자 크기로 그린 작은 꺾은선. 숫자 옆에서 흐름만 보여 준다",
+    "aka": [
+      "Micro Chart",
+      "Trend Line",
+      "미니 차트"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "kind": [
+        "선",
+        "막대",
+        "면"
+      ],
+      "endpoint": [
+        "끝점 강조",
+        "없음"
+      ]
+    },
+    "control_ko": {
+      "kind": "꼴",
+      "endpoint": "끝점"
+    },
+    "defaults": {
+      "kind": "면",
+      "endpoint": "끝점 강조"
+    },
+    "phrases": {
+      "kind": {
+        "선": "선으로, 아래는 비워 두고",
+        "막대": "막대로",
+        "면": "선으로, 아래를 옅게 채우고"
+      },
+      "endpoint": {
+        "끝점 강조": ", 마지막 점만 강조 색 동그라미로",
+        "없음": ""
+      }
+    },
+    "pairs": [
+      {
+        "name": "Line Chart",
+        "diff": "축과 눈금이 있는 큰 차트"
+      },
+      {
+        "name": "KPI Card",
+        "diff": "숫자 중심 카드"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "작은 그래프 넣어줘",
+        "risk": "축과 범례가 달린 큰 차트가 들어가 카드가 넘친다"
+      }
+    ],
+    "right": "\"축 없이 높이 24px 선, 마지막 점만 강조\"처럼 크기와 축 여부를 말한다",
+    "prompt": {
+      "when": "KPI Card 숫자 오른쪽에",
+      "what": "Sparkline",
+      "how": "지난 30일 값을 축 없이 높이 24px {kind}{endpoint}"
+    }
+  },
+  {
+    "id": "status-pill",
+    "name": "Status Pill",
+    "ko": "상태 알약",
+    "path": [
+      "표현",
+      "그림·숫자·아이콘",
+      "상태 표시"
+    ],
+    "one": "진행 중, 완료처럼 항목의 상태를 색과 글로 담은 둥근 꼬리표",
+    "aka": [
+      "Status Badge",
+      "Status Chip",
+      "상태 태그"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "style": [
+        "채운 배경",
+        "점 + 글"
+      ],
+      "size": [
+        "작게",
+        "보통"
+      ]
+    },
+    "control_ko": {
+      "style": "꼴",
+      "size": "크기"
+    },
+    "defaults": {
+      "style": "채운 배경",
+      "size": "보통"
+    },
+    "phrases": {
+      "style": {
+        "채운 배경": "옅은 배경과 진한 글",
+        "점 + 글": "배경 없이 앞에 색 점과 글"
+      },
+      "size": {
+        "작게": "글 11px",
+        "보통": "글 12px"
+      }
+    },
+    "states": [
+      "할 일",
+      "진행 중",
+      "검토",
+      "완료",
+      "보류"
+    ],
+    "pairs": [
+      {
+        "name": "Badge",
+        "diff": "새 것의 개수나 점"
+      },
+      {
+        "name": "Tag / Chip",
+        "diff": "분류 이름표. 지울 수 있다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "상태 색깔로 표시해줘",
+        "risk": "색만 있고 글이 없어 색을 구분하기 어려운 사람은 상태를 모른다"
+      }
+    ],
+    "right": "\"옅은 배경과 진한 글로 진행 중, 상태마다 정해 둔 색\"처럼 글과 색을 함께 말한다",
+    "prompt": {
+      "when": "이슈 표의 상태 열에",
+      "what": "Status Pill",
+      "how": "둥근 꼬리표에 상태 이름 글({size}), {style}, 할 일 회색·진행 중 파랑·검토 보라·완료 초록·보류 주황"
+    }
+  },
+  {
+    "id": "semantic-color",
+    "name": "Semantic Color",
+    "ko": "의미 색",
+    "path": [
+      "표현",
+      "색·효과",
+      "의미"
+    ],
+    "one": "성공, 경고, 위험, 정보에 정해 둔 색. 브랜드 색과 따로 둔다",
+    "aka": [
+      "Status Color",
+      "Feedback Color",
+      "상태 색"
+    ],
+    "tags": {
+      "purpose": [
+        "피드백"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "set": [
+        "성공·경고·위험·정보",
+        "성공·위험만"
+      ],
+      "theme": [
+        "밝은 화면",
+        "어두운 화면"
+      ]
+    },
+    "control_ko": {
+      "set": "색 묶음",
+      "theme": "먼저 정할 화면"
+    },
+    "defaults": {
+      "set": "성공·경고·위험·정보",
+      "theme": "밝은 화면"
+    },
+    "phrases": {
+      "set": {
+        "성공·경고·위험·정보": "--success·--warning·--danger·--info를",
+        "성공·위험만": "--success·--danger를"
+      },
+      "theme": {
+        "밝은 화면": "밝은 화면 값을 먼저 정하고 어두운 화면 값을 따로 두고",
+        "어두운 화면": "어두운 화면 값을 먼저 정하고 밝은 화면 값을 따로 두고"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Brand Color",
+        "diff": "제품을 나타내는 색. 상태를 뜻하지 않는다"
+      },
+      {
+        "name": "Status Pill",
+        "diff": "의미 색을 쓰는 부품 하나"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "빨간색으로 강조해줘",
+        "risk": "브랜드 강조와 위험 표시가 같은 빨강이 되어 무엇이 오류인지 헷갈린다"
+      }
+    ],
+    "right": "\"위험은 --danger 토큰, 브랜드 강조는 --accent, 색 옆에 아이콘이나 글\"처럼 토큰 이름으로 말한다",
+    "prompt": {
+      "when": "앱 전체 색 토큰에",
+      "what": "Semantic Color",
+      "how": "{set} {theme}, 브랜드 --accent와 섞지 않고, 색만으로 뜻을 전하지 않게 아이콘이나 글을 함께"
+    }
+  },
+  {
+    "id": "easing",
+    "name": "Easing",
+    "ko": "속도감",
+    "path": [
+      "움직임",
+      "기본 움직임",
+      "바뀌기"
+    ],
+    "one": "움직임이 처음과 끝에서 빨라지고 느려지는 방식. ease-out, linear, spring 등",
+    "aka": [
+      "Timing Function",
+      "cubic-bezier",
+      "속도 곡선"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면",
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "값이 바뀔 때"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "curve": [
+        "ease-out",
+        "ease-in",
+        "ease-in-out",
+        "linear",
+        "spring"
+      ],
+      "duration_ms": [
+        100,
+        1000
+      ]
+    },
+    "control_ko": {
+      "curve": "곡선",
+      "duration_ms": "길이(ms)"
+    },
+    "defaults": {
+      "curve": "ease-out",
+      "duration_ms": 250
+    },
+    "phrases": {
+      "curve": {
+        "ease-out": "ease-out(cubic-bezier(0.22, 1, 0.36, 1))",
+        "ease-in": "ease-in(cubic-bezier(0.55, 0, 1, 0.45))",
+        "ease-in-out": "ease-in-out(cubic-bezier(0.65, 0, 0.35, 1))",
+        "linear": "linear",
+        "spring": "spring(살짝 넘쳤다 돌아오게)"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Duration",
+        "diff": "움직임의 길이"
+      },
+      {
+        "name": "Spring",
+        "diff": "목표를 살짝 넘었다 돌아오는 곡선"
+      },
+      {
+        "name": "Linear",
+        "diff": "처음부터 끝까지 같은 속도"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "부드럽게 움직이게 해줘",
+        "risk": "느린 ease-in-out이 붙어 굼뜨게 느껴진다"
+      }
+    ],
+    "right": "\"들어올 때 ease-out 200ms, 나갈 때 ease-in 150ms\"처럼 곡선과 길이를 함께 말한다",
+    "prompt": {
+      "when": "패널이 열리고 닫힐 때",
+      "what": "Easing",
+      "how": "열릴 때 {curve} {duration_ms}ms, 닫힐 때 ease-in 150ms"
+    }
+  },
+  {
+    "id": "fade",
+    "name": "Fade",
+    "ko": "페이드",
+    "path": [
+      "움직임",
+      "기본 움직임",
+      "나타나기"
+    ],
+    "one": "투명도만 바꿔 나타나거나 사라진다",
+    "aka": [
+      "Fade In",
+      "Fade Out",
+      "Opacity Transition"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면",
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "값이 바뀔 때"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "duration_ms": [
+        100,
+        500
+      ],
+      "delay_ms": [
+        0,
+        300
+      ]
+    },
+    "control_ko": {
+      "duration_ms": "길이(ms)",
+      "delay_ms": "기다림(ms)"
+    },
+    "defaults": {
+      "duration_ms": 150,
+      "delay_ms": 0
+    },
+    "pairs": [
+      {
+        "name": "Slide",
+        "diff": "위치도 함께 움직인다"
+      },
+      {
+        "name": "Scale",
+        "diff": "크기도 함께 바뀐다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "자연스럽게 나타나게 해줘",
+        "risk": "길고 느린 움직임이나 위치 이동까지 붙는다"
+      }
+    ],
+    "right": "\"투명도만 0→1, 150ms ease-out\"처럼 무엇이 바뀌는지와 길이를 말한다",
+    "prompt": {
+      "when": "Tooltip이 뜰 때",
+      "what": "Fade",
+      "how": "{delay_ms}ms 기다렸다가 투명도만 0에서 1로 {duration_ms}ms ease-out, 사라질 때는 100ms"
+    }
+  },
+  {
+    "id": "slide",
+    "name": "Slide",
+    "ko": "슬라이드",
+    "path": [
+      "움직임",
+      "기본 움직임",
+      "나타나기"
+    ],
+    "one": "한쪽에서 밀려 들어오거나 나간다",
+    "aka": [
+      "Slide In",
+      "Slide Out",
+      "Translate"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면",
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "값이 바뀔 때"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "from": [
+        "아래",
+        "위",
+        "오른쪽",
+        "왼쪽"
+      ],
+      "distance_px": [
+        8,
+        100
+      ],
+      "duration_ms": [
+        150,
+        400
+      ]
+    },
+    "control_ko": {
+      "from": "오는 쪽",
+      "distance_px": "거리(px)",
+      "duration_ms": "길이(ms)"
+    },
+    "defaults": {
+      "from": "아래",
+      "distance_px": 12,
+      "duration_ms": 200
+    },
+    "phrases": {
+      "from": {
+        "아래": "아래에서 {distance_px}px 위로",
+        "위": "위에서 {distance_px}px 아래로",
+        "오른쪽": "오른쪽에서 {distance_px}px 왼쪽으로",
+        "왼쪽": "왼쪽에서 {distance_px}px 오른쪽으로"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Fade",
+        "diff": "자리에서 투명도만 바뀐다"
+      },
+      {
+        "name": "Page Transition",
+        "diff": "화면 전체가 바뀐다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "옆에서 나오게 해줘",
+        "risk": "화면 끝에서부터 길게 날아와 느리고 어지럽다"
+      }
+    ],
+    "right": "\"아래에서 12px만 옮기며 페이드와 함께 200ms\"처럼 거리를 말한다",
+    "prompt": {
+      "when": "목록에 새 항목이 들어올 때",
+      "what": "Slide",
+      "how": "{from} 옮기며 투명도 0→1, {duration_ms}ms ease-out"
+    }
+  },
+  {
+    "id": "stagger",
+    "name": "Stagger",
+    "ko": "차례로 나타나기",
+    "path": [
+      "움직임",
+      "기본 움직임",
+      "흐르기"
+    ],
+    "one": "목록 항목이 조금씩 시간 차를 두고 하나씩 나타난다",
+    "aka": [
+      "Stagger Animation",
+      "Cascade",
+      "차례 등장"
+    ],
+    "tags": {
+      "purpose": [
+        "주의"
+      ],
+      "use": [
+        "업무 화면",
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "불러올 때"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "step_ms": [
+        20,
+        120
+      ],
+      "max_items": [
+        5,
+        20
+      ]
+    },
+    "control_ko": {
+      "step_ms": "간격(ms)",
+      "max_items": "늦출 개수"
+    },
+    "defaults": {
+      "step_ms": 40,
+      "max_items": 10
+    },
+    "pairs": [
+      {
+        "name": "Fade",
+        "diff": "모두 한꺼번에 나타난다"
+      },
+      {
+        "name": "Skeleton",
+        "diff": "불러오기 전의 자리 표시"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "하나씩 순서대로 나타나게 해줘",
+        "risk": "항목마다 0.5초씩 기다려 긴 목록은 몇 초가 걸린다"
+      }
+    ],
+    "right": "\"항목마다 40ms 차이, 앞 10개만 늦추고 나머지는 함께\"처럼 간격과 상한을 말한다",
+    "prompt": {
+      "when": "카드 격자를 처음 불러올 때",
+      "what": "Stagger",
+      "how": "카드마다 {step_ms}ms씩 늦게 아래에서 8px fade-in(200ms), 앞 {max_items}개까지만 늦추고 나머지는 함께, 동작 줄이기면 한꺼번에"
+    }
+  },
+  {
+    "id": "highlight-flash",
+    "name": "Highlight Flash",
+    "ko": "강조 깜빡임",
+    "path": [
+      "움직임",
+      "기본 움직임",
+      "강조"
+    ],
+    "one": "방금 바뀌거나 추가된 행의 배경이 잠깐 칠해졌다가 돌아온다",
+    "aka": [
+      "Yellow Fade",
+      "Row Highlight",
+      "변경 강조"
+    ],
+    "tags": {
+      "purpose": [
+        "주의"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "값이 바뀔 때"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "color": [
+        "노랑",
+        "강조 색"
+      ],
+      "duration_ms": [
+        600,
+        2000
+      ]
+    },
+    "control_ko": {
+      "color": "색",
+      "duration_ms": "길이(ms)"
+    },
+    "defaults": {
+      "color": "노랑",
+      "duration_ms": 1200
+    },
+    "phrases": {
+      "color": {
+        "노랑": "옅은 노랑으로",
+        "강조 색": "옅은 강조 색으로"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Hover Effect",
+        "diff": "마우스를 올린 동안만"
+      },
+      {
+        "name": "Badge",
+        "diff": "새 것의 개수를 남긴다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "바뀐 거 눈에 띄게 해줘",
+        "risk": "계속 깜빡이거나 빨갛게 남아 오류처럼 보인다"
+      }
+    ],
+    "right": "\"바뀐 행 배경이 옅은 노랑에서 1초 동안 원래 색으로, 한 번만\"처럼 말한다",
+    "prompt": {
+      "when": "방금 저장했거나 다른 사람이 고친 행에",
+      "what": "Highlight Flash",
+      "how": "행 배경을 {color} 칠했다가 {duration_ms}ms 동안 ease-out으로 원래 색으로 돌리기, 한 번만"
+    }
+  },
+  {
+    "id": "scroll-into-view",
+    "name": "Scroll Into View",
+    "ko": "찾아가 보여 주기",
+    "path": [
+      "움직임",
+      "화면 전환·스크롤 연출",
+      "흐르기"
+    ],
+    "one": "고른 항목이나 오류 칸이 보이는 곳까지 부드럽게 스크롤한다",
+    "aka": [
+      "Scroll To",
+      "Jump to",
+      "앵커 이동"
+    ],
+    "tags": {
+      "purpose": [
+        "길찾기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "behavior": [
+        "부드럽게",
+        "즉시"
+      ],
+      "block": [
+        "가운데",
+        "맨 위"
+      ]
+    },
+    "control_ko": {
+      "behavior": "움직임",
+      "block": "멈출 자리"
+    },
+    "defaults": {
+      "behavior": "부드럽게",
+      "block": "가운데"
+    },
+    "phrases": {
+      "behavior": {
+        "부드럽게": "부드럽게(behavior: smooth)",
+        "즉시": "바로(behavior: auto)"
+      },
+      "block": {
+        "가운데": "화면 가운데로",
+        "맨 위": "화면 맨 위로"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Anchor Link",
+        "diff": "주소의 #으로 바로 뛴다"
+      },
+      {
+        "name": "Sticky Header",
+        "diff": "붙은 머리줄이 목표를 가릴 수 있다. scroll-margin으로 피한다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "해당 위치로 이동시켜줘",
+        "risk": "고정 머리줄 밑에 가려지거나 너무 빨리 뛰어 어디로 갔는지 모른다"
+      }
+    ],
+    "right": "\"부드럽게 가운데까지, 머리줄 높이만큼 여백, 도착하면 초점\"처럼 말한다",
+    "prompt": {
+      "when": "저장을 눌렀는데 틀린 칸이 있으면",
+      "what": "Scroll Into View",
+      "how": "첫 오류 칸까지 {behavior} {block} 스크롤하고, 고정 머리줄에 가리지 않게 scroll-margin을 두고, 도착하면 칸에 초점, 동작 줄이기면 바로"
+    }
+  },
+  {
+    "id": "hover-effect",
+    "name": "Hover Effect",
+    "ko": "마우스 올림 효과",
+    "path": [
+      "움직임",
+      "인터랙션 패턴",
+      "강조"
+    ],
+    "one": "마우스를 올리면 배경, 그림자, 커서가 바뀌어 누를 수 있음을 알린다",
+    "aka": [
+      "Hover State",
+      "Hover",
+      "마우스 오버"
+    ],
+    "tags": {
+      "purpose": [
+        "피드백"
+      ],
+      "use": [
+        "업무 화면",
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "마우스 올림"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "kind": [
+        "배경",
+        "그림자",
+        "밑줄"
+      ],
+      "duration_ms": [
+        0,
+        200
+      ]
+    },
+    "control_ko": {
+      "kind": "효과",
+      "duration_ms": "길이(ms)"
+    },
+    "defaults": {
+      "kind": "배경",
+      "duration_ms": 100
+    },
+    "phrases": {
+      "kind": {
+        "배경": "행 배경을 옅게 칠하고",
+        "그림자": "카드 그림자를 한 단계 올리고",
+        "밑줄": "글에 밑줄을 긋고"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Focus Ring",
+        "diff": "키보드 초점 표시. hover만 있으면 키보드 사용자는 모른다"
+      },
+      {
+        "name": "Pressed",
+        "diff": "누르는 순간의 모양"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "마우스 올리면 반응하게 해줘",
+        "risk": "크게 튀거나 확대되어 표 행이 흔들린다"
+      }
+    ],
+    "right": "\"행 배경만 옅게, 100ms, 터치 기기에서는 없음\"처럼 무엇이 바뀌는지 말한다",
+    "prompt": {
+      "when": "표의 행과 카드에 마우스를 올리면",
+      "what": "Hover Effect",
+      "how": "{kind}, {duration_ms}ms ease-out, 터치 기기에서는 넣지 않기"
+    }
+  },
+  {
+    "id": "drag-and-drop",
+    "name": "Drag and Drop",
+    "ko": "끌어 놓기",
+    "path": [
+      "움직임",
+      "인터랙션 패턴",
+      "흐르기"
+    ],
+    "one": "항목을 집어 다른 자리나 칸으로 옮긴다. 놓을 곳이 미리 표시된다",
+    "aka": [
+      "DnD",
+      "Reorder",
+      "드래그 앤 드롭"
+    ],
+    "tags": {
+      "purpose": [
+        "입력"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "끌 때"
+      ],
+      "build": "JS 많이"
+    },
+    "controls": {
+      "handle": [
+        "손잡이(⠿)로만",
+        "항목 전체"
+      ],
+      "placeholder": [
+        "빈 틀",
+        "선"
+      ]
+    },
+    "control_ko": {
+      "handle": "집는 곳",
+      "placeholder": "놓일 자리"
+    },
+    "defaults": {
+      "handle": "손잡이(⠿)로만",
+      "placeholder": "선"
+    },
+    "phrases": {
+      "handle": {
+        "손잡이(⠿)로만": "왼쪽 ⠿ 손잡이로 집으면",
+        "항목 전체": "항목 어디든 눌러 집으면"
+      },
+      "placeholder": {
+        "빈 틀": "놓일 자리에 같은 크기의 빈 틀",
+        "선": "놓일 자리에 강조 선"
+      }
+    },
+    "pairs": [
+      {
+        "name": "File Drop Zone",
+        "diff": "바깥 파일을 화면에 놓는다"
+      },
+      {
+        "name": "Kanban Board",
+        "diff": "칸 사이를 옮기는 화면 하나"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "순서 바꿀 수 있게 해줘",
+        "risk": "위아래 화살표 단추만 생기거나, 끌 때 놓일 자리가 보이지 않는다"
+      }
+    ],
+    "right": "\"⠿ 손잡이로 집고, 놓일 자리에 선, 집은 항목은 그림자\"처럼 말한다",
+    "prompt": {
+      "when": "할 일 목록의 순서를 바꿀 때",
+      "what": "Drag and Drop",
+      "how": "{handle} 항목이 그림자와 함께 살짝 들리고, {placeholder}, 다른 항목은 150ms로 비켜나고, 키보드로도(Space로 집고 화살표로 옮기고 Space로 놓기) 옮길 수 있게"
+    }
+  },
+  {
+    "id": "inline-edit",
+    "name": "Inline Edit",
+    "ko": "그 자리 고치기",
+    "path": [
+      "움직임",
+      "인터랙션 패턴",
+      "바뀌기"
+    ],
+    "one": "글을 누르면 그 자리에서 입력칸으로 바뀌어 바로 고친다",
+    "aka": [
+      "Click to Edit",
+      "In-place Edit",
+      "바로 편집"
+    ],
+    "tags": {
+      "purpose": [
+        "입력"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "save": [
+        "칸을 벗어나면 저장",
+        "Enter로 저장"
+      ],
+      "cancel": [
+        "Esc로 취소",
+        "없음"
+      ]
+    },
+    "control_ko": {
+      "save": "저장",
+      "cancel": "취소"
+    },
+    "defaults": {
+      "save": "칸을 벗어나면 저장",
+      "cancel": "Esc로 취소"
+    },
+    "phrases": {
+      "save": {
+        "칸을 벗어나면 저장": "Enter나 칸을 벗어나면 저장",
+        "Enter로 저장": "Enter를 눌러야 저장"
+      },
+      "cancel": {
+        "Esc로 취소": ", Esc는 취소",
+        "없음": ""
+      }
+    },
+    "pairs": [
+      {
+        "name": "Modal Dialog",
+        "diff": "편집 창을 따로 연다"
+      },
+      {
+        "name": "Text Field",
+        "diff": "처음부터 입력칸"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "바로 수정 가능하게 해줘",
+        "risk": "언제 저장되는지 몰라 고친 내용을 잃거나, 늘 입력칸이라 읽기 어렵다"
+      }
+    ],
+    "right": "\"누르면 입력칸, Enter 저장·Esc 취소\"처럼 저장과 취소 방법을 말한다",
+    "prompt": {
+      "when": "이슈 제목을 누르면",
+      "what": "Inline Edit",
+      "how": "그 자리에서 같은 크기의 입력칸으로 바뀌고, {save}{cancel}, 마우스를 올리면 연필 아이콘"
+    }
+  },
+  {
+    "id": "optimistic-update",
+    "name": "Optimistic Update",
+    "ko": "먼저 반영",
+    "path": [
+      "움직임",
+      "인터랙션 패턴",
+      "바뀌기"
+    ],
+    "one": "서버 답을 기다리지 않고 화면을 먼저 바꾸고, 실패하면 되돌린다",
+    "aka": [
+      "Optimistic UI",
+      "낙관적 업데이트"
+    ],
+    "tags": {
+      "purpose": [
+        "피드백"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "JS 많이"
+    },
+    "controls": {
+      "rollback": [
+        "되돌리고 Toast",
+        "되돌리고 칸에 오류"
+      ]
+    },
+    "control_ko": {
+      "rollback": "실패하면"
+    },
+    "defaults": {
+      "rollback": "되돌리고 Toast"
+    },
+    "phrases": {
+      "rollback": {
+        "되돌리고 Toast": "원래대로 되돌리며 \"저장하지 못했습니다 · 다시 시도\" Toast",
+        "되돌리고 칸에 오류": "원래대로 되돌리고 그 카드에 빨간 테두리와 \"저장 실패 · 다시 시도\""
+      }
+    },
+    "pairs": [
+      {
+        "name": "Loading Button",
+        "diff": "끝날 때까지 기다리게 한다"
+      },
+      {
+        "name": "Undo",
+        "diff": "사람이 되돌린다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "빠르게 반영되게 해줘",
+        "risk": "실패해도 화면이 바뀐 채 남아 저장된 줄 안다"
+      }
+    ],
+    "right": "\"먼저 바꾸고, 실패하면 원래 값으로 되돌리고 Toast로 알림\"처럼 실패 처리를 말한다",
+    "prompt": {
+      "when": "상태를 바꾸거나 카드를 옮기면",
+      "what": "Optimistic Update",
+      "how": "서버 답을 기다리지 않고 화면을 먼저 바꾸고, 실패하면 {rollback}"
+    }
+  },
+  {
+    "id": "undo",
+    "name": "Undo",
+    "ko": "되돌리기",
+    "path": [
+      "움직임",
+      "인터랙션 패턴",
+      "바뀌기"
+    ],
+    "one": "방금 한 일을 취소하는 단추. 확인 대화상자 대신 Toast에 붙이기도 한다",
+    "aka": [
+      "실행 취소",
+      "Undo Toast"
+    ],
+    "tags": {
+      "purpose": [
+        "피드백"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "window_s": [
+        3,
+        10
+      ],
+      "shortcut": [
+        "Ctrl+Z",
+        "없음"
+      ]
+    },
+    "control_ko": {
+      "window_s": "되돌릴 시간(초)",
+      "shortcut": "단축키"
+    },
+    "defaults": {
+      "window_s": 5,
+      "shortcut": "Ctrl+Z"
+    },
+    "phrases": {
+      "shortcut": {
+        "Ctrl+Z": ", Ctrl+Z로도 되돌리기",
+        "없음": ""
+      }
+    },
+    "pairs": [
+      {
+        "name": "Confirm Dialog",
+        "diff": "하기 전에 묻는다"
+      },
+      {
+        "name": "Trash",
+        "diff": "지운 것을 모아 두고 나중에 살린다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "삭제 취소 기능 넣어줘",
+        "risk": "휴지통 화면이 따로 생기거나, 바로 지워져 되돌릴 수 없다"
+      }
+    ],
+    "right": "\"지우면 바로 사라지고 Toast에 되돌리기 5초, 그 뒤 실제 삭제\"처럼 시간을 말한다",
+    "prompt": {
+      "when": "이슈를 지우면",
+      "what": "Undo",
+      "how": "목록에서 바로 빼고, Toast에 \"이슈를 지웠습니다 · 되돌리기\"를 {window_s}초, 누르면 원래 자리로 돌려놓고, {window_s}초 뒤에 실제로 지우기{shortcut}"
+    }
+  },
+  {
+    "id": "loading-button",
+    "name": "Loading Button",
+    "ko": "로딩 단추",
+    "path": [
+      "움직임",
+      "인터랙션 패턴",
+      "바뀌기"
+    ],
+    "one": "누르면 단추 안에서 로딩이 돌고 끝나면 완료 표시로 바뀐다",
+    "aka": [
+      "Async Button",
+      "Submit Button State",
+      "버튼 로딩"
+    ],
+    "tags": {
+      "purpose": [
+        "기다림"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "done": [
+        "체크 후 원래대로",
+        "그대로"
+      ],
+      "width": [
+        "폭 유지",
+        "늘어남"
+      ]
+    },
+    "control_ko": {
+      "done": "끝나면",
+      "width": "단추 폭"
+    },
+    "defaults": {
+      "done": "체크 후 원래대로",
+      "width": "폭 유지"
+    },
+    "phrases": {
+      "done": {
+        "체크 후 원래대로": "성공하면 체크와 \"저장됨\"을 1초 보이고 원래대로",
+        "그대로": "성공하면 체크와 \"저장됨\"으로 바뀐 채 두고"
+      },
+      "width": {
+        "폭 유지": "단추 폭을 그대로 두고 글 대신 Spinner",
+        "늘어남": "단추 폭이 늘어나며 Spinner와 \"저장 중…\""
+      }
+    },
+    "states": [
+      "기본",
+      "처리 중",
+      "완료",
+      "실패"
+    ],
+    "pairs": [
+      {
+        "name": "Spinner",
+        "diff": "단추 밖에서 따로 돈다"
+      },
+      {
+        "name": "Optimistic Update",
+        "diff": "기다리지 않고 먼저 바꾼다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "버튼 누르면 로딩 표시해줘",
+        "risk": "글자가 Spinner로 바뀌면서 단추 폭이 줄어 옆이 흔들리고, 두 번 눌러진다"
+      }
+    ],
+    "right": "\"폭 유지, 안에서 Spinner, 처리 중에는 못 누름, 끝나면 체크\"처럼 말한다",
+    "prompt": {
+      "when": "저장 단추를 누르면",
+      "what": "Loading Button",
+      "how": "{width}, 처리 중에는 다시 못 누르게, {done}, 실패하면 좌우로 한 번 흔들기"
+    }
+  },
+  {
+    "id": "focus-ring",
+    "name": "Focus Ring",
+    "ko": "초점 테두리",
+    "path": [
+      "만들기",
+      "출력·접근성",
+      "접근성"
+    ],
+    "one": "키보드로 옮겨 간 요소에 그리는 테두리. 지우면 키보드 사용자가 길을 잃는다",
+    "aka": [
+      "Focus Indicator",
+      "Focus Outline",
+      "focus-visible"
+    ],
+    "tags": {
+      "purpose": [
+        "접근성"
+      ],
+      "use": [
+        "업무 화면",
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "초점"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "width_px": [
+        2,
+        3
+      ],
+      "offset_px": [
+        0,
+        4
+      ]
+    },
+    "control_ko": {
+      "width_px": "굵기(px)",
+      "offset_px": "띄움(px)"
+    },
+    "defaults": {
+      "width_px": 2,
+      "offset_px": 2
+    },
+    "pairs": [
+      {
+        "name": "Hover Effect",
+        "diff": "마우스를 올렸을 때만"
+      },
+      {
+        "name": ":focus",
+        "diff": "마우스로 눌러도 그린다. :focus-visible은 키보드로 옮겼을 때만 그린다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "클릭하면 생기는 파란 테두리 없애줘",
+        "risk": "outline: none으로 지워 키보드 사용자가 지금 어디에 있는지 모른다"
+      }
+    ],
+    "right": "\":focus-visible에만 2px 강조 색 테두리\"처럼 지우지 말고 바꿔 달라고 말한다",
+    "prompt": {
+      "when": "모든 단추·링크·입력칸에",
+      "what": "Focus Ring",
+      "how": ":focus-visible일 때만 {width_px}px 강조 색 outline을 {offset_px}px 띄워 그리고, 마우스 클릭에는 그리지 않기, 어두운 화면에서도 대비가 보이게"
+    }
+  },
+  {
+    "id": "reduced-motion",
+    "name": "Reduced Motion",
+    "ko": "동작 줄이기",
+    "path": [
+      "만들기",
+      "출력·접근성",
+      "접근성"
+    ],
+    "one": "기기에서 동작 줄이기를 켠 사람에게 움직임을 빼거나 줄여 보여 준다",
+    "aka": [
+      "prefers-reduced-motion",
+      "모션 줄이기"
+    ],
+    "tags": {
+      "purpose": [
+        "접근성"
+      ],
+      "use": [
+        "업무 화면",
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "policy": [
+        "이동은 빼고 페이드만",
+        "모두 빼기"
+      ]
+    },
+    "control_ko": {
+      "policy": "줄이는 법"
+    },
+    "defaults": {
+      "policy": "이동은 빼고 페이드만"
+    },
+    "phrases": {
+      "policy": {
+        "이동은 빼고 페이드만": "이동·확대·패럴랙스는 빼고 150ms 이하 페이드만 남기고",
+        "모두 빼기": "움직임을 모두 빼고 바로 최종 모습을 보이고"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Motion Toggle",
+        "diff": "페이지 안에 둔 움직임 끄기 스위치"
+      },
+      {
+        "name": "Fade",
+        "diff": "줄일 때 남기기 좋은 움직임"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "애니메이션 넣어줘",
+        "risk": "기기의 동작 줄이기 설정을 무시해 어지럼을 느끼는 사람에게도 크게 움직인다"
+      }
+    ],
+    "right": "\"prefers-reduced-motion이면 이동·확대는 빼고 짧은 페이드만\"처럼 줄이는 방법을 함께 말한다",
+    "prompt": {
+      "when": "움직임을 넣은 모든 곳에",
+      "what": "Reduced Motion",
+      "how": "prefers-reduced-motion: reduce이면 {policy}, 숫자 카운트업은 최종 값을 바로"
+    }
+  }
+]
