@@ -3517,6 +3517,357 @@
     }
   },
   {
+    "id": "text-split-reveal",
+    "name": "Text Split Reveal",
+    "ko": "쪼개 드러내는 글자",
+    "path": [
+      "표현",
+      "글자",
+      "글자 효과"
+    ],
+    "one": "제목을 줄·단어·글자로 쪼개 차례로 드러낸다",
+    "aka": [
+      "Split Text",
+      "Text Reveal",
+      "Word Reveal",
+      "Char Reveal",
+      "SplitText"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "불러올 때",
+        "스크롤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "unit": [
+        "단어",
+        "글자",
+        "줄"
+      ],
+      "stagger_ms": [
+        20,
+        120
+      ],
+      "mask": [
+        "가림 틀 안에서",
+        "그냥"
+      ]
+    },
+    "control_ko": {
+      "unit": "쪼개는 단위",
+      "stagger_ms": "간격(ms)",
+      "mask": "올라오는 자리"
+    },
+    "defaults": {
+      "unit": "단어",
+      "stagger_ms": 60,
+      "mask": "가림 틀 안에서"
+    },
+    "phrases": {
+      "mask": {
+        "가림 틀 안에서": "줄마다 가림 틀(overflow: hidden) 안에서 아래로부터",
+        "그냥": "12px 아래에서 투명도와 함께"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Stagger",
+        "diff": "여러 요소를 차례로 시작하는 기법. 이 용어는 글을 쪼개 그 기법을 건다"
+      },
+      {
+        "name": "Typewriter",
+        "diff": "한 글자씩 쳐지며 끝에 커서가 있다. 글의 자리가 점점 늘어난다"
+      },
+      {
+        "name": "Text Scramble",
+        "diff": "자리는 그대로이고 글자가 섞였다 맞춰진다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "제목 멋지게 등장시켜줘",
+        "risk": "글자마다 span을 수백 개 만들어 끝나기까지 오래 걸리고, 화면 읽기 프로그램이 글자를 하나씩 끊어 읽는다"
+      }
+    ],
+    "right": "\"단어 단위, 60ms 간격, 줄마다 가림 틀 안에서 올라오기, 원문은 aria-label\"처럼 단위와 간격을 말한다",
+    "prompt": {
+      "when": "소개 페이지 첫 화면의 큰 제목에",
+      "what": "Text Split Reveal",
+      "how": "제목을 {unit} 단위로 쪼개 {stagger_ms}ms 간격으로 {mask} 올라오게 하고, transform·opacity만 쓰고, 쪼갠 조각은 aria-hidden, 원문은 aria-label로 읽히게, 동작 줄이기면 한 번에 보이게"
+    },
+    "motion": {
+      "cost": "합성만",
+      "light": "단어나 줄 단위로 쪼개 조각을 수십 개 이하로 둔다. 글자 단위는 짧은 제목에만. 쪼개기는 처음 한 번만 한다",
+      "support": "transform·opacity라 모든 브라우저. 쪼개기는 JS로 하거나 처음부터 span으로 써 둔다",
+      "reduce": "한 번에 보이게"
+    }
+  },
+  {
+    "id": "text-scramble",
+    "name": "Text Scramble",
+    "ko": "섞였다 맞춰지는 글자",
+    "path": [
+      "표현",
+      "글자",
+      "글자 효과"
+    ],
+    "one": "글자가 무작위 기호로 섞이다가 앞에서부터 제 글자로 맞춰진다",
+    "aka": [
+      "Hyper Text",
+      "Encrypted Text",
+      "Decode Text",
+      "Scramble Text"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "소개·랜딩",
+        "놀이"
+      ],
+      "trigger": [
+        "불러올 때",
+        "마우스 올림"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "duration_ms": [
+        400,
+        1500
+      ],
+      "chars": [
+        "기호",
+        "영문 대문자",
+        "숫자"
+      ]
+    },
+    "control_ko": {
+      "duration_ms": "길이(ms)",
+      "chars": "섞는 글자"
+    },
+    "defaults": {
+      "duration_ms": 800,
+      "chars": "기호"
+    },
+    "phrases": {
+      "chars": {
+        "기호": "기호(#%&*)",
+        "영문 대문자": "영문 대문자(A-Z)",
+        "숫자": "숫자(0-9)"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Typewriter",
+        "diff": "글자가 하나씩 늘어난다. 섞이는 단계가 없다"
+      },
+      {
+        "name": "Number Ticker",
+        "diff": "숫자 값이 실제로 세어 올라간다"
+      },
+      {
+        "name": "Text Split Reveal",
+        "diff": "쪼갠 조각이 움직여 드러난다. 글자 자체는 바뀌지 않는다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "글자가 해킹하듯 바뀌게 해줘",
+        "risk": "계속 반복돼 읽을 수 없고, 글자 폭이 바뀔 때마다 줄이 흔들린다"
+      }
+    ],
+    "right": "\"기호로 섞다가 800ms에 앞에서부터 맞추기, 한 번만, 글자 칸 폭 고정\"처럼 길이와 횟수를 말한다",
+    "prompt": {
+      "when": "소개 페이지의 짧은 표어 한 줄에",
+      "what": "Text Scramble",
+      "how": "글자를 {chars}로 섞다가 {duration_ms}ms 동안 앞에서부터 맞춰지게 하고, 처음 한 번만, 글자 칸 폭을 고정해 줄이 흔들리지 않게, 원문은 aria-label로, 동작 줄이기면 바로 원문"
+    },
+    "motion": {
+      "cost": "JS 매 프레임(짧게)",
+      "light": "1초 안팎, 요소 하나에 한 번만. requestAnimationFrame에서 글자만 바꾸고 칸 폭을 고정해 레이아웃이 흔들리지 않게",
+      "support": "JS라 모든 브라우저",
+      "reduce": "바로 원문",
+      "touch": "마우스를 올려 시작하면 휴대폰에서는 일어나지 않는다. 불러올 때 한 번으로 둔다"
+    }
+  },
+  {
+    "id": "shine-text",
+    "name": "Shine Text",
+    "ko": "빛 지나가는 글자",
+    "path": [
+      "표현",
+      "글자",
+      "글자 효과"
+    ],
+    "one": "글자 위로 밝은 띠가 지나가 반짝인다",
+    "aka": [
+      "Shimmer Text",
+      "Animated Shiny Text",
+      "Text Shine",
+      "Glint"
+    ],
+    "tags": {
+      "purpose": [
+        "주의"
+      ],
+      "use": [
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "speed_ms": [
+        600,
+        1600
+      ],
+      "repeat": [
+        "5초 안에 멈춤",
+        "계속 + 멈춤 단추"
+      ]
+    },
+    "control_ko": {
+      "speed_ms": "지나가는 시간(ms)",
+      "repeat": "반복"
+    },
+    "defaults": {
+      "speed_ms": 1000,
+      "repeat": "5초 안에 멈춤"
+    },
+    "phrases": {
+      "repeat": {
+        "5초 안에 멈춤": "5초 안에 멈추게",
+        "계속 + 멈춤 단추": "계속 반복하되 반복 사이를 두고 멈춤 단추를 함께 둬(5초 넘게 움직이므로)"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Highlight Flash",
+        "diff": "바뀐 곳을 한 번 알리는 배경 깜빡임"
+      },
+      {
+        "name": "Skeleton",
+        "diff": "불러오는 자리에 도는 반짝임. 글자 효과가 아니다"
+      },
+      {
+        "name": "Border Beam",
+        "diff": "글자가 아니라 테두리를 따라 빛이 돈다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "글씨가 반짝이게 해줘",
+        "risk": "멈출 방법 없이 계속 반짝여 시선을 빼앗고, 문단 전체에 걸어 계속 다시 그린다"
+      }
+    ],
+    "right": "\"새 기능 이름 두 단어에만, 1초에 지나가고 5초 안에 멈춤\"처럼 범위와 멈춤을 말한다",
+    "prompt": {
+      "when": "소개 페이지 제목의 강조할 두 단어에",
+      "what": "Shine Text",
+      "how": "background-clip: text로 밝은 띠를 얹어 {speed_ms}ms에 지나가게 하고, {repeat}, 한두 단어에만, 동작 줄이기면 띠 없는 글자"
+    },
+    "motion": {
+      "cost": "페인트·레이아웃 듦",
+      "light": "background-position을 옮기면 그때마다 다시 그린다. 한두 단어에만 걸고 반복 사이를 길게 둔다",
+      "support": "-webkit-background-clip: text를 함께 쓰면 모든 주요 브라우저",
+      "reduce": "띠 없는 글자",
+      "pause": "5초 넘게 반복하면 멈춤 단추를 둔다(WCAG 2.2.2)"
+    }
+  },
+  {
+    "id": "typewriter",
+    "name": "Typewriter",
+    "ko": "타자 치듯 나오는 글",
+    "path": [
+      "표현",
+      "글자",
+      "글자 효과"
+    ],
+    "one": "한 글자씩 쳐지듯 나타나고 끝에 커서가 깜빡인다",
+    "aka": [
+      "Typing Animation",
+      "Typewriter Effect",
+      "Typed Text"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "불러올 때"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "speed_ms": [
+        30,
+        120
+      ],
+      "loop": [
+        "한 번만",
+        "여러 문구 돌리기"
+      ]
+    },
+    "control_ko": {
+      "speed_ms": "글자 간격(ms)",
+      "loop": "반복"
+    },
+    "defaults": {
+      "speed_ms": 60,
+      "loop": "한 번만"
+    },
+    "phrases": {
+      "loop": {
+        "한 번만": "한 번만 치고 멈추고",
+        "여러 문구 돌리기": "문구 3개를 지우고 다시 치며 돌리되 멈춤 단추를 둬(5초 넘게 움직이므로)"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Text Split Reveal",
+        "diff": "쪼갠 조각이 차례로 올라온다. 커서가 없다"
+      },
+      {
+        "name": "Text Scramble",
+        "diff": "글자 수는 그대로이고 섞였다 맞춰진다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "타이핑 효과 넣어줘",
+        "risk": "문구가 끝없이 지워지고 다시 쳐져 읽기 전에 사라지고, 글자가 늘 때마다 아래 내용이 밀린다"
+      }
+    ],
+    "right": "\"글자마다 60ms, 한 번만, 자리 폭은 미리 잡기\"처럼 속도와 반복을 말한다",
+    "prompt": {
+      "when": "소개 페이지 첫 화면의 부제 한 줄에",
+      "what": "Typewriter",
+      "how": "글자마다 {speed_ms}ms 간격으로 쳐 나가고 끝에 커서를 두고, {loop}, 자리를 미리 잡아 아래 내용이 밀리지 않게, 원문은 aria-label로 처음부터 읽히게, 동작 줄이기면 문장 전체를 바로"
+    },
+    "motion": {
+      "cost": "JS 매 프레임",
+      "light": "글자 간격 타이머 하나면 된다. 자리를 미리 잡아 레이아웃이 밀리지 않게 하고, 읽는 속도보다 느리게 하지 않는다",
+      "support": "JS라 모든 브라우저",
+      "reduce": "문장 전체를 바로",
+      "pause": "문구를 돌리면 5초 넘게 움직이므로 멈춤 단추를 둔다"
+    }
+  },
+  {
     "id": "kpi-card",
     "name": "KPI Card",
     "ko": "지표 카드",
@@ -3844,6 +4195,512 @@
     }
   },
   {
+    "id": "aurora-gradient",
+    "name": "Aurora Gradient",
+    "ko": "오로라 배경",
+    "path": [
+      "표현",
+      "색·효과",
+      "배경·질감"
+    ],
+    "one": "여러 색 덩어리가 흐리게 번져 겹친 배경. 움직이면 아주 천천히 떠다닌다",
+    "aka": [
+      "Mesh Gradient",
+      "Aurora Background",
+      "Gradient Mesh",
+      "Blob Background"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "blobs": [
+        2,
+        4
+      ],
+      "motion": [
+        "정지",
+        "천천히 움직임"
+      ]
+    },
+    "control_ko": {
+      "blobs": "색 덩어리 수",
+      "motion": "움직임"
+    },
+    "defaults": {
+      "blobs": 3,
+      "motion": "정지"
+    },
+    "phrases": {
+      "motion": {
+        "정지": "움직이지 않게 두고",
+        "천천히 움직임": "transform으로 20초 넘게 천천히 떠다니게 하되 멈춤 단추를 두고"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Shader Background",
+        "diff": "GPU로 매 프레임 그린다. 비슷한 모습이지만 훨씬 무겁다"
+      },
+      {
+        "name": "Grain",
+        "diff": "위에 덮으면 그라데이션의 색 띠(밴딩)를 가려 준다"
+      },
+      {
+        "name": "Glass",
+        "diff": "이 배경 위에 얹으면 흐림이 잘 보인다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "배경 예쁘게 그라데이션으로 움직이게 해줘",
+        "risk": "큰 흐림을 매 프레임 다시 그려 노트북 팬이 돌고, 밝은 색 덩어리 위에서 글자가 안 읽힌다"
+      }
+    ],
+    "right": "\"색 덩어리 3개를 blur로 겹치고 기본은 정지, 글자 대비 4.5:1\"처럼 덩어리 수와 움직임을 말한다",
+    "prompt": {
+      "when": "소개 페이지 마지막 행동 유도(CTA) 구역 배경에",
+      "what": "Aurora Gradient",
+      "how": "색 덩어리 {blobs}개를 filter: blur로 흐리게 겹치고 {motion}, 덩어리 위 글자도 대비 4.5:1을 넘게, 동작 줄이기면 정지"
+    },
+    "motion": {
+      "cost": "페인트·레이아웃 듦(큰 흐림)",
+      "light": "색 덩어리를 한 번 흐리게 그려 두고 transform으로만 옮긴다. 흐림 반경과 면적을 줄이고, 기본은 정지",
+      "support": "CSS 그라디언트와 filter: blur는 모든 주요 브라우저",
+      "reduce": "정지",
+      "pause": "움직이면 5초 넘게 가므로 멈춤 단추(WCAG 2.2.2)"
+    }
+  },
+  {
+    "id": "grain",
+    "name": "Grain",
+    "ko": "잡음 질감",
+    "path": [
+      "표현",
+      "색·효과",
+      "배경·질감"
+    ],
+    "one": "아주 작은 잡음 점을 덮어 매끈한 면에 종이나 필름 같은 질감을 준다",
+    "aka": [
+      "Noise Texture",
+      "Film Grain",
+      "Noise Overlay"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "opacity_pct": [
+        3,
+        20
+      ],
+      "size": [
+        "고움",
+        "거침"
+      ]
+    },
+    "control_ko": {
+      "opacity_pct": "진하기(%)",
+      "size": "알갱이"
+    },
+    "defaults": {
+      "opacity_pct": 10,
+      "size": "고움"
+    },
+    "phrases": {
+      "size": {
+        "고움": "고운 알갱이로",
+        "거침": "굵은 알갱이로"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Aurora Gradient",
+        "diff": "색 덩어리 배경. 잡음을 덮으면 색 띠가 덜 보인다"
+      },
+      {
+        "name": "Dot Grid",
+        "diff": "일정한 간격의 무늬. 잡음은 무작위다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "질감 있는 배경으로 해줘",
+        "risk": "큰 잡음 이미지를 받거나 canvas로 매 프레임 잡음을 새로 그려 무겁다"
+      }
+    ],
+    "right": "\"SVG 잡음 타일 하나를 반복, 투명도 8%, 움직이지 않게\"처럼 진하기와 정지를 말한다",
+    "prompt": {
+      "when": "소개 페이지의 그라데이션 배경 위에",
+      "what": "Grain",
+      "how": "작은 잡음 타일(SVG feTurbulence나 PNG) 하나를 {size} 반복해 투명도 {opacity_pct}%로 덮고, 움직이지 않게, pointer-events: none으로 클릭을 막지 않게"
+    },
+    "motion": {
+      "cost": "페인트·레이아웃 듦(처음 한 번)",
+      "light": "작은 타일 하나를 반복하고 움직이지 않는다. 필름처럼 떨리는 잡음은 매 프레임 다시 그리므로 피한다",
+      "support": "SVG 필터와 배경 반복은 모든 주요 브라우저",
+      "reduce": "그대로(움직이지 않는다)"
+    }
+  },
+  {
+    "id": "glass",
+    "name": "Glass",
+    "ko": "유리 판",
+    "path": [
+      "표현",
+      "색·효과",
+      "배경·질감"
+    ],
+    "one": "뒤가 흐리게 비치는 반투명 판. 붙어 있는 상단 막대에 자주 쓴다",
+    "aka": [
+      "Glassmorphism",
+      "Frosted Glass",
+      "backdrop-filter",
+      "Liquid Glass"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "소개·랜딩",
+        "업무 화면"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "blur_px": [
+        4,
+        24
+      ],
+      "tint_pct": [
+        40,
+        85
+      ]
+    },
+    "control_ko": {
+      "blur_px": "흐림(px)",
+      "tint_pct": "판 불투명도(%)"
+    },
+    "defaults": {
+      "blur_px": 12,
+      "tint_pct": 70
+    },
+    "pairs": [
+      {
+        "name": "Sticky Header",
+        "diff": "유리 판을 가장 자주 거는 자리"
+      },
+      {
+        "name": "Modal Dialog",
+        "diff": "뒤를 어둡게 덮는 판을 쓴다. 흐림은 선택"
+      },
+      {
+        "name": "Aurora Gradient",
+        "diff": "유리 판 뒤에 깔면 흐림이 잘 보인다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "유리처럼 반투명하게 해줘",
+        "risk": "판을 여러 겹 겹치고 흐림을 크게 줘 스크롤이 버벅이고, 지원하지 않는 곳에서는 글자가 배경에 묻힌다"
+      }
+    ],
+    "right": "\"상단 막대 하나에 backdrop-filter: blur(12px), 판 70% 불투명, 지원 안 하면 불투명\"처럼 자리와 대체를 말한다",
+    "prompt": {
+      "when": "스크롤해도 붙어 있는 상단 막대에",
+      "what": "Glass",
+      "how": "backdrop-filter: blur({blur_px}px)와 {tint_pct}% 불투명한 배경색을 주고, -webkit- 접두사를 함께 쓰고, @supports로 지원하지 않으면 불투명 배경, 글자 대비 4.5:1을 넘게, 판은 작게 하나만 겹치지 않게"
+    },
+    "motion": {
+      "cost": "페인트·레이아웃 듦(GPU 비용)",
+      "light": "면적을 작게, 겹치지 않게, 흐림 값을 낮게. 판 뒤가 스크롤로 바뀌면 그때마다 흐림을 다시 계산한다",
+      "support": "이번 조사에서 지원 표를 확인하지 못했다. -webkit-backdrop-filter를 함께 쓰고 @supports로 불투명 대체색을 둔다",
+      "reduce": "그대로(움직임이 없다)"
+    }
+  },
+  {
+    "id": "shader-background",
+    "name": "Shader Background",
+    "ko": "셰이더 배경",
+    "path": [
+      "표현",
+      "색·효과",
+      "배경·질감"
+    ],
+    "one": "GPU 셰이더로 그린, 흐르거나 일렁이는 배경. 한 페이지에 하나, 첫 화면에만 쓴다",
+    "aka": [
+      "WebGL Background",
+      "Shader Gradient",
+      "Gradient Shader",
+      "Dither Shader"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "JS 많이"
+    },
+    "controls": {
+      "start": [
+        "첫 입력 뒤",
+        "바로"
+      ],
+      "res_pct": [
+        25,
+        100
+      ]
+    },
+    "control_ko": {
+      "start": "켜는 때",
+      "res_pct": "그리는 해상도(%)"
+    },
+    "defaults": {
+      "start": "첫 입력 뒤",
+      "res_pct": 50
+    },
+    "phrases": {
+      "start": {
+        "첫 입력 뒤": "페이지가 뜨고 첫 입력(스크롤·터치) 뒤에",
+        "바로": "페이지가 뜨자마자"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Aurora Gradient",
+        "diff": "CSS로 비슷한 모습을 낸다. 훨씬 가볍다. 먼저 이것으로 되는지 본다"
+      },
+      {
+        "name": "Reduced Motion",
+        "diff": "동작 줄이기를 켠 사람에게는 정지 이미지를 보여 준다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "배경에 3D처럼 움직이는 그라데이션 넣어줘",
+        "risk": "three.js 전체를 들여 첫 화면이 늦게 뜨고, 구역마다 캔버스를 둬 휴대폰이 뜨거워진다"
+      }
+    ],
+    "right": "\"히어로 하나에만 WebGL, 첫 입력 뒤 켜기, 해상도 50%, 화면 밖이면 멈춤, 정지 이미지 대체\"처럼 말한다",
+    "prompt": {
+      "when": "소개 페이지 첫 화면(히어로) 배경에",
+      "what": "Shader Background",
+      "how": "히어로 하나에만 WebGL 셰이더 배경을 두고, {start} 켜고, 해상도를 {res_pct}%로 낮춰 그리고, 화면 밖이거나 탭이 숨으면 멈추고, 5초 넘게 움직이니 멈춤 단추를 두고, WebGL이 없거나 동작 줄이기면 같은 색의 정지 이미지"
+    },
+    "motion": {
+      "cost": "GPU 셰이더",
+      "light": "한 페이지에 하나, 히어로만. 정지 이미지를 먼저 보여 주고 첫 입력 뒤 초기화, 해상도를 낮춰 그리고, 화면 밖·숨은 탭에서는 멈춘다",
+      "support": "WebGL 지원은 이번 조사에서 확인하지 못했다. 늘 정지 이미지 대체를 둔다",
+      "reduce": "정지 이미지",
+      "touch": "휴대폰은 배터리와 발열 때문에 해상도를 더 낮추거나 정지 이미지로",
+      "pause": "5초 넘게 움직이므로 멈춤 단추(WCAG 2.2.2)"
+    }
+  },
+  {
+    "id": "dot-grid",
+    "name": "Dot Grid",
+    "ko": "점 격자 배경",
+    "path": [
+      "표현",
+      "색·효과",
+      "배경·질감"
+    ],
+    "one": "작은 점이나 가는 선을 일정한 간격으로 깐 배경. 가장자리는 흐리게 사라진다",
+    "aka": [
+      "Dot Pattern",
+      "Grid Pattern",
+      "Graph Paper Background",
+      "Grid Background"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "kind": [
+        "점",
+        "선"
+      ],
+      "gap_px": [
+        12,
+        40
+      ],
+      "fade": [
+        "가장자리 흐림",
+        "없음"
+      ]
+    },
+    "control_ko": {
+      "kind": "무늬",
+      "gap_px": "간격(px)",
+      "fade": "가장자리"
+    },
+    "defaults": {
+      "kind": "점",
+      "gap_px": 20,
+      "fade": "가장자리 흐림"
+    },
+    "phrases": {
+      "kind": {
+        "점": "점",
+        "선": "격자 선"
+      },
+      "fade": {
+        "가장자리 흐림": "mask-image로 가장자리를 흐리게 사라지게 하고",
+        "없음": "가장자리는 그대로 두고"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Grain",
+        "diff": "무작위 잡음 질감. 점 격자는 일정한 간격이다"
+      },
+      {
+        "name": "Aurora Gradient",
+        "diff": "색 덩어리 배경. 점 격자는 색이 거의 없다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "배경에 점 패턴 깔아줘",
+        "risk": "점 이미지를 받거나 SVG 점을 수천 개 그리고, 점이 진해 글자보다 눈에 띈다"
+      }
+    ],
+    "right": "\"radial-gradient 점, 20px 간격, 선 색, 가장자리 흐림\"처럼 무늬와 간격을 말한다",
+    "prompt": {
+      "when": "히어로나 기능 소개 구역 배경에",
+      "what": "Dot Grid",
+      "how": "배경에 CSS 그라디언트를 {gap_px}px 간격으로 반복해 {kind} 무늬를 옅게 깔고, {fade}, 이미지 파일 없이, 움직이지 않게"
+    },
+    "motion": {
+      "cost": "합성만(정적 CSS)",
+      "light": "이미지 없이 CSS 그라디언트 반복 하나. 움직이지 않으니 한 번 그리면 끝",
+      "support": "CSS 그라디언트는 모든 주요 브라우저. mask-image는 -webkit- 접두사도 함께 쓴다",
+      "reduce": "그대로(정적)"
+    }
+  },
+  {
+    "id": "border-beam",
+    "name": "Border Beam",
+    "ko": "테두리 빛",
+    "path": [
+      "표현",
+      "색·효과",
+      "배경·질감"
+    ],
+    "one": "카드 테두리를 따라 짧은 빛줄기가 돈다. 여럿 중 하나를 눈에 띄게 할 때 쓴다",
+    "aka": [
+      "Shine Border",
+      "Moving Border",
+      "Glow Border",
+      "Conic Border"
+    ],
+    "tags": {
+      "purpose": [
+        "주의"
+      ],
+      "use": [
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "speed_s": [
+        2,
+        8
+      ],
+      "stop": [
+        "멈춤 단추",
+        "한 바퀴만"
+      ]
+    },
+    "control_ko": {
+      "speed_s": "한 바퀴(초)",
+      "stop": "멈추는 법"
+    },
+    "defaults": {
+      "speed_s": 4,
+      "stop": "한 바퀴만"
+    },
+    "phrases": {
+      "stop": {
+        "멈춤 단추": "5초 넘게 도니 멈춤 단추를 두고",
+        "한 바퀴만": "처음 한 바퀴만 돌고 멈추게 하고"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Shine Text",
+        "diff": "테두리가 아니라 글자 위로 빛이 지나간다"
+      },
+      {
+        "name": "Focus Ring",
+        "diff": "키보드 초점 표시. 장식이 아니므로 대신 쓰지 않는다"
+      },
+      {
+        "name": "Badge",
+        "diff": "\"추천\"을 글로 알린다. 빛만으로 알리지 않게 함께 쓴다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "카드 테두리 빛나게 돌려줘",
+        "risk": "모든 카드에 걸고 @property 각도 애니메이션으로 매 프레임 다시 그리며, 멈출 방법이 없다"
+      }
+    ],
+    "right": "\"추천 카드 하나에만, conic-gradient 판을 rotate로 4초 한 바퀴, 한 번만\"처럼 범위와 횟수를 말한다",
+    "prompt": {
+      "when": "요금제 카드 중 추천 요금제 하나에",
+      "what": "Border Beam",
+      "how": "카드 뒤에 conic-gradient를 그린 큰 판을 두고 transform: rotate로 {speed_s}초에 한 바퀴 돌려 1~2px 테두리 틈으로만 보이게 하고, {stop}, \"추천\" 글 배지를 함께 두고, 동작 줄이기면 강조색 정지 테두리"
+    },
+    "motion": {
+      "cost": "합성만(회전 방식)",
+      "light": "conic-gradient를 큰 판에 한 번 그려 transform: rotate로 돌리면 다시 그리지 않는다. @property로 각도를 바꾸는 방식은 매 프레임 다시 그린다. 카드 하나에만",
+      "support": "conic-gradient와 transform은 모든 주요 브라우저",
+      "reduce": "강조색 정지 테두리",
+      "pause": "계속 돌면 멈춤 단추(WCAG 2.2.2)"
+    }
+  },
+  {
     "id": "easing",
     "name": "Easing",
     "ko": "속도감",
@@ -3926,6 +4783,340 @@
       "when": "패널이 열리고 닫힐 때",
       "what": "Easing",
       "how": "열릴 때 {curve} {duration_ms}ms, 닫힐 때 ease-in 150ms"
+    }
+  },
+  {
+    "id": "flip",
+    "name": "FLIP",
+    "ko": "자리 바뀜 잇기",
+    "path": [
+      "움직임",
+      "기본 움직임",
+      "기법"
+    ],
+    "one": "레이아웃이 바뀐 요소를 처음 자리에서 새 자리로 transform으로 이어 움직인다(First, Last, Invert, Play)",
+    "aka": [
+      "First-Last-Invert-Play",
+      "Layout Animation",
+      "Auto Animate",
+      "layoutId"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면",
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "값이 바뀔 때"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "change": [
+        "정렬 바꿈",
+        "항목 빠짐"
+      ],
+      "duration_ms": [
+        150,
+        500
+      ]
+    },
+    "control_ko": {
+      "change": "바뀌는 일",
+      "duration_ms": "길이(ms)"
+    },
+    "defaults": {
+      "change": "정렬 바꿈",
+      "duration_ms": 250
+    },
+    "phrases": {
+      "change": {
+        "정렬 바꿈": "목록의 정렬 순서가 바뀔",
+        "항목 빠짐": "목록에서 항목이 빠져 나머지가 당겨질"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Shared Element Transition",
+        "diff": "화면 사이에서 같은 요소를 잇는 일을 브라우저가 해 준다"
+      },
+      {
+        "name": "Drag and Drop",
+        "diff": "끌어 놓을 때 비켜나는 카드에 FLIP을 쓴다"
+      },
+      {
+        "name": "Web Animations API",
+        "diff": "FLIP의 마지막 단계(Play)를 거는 도구"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "정렬 바꾸면 부드럽게 움직이게 해줘",
+        "risk": "top·left를 매 프레임 바꿔 버벅이거나, 항목이 순간 이동해 무엇이 어디로 갔는지 모른다"
+      }
+    ],
+    "right": "\"정렬이 바뀌면 FLIP으로 250ms, 자리 재기는 전후 한 번씩, transform만\"처럼 기법 이름과 길이를 말한다",
+    "prompt": {
+      "when": "이슈 목록이나 요금 비교표에서",
+      "what": "FLIP",
+      "how": "{change} 때 각 항목의 처음 자리와 새 자리를 한 번씩 재서, 차이만큼 transform으로 되돌렸다가 {duration_ms}ms 동안 0으로 풀어 이어 주고, 동작 줄이기면 바로 바꿈"
+    },
+    "motion": {
+      "cost": "합성만(자리 재기는 전후 한 번씩)",
+      "light": "자리 재기(getBoundingClientRect)는 바뀌기 전후 한 번씩만, 움직임은 transform만. width·top을 직접 바꾸지 않는다",
+      "support": "기법이라 특정 브라우저 기능에 기대지 않는다. 화면 전체라면 View Transition으로도 된다",
+      "reduce": "바로 바꿈"
+    }
+  },
+  {
+    "id": "spring",
+    "name": "Spring",
+    "ko": "스프링 움직임",
+    "path": [
+      "움직임",
+      "기본 움직임",
+      "기법"
+    ],
+    "one": "목표에 닿을 때 살짝 지나쳤다가 돌아와 멈추는, 탄성 있는 움직임",
+    "aka": [
+      "Spring Animation",
+      "Spring Physics",
+      "Bounce",
+      "탄성"
+    ],
+    "tags": {
+      "purpose": [
+        "피드백"
+      ],
+      "use": [
+        "소개·랜딩",
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "bounce": [
+        "없음",
+        "조금",
+        "많이"
+      ],
+      "duration_ms": [
+        300,
+        1000
+      ]
+    },
+    "control_ko": {
+      "bounce": "튕김",
+      "duration_ms": "길이(ms)"
+    },
+    "defaults": {
+      "bounce": "조금",
+      "duration_ms": 500
+    },
+    "phrases": {
+      "bounce": {
+        "없음": "튕김 없는",
+        "조금": "한 번 살짝 지나치는",
+        "많이": "두세 번 튕기는"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Easing",
+        "diff": "속도 곡선 전반을 고르는 용어. Spring은 그중 탄성 곡선을 튕김·감쇠로 말하는 법"
+      },
+      {
+        "name": "linear() Easing",
+        "diff": "스프링 곡선을 라이브러리 없이 CSS로 옮기는 도구"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "통통 튀게 해줘",
+        "risk": "여러 번 크게 튕겨 멈추기까지 오래 걸리고, 스프링 라이브러리를 통째로 들인다"
+      }
+    ],
+    "right": "\"한 번 살짝 지나치는 스프링, 500ms, linear()로 근사\"처럼 튕김 정도와 길이를 말한다",
+    "prompt": {
+      "when": "눌러서 열리는 패널이나 알림이 나타날 때",
+      "what": "Spring",
+      "how": "{bounce} 탄성으로 {duration_ms}ms 동안 transform만 움직이고, 라이브러리 없이 linear()로 스프링 곡선을 근사하고, 동작 줄이기면 탄성 없이 짧게"
+    },
+    "motion": {
+      "cost": "합성만",
+      "light": "스프링 곡선을 linear() 점 목록으로 미리 만들어 CSS로 돌리면 매 프레임 JS 계산이 없다. 튕김은 한 번이면 충분하다",
+      "support": "linear()로 하면 Chrome 113, Firefox 112, Safari 17.2(Baseline 새로 지원, 2023-12). 지원하지 않으면 ease-out",
+      "reduce": "탄성 없이 짧게"
+    }
+  },
+  {
+    "id": "linear-easing",
+    "name": "linear() Easing",
+    "ko": "점으로 그린 이징",
+    "path": [
+      "움직임",
+      "기본 움직임",
+      "기법"
+    ],
+    "one": "CSS linear()에 점 목록을 넣어 스프링·튕김 같은 아무 곡선이나 이징으로 쓴다",
+    "aka": [
+      "CSS linear()",
+      "linear() timing function",
+      "Custom Easing"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면",
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "값이 바뀔 때"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "points": [
+        5,
+        40
+      ],
+      "shape": [
+        "튕김",
+        "스프링"
+      ]
+    },
+    "control_ko": {
+      "points": "점 수",
+      "shape": "곡선 모양"
+    },
+    "defaults": {
+      "points": 20,
+      "shape": "튕김"
+    },
+    "phrases": {
+      "shape": {
+        "튕김": "바닥에 닿고 튕기는(bounce)",
+        "스프링": "지나쳤다 돌아오는(spring)"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Easing",
+        "diff": "정해진 곡선(ease-out, cubic-bezier)을 고른다. linear()는 곡선을 점으로 직접 그린다"
+      },
+      {
+        "name": "Spring",
+        "diff": "linear()로 옮기는 대표 곡선"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "자연스럽게 튕기는 이징 넣어줘",
+        "risk": "cubic-bezier로는 튕김을 못 그려 JS 라이브러리를 들이거나, 점을 수백 개 넣어 CSS가 길어진다"
+      }
+    ],
+    "right": "\"튕김 곡선을 점 20개 linear()로, 지원 안 하면 ease-out\"처럼 점 수와 대체를 말한다",
+    "prompt": {
+      "when": "알림 배지나 장바구니 숫자가 바뀔 때",
+      "what": "linear() Easing",
+      "how": "{shape} 곡선을 점 {points}개의 linear()로 옮겨 transition-timing-function에 넣고, 점은 생성기로 뽑고, @supports로 지원하지 않으면 ease-out"
+    },
+    "motion": {
+      "cost": "합성만",
+      "light": "점 10~30개면 충분하다. 곡선 계산은 미리 해 두고 브라우저가 돌리므로 JS 라이브러리가 필요 없다",
+      "support": "Chrome 113, Firefox 112, Safari 17.2(Baseline 새로 지원, 2023-12). 지원하지 않으면 ease-out",
+      "reduce": "이징 없이 짧게"
+    }
+  },
+  {
+    "id": "web-animations-api",
+    "name": "Web Animations API",
+    "ko": "JS로 거는 애니메이션",
+    "path": [
+      "움직임",
+      "기본 움직임",
+      "기법"
+    ],
+    "one": "element.animate()로 JS에서 키프레임 애니메이션을 걸고 멈춤·되감기·속도를 다룬다",
+    "aka": [
+      "WAAPI",
+      "element.animate()",
+      "Animation API"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면",
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "action": [
+        "되감기",
+        "멈춤",
+        "속도 2배"
+      ],
+      "duration_ms": [
+        300,
+        1200
+      ]
+    },
+    "control_ko": {
+      "action": "도중에 할 일",
+      "duration_ms": "길이(ms)"
+    },
+    "defaults": {
+      "action": "되감기",
+      "duration_ms": 600
+    },
+    "phrases": {
+      "action": {
+        "되감기": "도중에 취소되면 reverse()로 되감고",
+        "멈춤": "pause()로 멈췄다 play()로 이어 가고",
+        "속도 2배": "도중에 playbackRate로 속도를 바꾸고"
+      }
+    },
+    "pairs": [
+      {
+        "name": "FLIP",
+        "diff": "FLIP의 마지막 단계(Play)를 animate()로 거는 경우가 많다"
+      },
+      {
+        "name": "Easing",
+        "diff": "animate()의 easing 옵션에 같은 곡선을 넣는다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "자바스크립트로 애니메이션 만들어줘",
+        "risk": "requestAnimationFrame 루프로 top·width를 매 프레임 바꿔 버벅이고, 도중에 취소하면 모양이 튄다"
+      }
+    ],
+    "right": "\"element.animate()로 transform 600ms, 취소되면 reverse(), 끝나면 finished로 다음 일\"처럼 말한다",
+    "prompt": {
+      "when": "사이드 패널을 JS로 열고 닫을 때",
+      "what": "Web Animations API",
+      "how": "element.animate()로 transform·opacity 키프레임을 {duration_ms}ms 걸고, 돌아온 Animation 객체로 {action}, 끝나면 finished 약속(promise)으로 다음 일을 잇고, 동작 줄이기면 matchMedia로 길이를 0"
+    },
+    "motion": {
+      "cost": "합성만(transform·opacity일 때)",
+      "light": "requestAnimationFrame 루프로 매 프레임 스타일을 바꾸는 대신 animate()에 맡기면 브라우저가 합성 스레드에서 돌린다",
+      "support": "element.animate()는 오래전부터 주요 브라우저에 있다(이번 조사에서 판 번호는 확인 못 함)",
+      "reduce": "matchMedia로 길이를 0"
     }
   },
   {
@@ -4304,6 +5495,861 @@
     }
   },
   {
+    "id": "scroll-driven-animation",
+    "name": "Scroll-driven Animation",
+    "ko": "스크롤 연동 애니메이션",
+    "path": [
+      "움직임",
+      "화면 전환·스크롤 연출",
+      "스크롤 연출"
+    ],
+    "one": "애니메이션의 진행을 시간 대신 스크롤 위치에 묶는다. 스크롤을 되돌리면 되감긴다",
+    "aka": [
+      "Scroll Timeline",
+      "animation-timeline",
+      "View Timeline",
+      "스크롤 타임라인"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "스크롤"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "timeline": [
+        "view()",
+        "scroll()"
+      ],
+      "prop": [
+        "투명도 + 이동",
+        "크기"
+      ]
+    },
+    "control_ko": {
+      "timeline": "타임라인",
+      "prop": "바뀌는 것"
+    },
+    "defaults": {
+      "timeline": "view()",
+      "prop": "투명도 + 이동"
+    },
+    "phrases": {
+      "timeline": {
+        "view()": "카드마다 화면을 지나는 동안(animation-timeline: view())",
+        "scroll()": "페이지 스크롤 전체에 맞춰(animation-timeline: scroll())"
+      },
+      "prop": {
+        "투명도 + 이동": "투명도와 세로 위치(opacity, translateY)를",
+        "크기": "크기(scale)를"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Scroll Reveal",
+        "diff": "들어온 순간부터 시간으로 한 번 재생된다. 스크롤을 멈춰도 끝까지 간다"
+      },
+      {
+        "name": "Parallax",
+        "diff": "스크롤 연동으로 만드는 효과 중 하나. 층마다 속도만 다르다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "스크롤 내리면 애니메이션 되게 해줘",
+        "risk": "scroll 이벤트마다 JS로 top·width를 바꿔 버벅이거나, 한 번 재생하는 Scroll Reveal이 나온다"
+      }
+    ],
+    "right": "\"카드가 화면을 지나는 동안 opacity·translateY를 animation-timeline: view()로, 지원 안 하면 완성 모습\"처럼 타임라인과 바뀌는 속성을 말한다",
+    "prompt": {
+      "when": "기능 소개 카드가 스크롤로 지나갈 때",
+      "what": "Scroll-driven Animation",
+      "how": "{timeline} {prop} 바꾸고, transform·opacity만 움직이고, @supports로 지원하지 않는 브라우저에서는 완성 모습으로, 동작 줄이기면 끔"
+    },
+    "motion": {
+      "cost": "합성만",
+      "light": "transform·opacity만 움직이면 메인 스레드를 거의 쓰지 않는다. scroll 이벤트 JS를 쓰지 않는다",
+      "support": "Chrome 115, Safari 26, Firefox 159에서 됨(Baseline 새로 지원, 2026-10). 지원하지 않으면 효과 없이 완성 모습",
+      "reduce": "완성 모습으로 고정"
+    }
+  },
+  {
+    "id": "scroll-reveal",
+    "name": "Scroll Reveal",
+    "ko": "스크롤 등장",
+    "path": [
+      "움직임",
+      "화면 전환·스크롤 연출",
+      "스크롤 연출"
+    ],
+    "one": "요소가 화면에 들어오는 순간 짧게 나타난다. 한 번 나타나면 그대로 둔다",
+    "aka": [
+      "Reveal on Scroll",
+      "Fade Up",
+      "Scroll Animation",
+      "AOS"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "스크롤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "distance_px": [
+        0,
+        40
+      ],
+      "duration_ms": [
+        200,
+        800
+      ],
+      "once": [
+        "한 번만",
+        "들어올 때마다"
+      ]
+    },
+    "control_ko": {
+      "distance_px": "올라오는 거리(px)",
+      "duration_ms": "길이(ms)",
+      "once": "다시 재생"
+    },
+    "defaults": {
+      "distance_px": 16,
+      "duration_ms": 400,
+      "once": "한 번만"
+    },
+    "phrases": {
+      "once": {
+        "한 번만": "처음 한 번만",
+        "들어올 때마다": "들어올 때마다 다시"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Scroll-driven Animation",
+        "diff": "진행이 스크롤 위치에 묶여 되감긴다"
+      },
+      {
+        "name": "Scroll Into View",
+        "diff": "요소를 나타나게 하는 게 아니라 스크롤을 그 요소까지 움직인다"
+      },
+      {
+        "name": "Stagger",
+        "diff": "여러 개가 함께 들어올 때 차례로 시작시키는 기법. 함께 쓴다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "스크롤하면 스르륵 나타나게 해줘",
+        "risk": "먼 거리에서 느리게 올라와 빈 화면이 길고, 위로 올릴 때마다 다시 재생돼 산만하다"
+      }
+    ],
+    "right": "\"화면에 들어올 때 16px 아래에서 400ms, 한 번만, IntersectionObserver로\"처럼 거리·길이·반복을 말한다",
+    "prompt": {
+      "when": "소개 페이지의 기능 카드가 화면에 들어올 때",
+      "what": "Scroll Reveal",
+      "how": "{distance_px}px 아래에서 올라오며 투명도 0→1, {duration_ms}ms ease-out으로 {once} 나타나게 하고, IntersectionObserver로 감지하고, 동작 줄이기면 처음부터 보이게"
+    },
+    "motion": {
+      "cost": "합성만",
+      "light": "IntersectionObserver로 들어온 순간만 알고, transform·opacity만 움직인다. 매 스크롤마다 위치를 재지 않는다",
+      "support": "IntersectionObserver는 모든 주요 브라우저에서 됨. CSS만으로 하려면 Scroll-driven Animation의 view()",
+      "reduce": "처음부터 보이게"
+    }
+  },
+  {
+    "id": "parallax",
+    "name": "Parallax",
+    "ko": "시차 스크롤",
+    "path": [
+      "움직임",
+      "화면 전환·스크롤 연출",
+      "스크롤 연출"
+    ],
+    "one": "층마다 다른 속도로 스크롤돼 깊이가 있어 보인다. 뒤층일수록 느리다",
+    "aka": [
+      "Parallax Scrolling",
+      "패럴랙스",
+      "시차 효과"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "스크롤"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "layers": [
+        "2층",
+        "3층"
+      ],
+      "speed": [
+        20,
+        80
+      ]
+    },
+    "control_ko": {
+      "layers": "층 수",
+      "speed": "뒤층 속도(%)"
+    },
+    "defaults": {
+      "layers": "2층",
+      "speed": 50
+    },
+    "phrases": {
+      "layers": {
+        "2층": "배경과 글 두 층",
+        "3층": "배경·중간·글 세 층"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Scroll-driven Animation",
+        "diff": "패럴랙스를 가볍게 만드는 바탕 기술. 그 자체는 어떤 속성이든 스크롤에 묶는다"
+      },
+      {
+        "name": "Sticky Scrollytelling",
+        "diff": "층이 움직이는 게 아니라 한 칸을 붙여 두고 내용을 바꾼다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "배경이 깊이감 있게 움직이게 해줘",
+        "risk": "층을 여럿 두고 scroll 이벤트로 top을 바꿔 버벅이고, 어지럼을 느끼는 사람에게 불편하다"
+      }
+    ],
+    "right": "\"배경은 스크롤 속도의 50%, 두 층만, transform만, 동작 줄이기면 끔\"처럼 층 수와 속도를 말한다",
+    "prompt": {
+      "when": "소개 페이지 첫 화면(히어로)에서",
+      "what": "Parallax",
+      "how": "{layers}으로 나누고 뒤층은 스크롤의 {speed}% 속도로 transform: translateY만 움직이고, 스크롤 연동 CSS를 먼저 쓰고, 동작 줄이기면 끄고 모든 층을 고정"
+    },
+    "motion": {
+      "cost": "합성만",
+      "light": "층은 2~3개, transform만. CSS 스크롤 연동을 먼저 쓰고, JS로 하면 requestAnimationFrame 한 번에 모아 그린다",
+      "support": "CSS 방식은 Scroll-driven Animation과 같다(Chrome 115, Safari 26, Firefox 159에서 됨(Baseline 새로 지원, 2026-10)). JS 방식은 모든 브라우저",
+      "reduce": "끔. 어지럼을 일으킬 수 있는 장식이라 끄는 대표 예다(WCAG 2.3.3)"
+    }
+  },
+  {
+    "id": "sticky-scrollytelling",
+    "name": "Sticky Scrollytelling",
+    "ko": "붙여 두고 바뀌는 스크롤",
+    "path": [
+      "움직임",
+      "화면 전환·스크롤 연출",
+      "스크롤 연출"
+    ],
+    "one": "그림 칸을 붙여 두고, 옆의 설명이 지나갈 때마다 그림이 단계별로 바뀐다",
+    "aka": [
+      "Scrollytelling",
+      "Pinned Scroll",
+      "Sticky Scroll Reveal",
+      "스크롤 스토리텔링"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "스크롤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "steps": [
+        2,
+        4
+      ],
+      "swap": [
+        "교차 페이드",
+        "밀어 올림"
+      ]
+    },
+    "control_ko": {
+      "steps": "단계 수",
+      "swap": "바뀌는 방식"
+    },
+    "defaults": {
+      "steps": 3,
+      "swap": "교차 페이드"
+    },
+    "phrases": {
+      "swap": {
+        "교차 페이드": "교차 페이드(cross-fade)로",
+        "밀어 올림": "위로 밀어 올리며"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Sticky Header",
+        "diff": "머리줄을 위에 붙여 둘 뿐, 내용은 바뀌지 않는다"
+      },
+      {
+        "name": "Tabs",
+        "diff": "눌러서 바꾼다. 스크롤과 상관없다"
+      },
+      {
+        "name": "Parallax",
+        "diff": "붙이는 칸 없이 층의 속도만 다르다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "스크롤하면 화면이 고정되고 내용이 바뀌게 해줘",
+        "risk": "JS로 페이지 스크롤 자체를 붙잡아(scroll-jacking) 휠이 먹히지 않는 것처럼 느껴진다"
+      }
+    ],
+    "right": "\"그림 칸은 position: sticky, 설명 3단계가 지나갈 때 그림을 교차 페이드, 좁은 폭에서는 단계마다 그림을 글 아래\"처럼 말한다",
+    "prompt": {
+      "when": "소개 페이지의 \"이렇게 동작해요\" 구역에서",
+      "what": "Sticky Scrollytelling",
+      "how": "그림 칸을 position: sticky로 붙여 두고, 설명 {steps}단계가 화면 가운데를 지날 때마다 그림을 {swap} 바꾸고, 지금 단계는 IntersectionObserver로 정하고, 휴대폰 좁은 폭과 동작 줄이기에서는 단계마다 그림을 글 아래 펼쳐 보이게"
+    },
+    "motion": {
+      "cost": "합성만",
+      "light": "붙이기는 position: sticky로. JS는 지금 단계를 정하는 데만 쓰고, 페이지 스크롤은 건드리지 않는다",
+      "support": "position: sticky와 IntersectionObserver는 모든 주요 브라우저에서 됨",
+      "reduce": "단계마다 그림을 글 아래 펼쳐 보이게",
+      "touch": "좁은 폭에서는 두 칸이 안 들어가 위와 같이 펼친다"
+    }
+  },
+  {
+    "id": "horizontal-scroll",
+    "name": "Horizontal Scroll",
+    "ko": "가로 스크롤 줄",
+    "path": [
+      "움직임",
+      "화면 전환·스크롤 연출",
+      "스크롤 연출"
+    ],
+    "one": "카드 줄을 옆으로 밀어 넘긴다. 다음 카드가 살짝 보여 더 있다는 걸 알린다",
+    "aka": [
+      "Horizontal Scroller",
+      "Scroll Snap",
+      "가로 스와이프",
+      "Card Row"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "소개·랜딩",
+        "업무 화면"
+      ],
+      "trigger": [
+        "끌 때"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "snap": [
+        "카드마다 멈춤",
+        "자유"
+      ],
+      "peek_px": [
+        0,
+        40
+      ]
+    },
+    "control_ko": {
+      "snap": "멈춤",
+      "peek_px": "다음 카드 보이기(px)"
+    },
+    "defaults": {
+      "snap": "카드마다 멈춤",
+      "peek_px": 24
+    },
+    "phrases": {
+      "snap": {
+        "카드마다 멈춤": "카드 앞머리에서 멈추게(scroll-snap-type: x mandatory)",
+        "자유": "멈춤 없이 미는 만큼 흐르게"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Card Grid",
+        "diff": "여러 줄로 쌓아 한눈에 보인다. 옆으로 밀지 않는다"
+      },
+      {
+        "name": "Carousel",
+        "diff": "보통 한 장씩 자동으로 넘어간다. 가로 스크롤 줄은 사용자가 민다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "가로로 스크롤되는 섹션 만들어줘",
+        "risk": "세로 휠을 가로 이동으로 바꿔(scroll-jacking) 페이지가 멈춘 것 같고, 다음 카드가 안 보여 더 있는지 모른다"
+      }
+    ],
+    "right": "\"overflow-x 가로 줄, 카드마다 scroll-snap, 다음 카드 24px 보이기, 좌우 단추\"처럼 말하고 세로 휠은 그대로 둔다",
+    "prompt": {
+      "when": "소개 페이지의 사례 카드 목록에서",
+      "what": "Horizontal Scroll",
+      "how": "카드 줄을 overflow-x: auto로 옆으로 밀게 하고 {snap}, 다음 카드가 {peek_px}px 보이게 하고, 세로 휠은 가로로 바꾸지 말고, 키보드로도 넘기게 좌우 단추를 둬"
+    },
+    "motion": {
+      "cost": "합성만",
+      "light": "브라우저의 기본 가로 스크롤과 scroll-snap을 쓴다. 끌기를 JS로 다시 만들지 않는다",
+      "support": "overflow-x와 scroll-snap은 모든 주요 브라우저에서 됨",
+      "reduce": "그대로(사용자가 직접 미는 움직임). 좌우 단추의 부드러운 이동만 즉시로"
+    }
+  },
+  {
+    "id": "scroll-progress",
+    "name": "Scroll Progress",
+    "ko": "읽은 만큼 막대",
+    "path": [
+      "움직임",
+      "화면 전환·스크롤 연출",
+      "스크롤 연출"
+    ],
+    "one": "페이지를 얼마나 읽었는지 맨 위의 가는 막대로 보여 준다",
+    "aka": [
+      "Reading Progress Bar",
+      "Scroll Indicator",
+      "스크롤 진행 표시"
+    ],
+    "tags": {
+      "purpose": [
+        "길찾기"
+      ],
+      "use": [
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "스크롤"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "target": [
+        "본문만",
+        "페이지 전체"
+      ],
+      "height_px": [
+        2,
+        6
+      ]
+    },
+    "control_ko": {
+      "target": "기준",
+      "height_px": "두께(px)"
+    },
+    "defaults": {
+      "target": "본문만",
+      "height_px": 3
+    },
+    "phrases": {
+      "target": {
+        "본문만": "본문 길이 기준(바닥글 빼고)",
+        "페이지 전체": "페이지 전체 길이 기준"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Progress Bar",
+        "diff": "작업이 얼마나 끝났는지 보여 준다. 스크롤과 상관없다"
+      },
+      {
+        "name": "Sticky Header",
+        "diff": "막대를 붙여 둘 자리. 머리줄 밑줄로 같이 쓴다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "스크롤 진행 표시줄 넣어줘",
+        "risk": "width를 매 스크롤마다 바꿔 레이아웃을 다시 계산하고, 바닥글까지 기준에 넣어 다 읽어도 덜 찬다"
+      }
+    ],
+    "right": "\"본문 길이 기준, 맨 위 3px, transform: scaleX로\"처럼 기준과 두께를 말한다",
+    "prompt": {
+      "when": "긴 소개 글이나 블로그 글에서",
+      "what": "Scroll Progress",
+      "how": "읽은 만큼을 {target}으로 맨 위 {height_px}px 막대에 보여 주고, width 대신 transform: scaleX로 채우고, animation-timeline: scroll()을 쓰고 지원하지 않으면 JS로 계산, 동작 줄이기에서도 그대로"
+    },
+    "motion": {
+      "cost": "합성만",
+      "light": "width 대신 transform: scaleX. CSS animation-timeline: scroll()이면 JS가 없다",
+      "support": "CSS 방식은 Chrome 115, Safari 26, Firefox 159에서 됨(Baseline 새로 지원, 2026-10). 지원하지 않으면 JS로 scrollY를 재서 같은 scaleX",
+      "reduce": "그대로 둬도 된다(정보 표시)"
+    }
+  },
+  {
+    "id": "view-transition",
+    "name": "View Transition",
+    "ko": "뷰 전환",
+    "path": [
+      "움직임",
+      "화면 전환·스크롤 연출",
+      "화면 전환"
+    ],
+    "one": "화면이 바뀔 때 브라우저가 전과 후를 찍어 두고 둘을 이어 준다. 기본은 교차 페이드",
+    "aka": [
+      "Page Transition",
+      "View Transitions API",
+      "startViewTransition",
+      "페이지 전환"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "소개·랜딩",
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "kind": [
+        "교차 페이드",
+        "밀기"
+      ],
+      "duration_ms": [
+        150,
+        500
+      ]
+    },
+    "control_ko": {
+      "kind": "잇는 방식",
+      "duration_ms": "길이(ms)"
+    },
+    "defaults": {
+      "kind": "교차 페이드",
+      "duration_ms": 250
+    },
+    "phrases": {
+      "kind": {
+        "교차 페이드": "교차 페이드(기본값)로",
+        "밀기": "옆으로 밀며(::view-transition-old/new에 translateX)"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Shared Element Transition",
+        "diff": "화면 전체가 아니라 이름 붙인 요소 하나가 자리를 옮기며 이어진다"
+      },
+      {
+        "name": "Fade",
+        "diff": "요소 하나의 투명도만 바꾼다. 뷰 전환은 전 화면과 새 화면을 통째로 잇는다"
+      },
+      {
+        "name": "Tabs",
+        "diff": "눌러서 내용을 바꾸는 부품. 바꿀 때 뷰 전환을 걸 수 있다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "페이지 넘어갈 때 부드럽게 해줘",
+        "risk": "전환 라이브러리를 들이거나 화면 전체를 0.5초씩 숨겼다 보여 줘서 누를 때마다 늦게 느껴진다"
+      }
+    ],
+    "right": "\"document.startViewTransition()으로 감싸 250ms 교차 페이드, 지원 안 하면 바로 바꾸기\"처럼 방식과 길이를 말한다",
+    "prompt": {
+      "when": "소개 사이트에서 기능·요금·후기 화면을 오갈 때",
+      "what": "View Transition",
+      "how": "내용을 바꾸는 코드를 document.startViewTransition()으로 감싸 {kind} {duration_ms}ms 동안 이어 주고, 지원하지 않는 브라우저에서는 바로 바꾸고, 동작 줄이기면 전환을 끔"
+    },
+    "motion": {
+      "cost": "합성만",
+      "light": "브라우저가 전·후 화면을 그림으로 찍어 합성하므로 레이아웃을 다시 계산하지 않는다. 0.2~0.4초로 짧게, 자주 오가는 업무 화면에서는 더 짧게",
+      "support": "같은 문서 뷰 전환은 Baseline 새로 지원(2025-10, 마지막이 Firefox 144). 페이지 사이(문서 간) 전환은 Chrome 126+, Safari 18.2+, Firefox 없음. 지원하지 않으면 전환 없이 바로 바뀐다",
+      "reduce": "전환 없이 바로 바꿈"
+    }
+  },
+  {
+    "id": "shared-element-transition",
+    "name": "Shared Element Transition",
+    "ko": "이어지는 요소 전환",
+    "path": [
+      "움직임",
+      "화면 전환·스크롤 연출",
+      "화면 전환"
+    ],
+    "one": "목록의 사진이 상세 화면의 큰 사진으로 자리와 크기를 옮기며 이어진다",
+    "aka": [
+      "Hero Transition",
+      "Morph",
+      "view-transition-name",
+      "Magic Move"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기",
+        "길찾기"
+      ],
+      "use": [
+        "소개·랜딩",
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "duration_ms": [
+        200,
+        600
+      ],
+      "back": [
+        "돌아갈 때도",
+        "갈 때만"
+      ]
+    },
+    "control_ko": {
+      "duration_ms": "길이(ms)",
+      "back": "뒤로 갈 때"
+    },
+    "defaults": {
+      "duration_ms": 350,
+      "back": "돌아갈 때도"
+    },
+    "phrases": {
+      "back": {
+        "돌아갈 때도": "뒤로 갈 때도 같은 사진이 목록 자리로 되돌아가게",
+        "갈 때만": "뒤로 갈 때는 바로 바꾸게"
+      }
+    },
+    "pairs": [
+      {
+        "name": "View Transition",
+        "diff": "화면 전체를 잇는 바탕 기술. 이 용어는 그중 이름 붙인 요소 하나를 잇는다"
+      },
+      {
+        "name": "FLIP",
+        "diff": "뷰 전환 없이 JS로 자리를 재서 transform으로 잇는 기법"
+      },
+      {
+        "name": "Modal Dialog",
+        "diff": "목록 위에 덮어 열린다. 요소가 자리를 옮기지 않는다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "카드 누르면 커지면서 상세로 가게 해줘",
+        "risk": "width·height를 직접 바꿔 버벅이거나, 모든 카드에 같은 view-transition-name을 줘서 전환이 깨진다"
+      }
+    ],
+    "right": "\"누른 카드 사진에만 view-transition-name: product, 상세 큰 사진도 같은 이름, 350ms\"처럼 무엇을 잇는지 말한다",
+    "prompt": {
+      "when": "상품 목록에서 카드를 눌러 상세로 갈 때",
+      "what": "Shared Element Transition",
+      "how": "누른 카드의 사진과 상세의 큰 사진에 같은 view-transition-name을 그 순간 하나만 주고 {duration_ms}ms 동안 자리와 크기를 이어 주고, {back}, 나머지 화면은 교차 페이드, 지원하지 않으면 바로 바꾸고, 동작 줄이기면 끔"
+    },
+    "motion": {
+      "cost": "합성만",
+      "light": "view-transition-name은 누른 요소에만 그 순간 붙인다(한 화면에 같은 이름은 하나). 자리와 크기 변화는 브라우저가 transform으로 처리한다",
+      "support": "같은 문서 뷰 전환은 Baseline 새로 지원(2025-10, 마지막이 Firefox 144). 페이지 사이(문서 간) 전환은 Chrome 126+, Safari 18.2+, Firefox 없음. 지원하지 않으면 전환 없이 바로 바뀐다",
+      "reduce": "전환 없이 바로 바꿈"
+    }
+  },
+  {
+    "id": "entry-animation",
+    "name": "Entry Animation",
+    "ko": "생겨날 때 등장",
+    "path": [
+      "움직임",
+      "화면 전환·스크롤 연출",
+      "화면 전환"
+    ],
+    "one": "display: none이던 요소가 생겨날 때 시작 모습을 정해 두고 부드럽게 들어온다. 닫을 때도 끝까지 보이며 사라진다",
+    "aka": [
+      "@starting-style",
+      "Enter Animation",
+      "allow-discrete",
+      "입장 애니메이션"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면",
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "from": [
+        "아래에서",
+        "작게"
+      ],
+      "duration_ms": [
+        100,
+        400
+      ],
+      "exit": [
+        "닫을 때도",
+        "열 때만"
+      ]
+    },
+    "control_ko": {
+      "from": "시작 모습",
+      "duration_ms": "길이(ms)",
+      "exit": "사라질 때"
+    },
+    "defaults": {
+      "from": "아래에서",
+      "duration_ms": 200,
+      "exit": "닫을 때도"
+    },
+    "phrases": {
+      "from": {
+        "아래에서": "8px 아래·투명(opacity 0, translateY(8px))으로",
+        "작게": "조금 작게·투명(opacity 0, scale(.96))으로"
+      },
+      "exit": {
+        "닫을 때도": "닫을 때도 transition-behavior: allow-discrete로 끝까지 보이며 사라지게",
+        "열 때만": "닫을 때는 바로 사라지게"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Fade",
+        "diff": "이미 있는 요소의 투명도를 바꾼다. 이 용어는 없던 요소가 생겨나는 순간의 시작 모습을 정한다"
+      },
+      {
+        "name": "Scroll Reveal",
+        "diff": "이미 있는 요소가 스크롤로 화면에 들어올 때 나타난다"
+      },
+      {
+        "name": "Popover",
+        "diff": "이 등장 방식을 자주 거는 부품"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "열릴 때 애니메이션 넣어줘",
+        "risk": "display: none에서는 transition이 걸리지 않아 툭 나타나고, 이를 피하려 setTimeout으로 클래스를 늦게 붙이는 꼼수가 들어간다"
+      }
+    ],
+    "right": "\"@starting-style로 opacity 0·8px 아래에서 200ms, 닫을 때 allow-discrete\"처럼 시작 모습과 닫힘을 말한다",
+    "prompt": {
+      "when": "구독 안내 패널이나 메뉴가 열리고 닫힐 때",
+      "what": "Entry Animation",
+      "how": "패널이 display: none에서 보일 때 @starting-style로 시작 모습을 {from} 정해 {duration_ms}ms 들어오게 하고, {exit}, opacity·transform만 쓰고, 지원하지 않으면 바로 보이게, 동작 줄이기면 끔"
+    },
+    "motion": {
+      "cost": "합성만",
+      "light": "JS 타이머 없이 CSS만으로 등장과 퇴장을 만든다. opacity·transform만 움직인다",
+      "support": "Baseline 새로 지원(2024-08, 마지막이 Firefox 129). 지원하지 않으면 바로 보인다",
+      "reduce": "바로 보이고 바로 사라짐"
+    }
+  },
+  {
+    "id": "marquee",
+    "name": "Marquee",
+    "ko": "흐르는 띠",
+    "path": [
+      "움직임",
+      "화면 전환·스크롤 연출",
+      "흐르기"
+    ],
+    "one": "로고나 글이 한 방향으로 끊김 없이 계속 흐른다",
+    "aka": [
+      "Ticker",
+      "Logo Wall",
+      "Infinite Scroll Strip",
+      "Infinite Moving Cards"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "speed_px": [
+        20,
+        80
+      ],
+      "stop": [
+        "멈춤 단추",
+        "5초 뒤 멈춤"
+      ]
+    },
+    "control_ko": {
+      "speed_px": "1초에 흐르는 거리(px)",
+      "stop": "멈추는 법"
+    },
+    "defaults": {
+      "speed_px": 40,
+      "stop": "멈춤 단추"
+    },
+    "phrases": {
+      "stop": {
+        "멈춤 단추": "멈춤·재생 단추를 둬(5초 넘게 움직이므로)",
+        "5초 뒤 멈춤": "5초 흐른 뒤 스스로 멈추게"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Horizontal Scroll",
+        "diff": "사용자가 밀어 넘긴다. 띠는 스스로 흐른다"
+      },
+      {
+        "name": "Carousel",
+        "diff": "한 장씩 끊어 넘어간다. 띠는 끊김 없이 흐른다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "로고들 옆으로 흐르게 해줘",
+        "risk": "멈출 방법 없이 계속 흘러 읽기 어렵고, 복제를 여러 벌 넣고 left 값을 바꿔 버벅인다"
+      }
+    ],
+    "right": "\"로고 줄 두 벌, translateX로 1초에 40px, 마우스·초점이면 멈춤, 멈춤 단추\"처럼 속도와 멈추는 법을 말한다",
+    "prompt": {
+      "when": "소개 페이지의 고객사 로고 줄에",
+      "what": "Marquee",
+      "how": "로고 줄을 두 벌 이어 붙여 transform: translateX로 1초에 {speed_px}px씩 끊김 없이 흐르게 하고, 마우스를 올리거나 초점이 들어오면 멈추고, {stop}, 동작 줄이기면 멈춘 한 줄"
+    },
+    "motion": {
+      "cost": "합성만",
+      "light": "복제는 한 벌만(화면 폭을 덮을 만큼), CSS animation으로 transform만 움직이고 animation-play-state로 멈춘다",
+      "support": "CSS animation이라 모든 브라우저",
+      "reduce": "멈춘 한 줄",
+      "pause": "5초 넘게 움직이므로 멈춤 단추나 5초 뒤 멈춤(WCAG 2.2.2). 마우스를 올려 멈추는 것만으로는 휴대폰과 키보드에서 못 멈춘다"
+    }
+  },
+  {
     "id": "hover-effect",
     "name": "Hover Effect",
     "ko": "마우스 올림 효과",
@@ -4378,6 +6424,340 @@
       "when": "표의 행과 카드에 마우스를 올리면",
       "what": "Hover Effect",
       "how": "{kind}, {duration_ms}ms ease-out, 터치 기기에서는 넣지 않기"
+    }
+  },
+  {
+    "id": "magnetic-button",
+    "name": "Magnetic Button",
+    "ko": "끌려오는 단추",
+    "path": [
+      "움직임",
+      "인터랙션 패턴",
+      "포인터 반응"
+    ],
+    "one": "포인터가 가까이 오면 단추가 그쪽으로 살짝 끌려온다",
+    "aka": [
+      "Magnetic Hover",
+      "Magnet Button",
+      "Attract Hover"
+    ],
+    "tags": {
+      "purpose": [
+        "피드백"
+      ],
+      "use": [
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "마우스 올림"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "strength_px": [
+        4,
+        20
+      ],
+      "range_px": [
+        40,
+        120
+      ]
+    },
+    "control_ko": {
+      "strength_px": "최대 이동(px)",
+      "range_px": "끌림 거리(px)"
+    },
+    "defaults": {
+      "strength_px": 8,
+      "range_px": 80
+    },
+    "pairs": [
+      {
+        "name": "Hover Effect",
+        "diff": "올렸을 때 색·그림자가 바뀐다. 끌림은 다가올 때 위치가 바뀐다"
+      },
+      {
+        "name": "3D Tilt",
+        "diff": "자리는 그대로이고 기울어진다"
+      },
+      {
+        "name": "Cursor Follower",
+        "diff": "단추가 아니라 장식이 포인터를 따라간다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "단추가 마우스 따라오게 해줘",
+        "risk": "단추가 크게 움직여 누르려는 순간 도망가고, 휴대폰에서는 아무 반응이 없는데 대안도 없다"
+      }
+    ],
+    "right": "\"단추 둘레 80px 안에서 최대 8px만 끌려오기, 마우스일 때만, 휴대폰은 눌림만\"처럼 거리와 한도를 말한다",
+    "prompt": {
+      "when": "소개 페이지의 시작하기 단추에",
+      "what": "Magnetic Button",
+      "how": "단추 둘레 {range_px}px 안으로 포인터가 들어오면 포인터 쪽으로 최대 {strength_px}px만 transform으로 끌어오고, 벗어나면 제자리로 부드럽게, @media (hover: hover)일 때만, 휴대폰과 동작 줄이기에서는 누를 때 눌림 반응만"
+    },
+    "motion": {
+      "cost": "JS 매 프레임(포인터가 움직일 때만)",
+      "light": "pointermove를 requestAnimationFrame 한 번에 모아 transform만 바꾼다. 단추 1~2개에만",
+      "support": "pointer 이벤트, transform, CSS 변수는 모든 주요 브라우저",
+      "reduce": "효과 없음",
+      "touch": "터치에는 떠 있는 포인터가 없다. 누를 때 눌림(scale .97)만"
+    }
+  },
+  {
+    "id": "spotlight-hover",
+    "name": "Spotlight Hover",
+    "ko": "따라오는 빛 카드",
+    "path": [
+      "움직임",
+      "인터랙션 패턴",
+      "포인터 반응"
+    ],
+    "one": "포인터 위치를 따라 카드 위에 둥근 빛이 번진다",
+    "aka": [
+      "Card Spotlight",
+      "Glare Hover",
+      "Magic Card",
+      "Radial Hover"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "마우스 올림"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "size_px": [
+        80,
+        300
+      ],
+      "scope": [
+        "카드 하나",
+        "카드 줄 전체"
+      ]
+    },
+    "control_ko": {
+      "size_px": "빛 크기(px)",
+      "scope": "빛이 닿는 곳"
+    },
+    "defaults": {
+      "size_px": 160,
+      "scope": "카드 하나"
+    },
+    "phrases": {
+      "scope": {
+        "카드 하나": "올린 카드 하나에만",
+        "카드 줄 전체": "카드 줄 전체에 걸쳐(옆 카드 테두리까지 비치게)"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Hover Effect",
+        "diff": "올리면 카드 전체가 한 번 바뀐다. 빛은 포인터 자리를 따라간다"
+      },
+      {
+        "name": "Border Beam",
+        "diff": "포인터와 상관없이 테두리를 따라 스스로 돈다"
+      },
+      {
+        "name": "3D Tilt",
+        "diff": "빛 대신 카드가 기울어진다. 함께 쓰기도 한다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "카드에 마우스 올리면 빛나게 해줘",
+        "risk": "카드 전체 배경을 바꾸는 단순 호버가 나오거나, 빛 안에만 중요한 글을 넣어 휴대폰에서는 못 본다"
+      }
+    ],
+    "right": "\"포인터 위치를 --x --y로, radial-gradient 160px, 올린 카드에만, 정보는 숨기지 않기\"처럼 말한다",
+    "prompt": {
+      "when": "기능 소개 카드 줄에",
+      "what": "Spotlight Hover",
+      "how": "포인터 위치를 CSS 변수 --x, --y로 넘겨 {size_px}px 크기의 radial-gradient 빛을 {scope} 그리고, 빛은 장식이라 정보를 그 안에 숨기지 않고, 휴대폰에서는 누른 카드에 은은한 빛을 고정, 동작 줄이기면 끔"
+    },
+    "motion": {
+      "cost": "페인트·레이아웃 듦",
+      "light": "JS는 --x, --y 변수 두 개만 바꾸고 그리기는 radial-gradient 하나로. 빛 크기를 작게",
+      "support": "pointer 이벤트, transform, CSS 변수는 모든 주요 브라우저",
+      "reduce": "끔",
+      "touch": "누른 카드에 은은한 빛을 고정"
+    }
+  },
+  {
+    "id": "tilt-3d",
+    "name": "3D Tilt",
+    "ko": "기울어지는 카드",
+    "path": [
+      "움직임",
+      "인터랙션 패턴",
+      "포인터 반응"
+    ],
+    "one": "포인터 위치에 따라 카드가 살짝 입체로 기울어진다",
+    "aka": [
+      "Tilt Card",
+      "3D Card Effect",
+      "Hover Tilt",
+      "Parallax Tilt"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "소개·랜딩"
+      ],
+      "trigger": [
+        "마우스 올림"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "max_deg": [
+        2,
+        15
+      ],
+      "glare": [
+        "없음",
+        "빛 반사"
+      ]
+    },
+    "control_ko": {
+      "max_deg": "최대 각도(도)",
+      "glare": "빛 반사"
+    },
+    "defaults": {
+      "max_deg": 8,
+      "glare": "없음"
+    },
+    "phrases": {
+      "glare": {
+        "없음": "빛 반사 없이",
+        "빛 반사": "포인터 쪽에 옅은 빛 반사를 얹고"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Spotlight Hover",
+        "diff": "기울지 않고 빛만 따라온다"
+      },
+      {
+        "name": "Magnetic Button",
+        "diff": "기울지 않고 자리가 끌려온다"
+      },
+      {
+        "name": "Hover Effect",
+        "diff": "올리면 한 번 바뀐다. 기울기는 포인터 자리를 계속 따라간다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "카드 입체감 있게 움직이게 해줘",
+        "risk": "각도가 커서 글자가 비스듬히 읽기 어렵고, 기기 기울기 센서까지 써서 휴대폰이 권한을 묻는다"
+      }
+    ],
+    "right": "\"최대 8도, rotateX·rotateY, 부모에 perspective, 벗어나면 0도로, 휴대폰은 눌림만\"처럼 각도 한도를 말한다",
+    "prompt": {
+      "when": "제품 소개 카드에",
+      "what": "3D Tilt",
+      "how": "부모에 perspective를 두고 포인터 위치로 카드를 최대 {max_deg}도까지 rotateX·rotateY로 기울이고, {glare}, 벗어나면 0도로 부드럽게, 휴대폰과 동작 줄이기에서는 기울이지 않고 눌림 반응만"
+    },
+    "motion": {
+      "cost": "합성만",
+      "light": "transform(rotate, perspective)만 바꾼다. 각도는 8도 이내, 카드 몇 장에만",
+      "support": "pointer 이벤트, transform, CSS 변수는 모든 주요 브라우저",
+      "reduce": "기울이지 않음",
+      "touch": "기울임 없이 누를 때 눌림만. 기기 기울기 센서는 쓰지 않는다"
+    }
+  },
+  {
+    "id": "cursor-follower",
+    "name": "Cursor Follower",
+    "ko": "따라오는 커서 장식",
+    "path": [
+      "움직임",
+      "인터랙션 패턴",
+      "포인터 반응"
+    ],
+    "one": "포인터를 조금 늦게 따라다니는 원 같은 장식. 링크 위에서는 커진다",
+    "aka": [
+      "Custom Cursor",
+      "Following Pointer",
+      "Smooth Cursor",
+      "Cursor Trail"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "소개·랜딩",
+        "놀이"
+      ],
+      "trigger": [
+        "마우스 올림"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "lag_ms": [
+        50,
+        300
+      ],
+      "grow": [
+        "링크 위에서 커짐",
+        "그대로"
+      ]
+    },
+    "control_ko": {
+      "lag_ms": "늦게 따라옴(ms)",
+      "grow": "링크 위에서"
+    },
+    "defaults": {
+      "lag_ms": 120,
+      "grow": "링크 위에서 커짐"
+    },
+    "phrases": {
+      "grow": {
+        "링크 위에서 커짐": "링크·단추 위에서는 원을 키워 누를 곳을 알리고",
+        "그대로": "크기는 그대로 두고"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Magnetic Button",
+        "diff": "장식이 아니라 단추 자체가 포인터 쪽으로 끌려온다"
+      },
+      {
+        "name": "Spotlight Hover",
+        "diff": "포인터를 따라가는 빛이 카드 안에만 그려진다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "마우스 커서 예쁘게 바꿔줘",
+        "risk": "기본 커서를 지우고 늦게 따라오는 원만 남겨 정확히 누르기 어렵다"
+      }
+    ],
+    "right": "\"기본 커서는 두고, 120ms 늦게 따라오는 원, 링크 위에서 커짐, 터치에서는 숨김\"처럼 말한다",
+    "prompt": {
+      "when": "소개 페이지 전체에",
+      "what": "Cursor Follower",
+      "how": "포인터를 {lag_ms}ms 늦게 따라오는 원을 transform으로 움직이고, {grow}, 기본 커서는 지우지 않고, pointer-events: none, 터치 기기와 동작 줄이기에서는 숨김"
+    },
+    "motion": {
+      "cost": "합성만(포인터가 움직일 때 JS)",
+      "light": "transform만 움직이고 pointermove를 requestAnimationFrame 한 번에 모은다. 기본 커서를 남겨 느린 기기에서도 누를 곳이 정확하다",
+      "support": "pointer 이벤트, transform, CSS 변수는 모든 주요 브라우저",
+      "reduce": "숨김",
+      "touch": "숨김(터치에는 따라갈 포인터가 없다)"
     }
   },
   {

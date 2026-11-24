@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>UI 용어집</title>
-<meta name="description" content="바이브코딩 때 사람과 AI가 화면을 같은 이름으로 부르게 하는 업무 화면 UI·모션 용어 62개. 움직이는 예시, 헷갈리는 짝, 요청 문장.">
+<meta name="description" content="바이브코딩 때 사람과 AI가 화면을 같은 이름으로 부르게 하는 UI·모션 용어집. 업무 화면 부품과 소개·랜딩 효과, 움직이는 예시, 헷갈리는 짝, 요청 문장.">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
 <link rel="stylesheet" href="parts.css">
 <style>
 /* 2단계 페이지 틀: terms.json을 읽어 격자 보기 / 목록 + 큰 미리보기, 검색과 태그 필터. 색 값은 시범과 같다 */
@@ -181,7 +181,7 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
 <body>
 <div class="wrap">
   <header>
-    <span class="eyebrow">UI Vocabulary · 업무 화면</span>
+    <span class="eyebrow">UI Vocabulary · 업무 화면 · 소개·랜딩</span>
     <h1>UI 용어집</h1>
     <p class="lead">바이브코딩을 할 때 사람과 AI가 화면을 같은 이름으로 부르게 하는 용어집입니다. 용어를 누르면 헷갈리는 짝, 틀리기 쉬운 말, 그대로 복사해 쓸 요청 문장이 나옵니다.</p>
   </header>
@@ -212,7 +212,7 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
 
   </div>
   <section id="screensview" class="screensview" hidden></section>
-  <footer>용어 <span id="total"></span>개 · 데이터는 <code>terms.json</code>, 조합 화면은 <code>recipes.json</code>입니다. 용어마다 움직이는 예시가 있고, 조합 화면 5개가 용어 62개를 한 번씩 씁니다. 코드는 MIT, 글은 CC BY 4.0 · <a href="https://github.com/whitejo401/ui-labs">GitHub</a> · <a href="llms.txt">llms.txt</a></footer>
+  <footer>용어 <span id="total"></span>개 · 데이터는 <code>terms.json</code>, 조합 화면은 <code>recipes.json</code>입니다. 용어마다 움직이는 예시가 있고, 조합 화면은 6개입니다. 업무 화면 5개가 업무 화면 용어 62개를 한 번씩 쓰고, 제품 소개 랜딩이 소개·랜딩 효과를 엮습니다. 코드는 MIT, 글은 CC BY 4.0 · <a href="https://github.com/whitejo401/ui-labs">GitHub</a> · <a href="llms.txt">llms.txt</a></footer>
 </div>
 
 <dialog id="dlg" aria-label="용어">
@@ -226,6 +226,7 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
 <script src="screen-dashboard.js"></script>
 <script src="screen-work-board.js"></script>
 <script src="screen-request-form.js"></script>
+<script src="screen-landing.js"></script>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
@@ -283,6 +284,14 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
     }).join('') + '</div>';
   }
 
+  // 효과 용어의 차별점 칸 (wiki: ui-labs-terms-data-format)
+  var MOTION = [['cost', '성능'], ['light', '가볍게 만드는 법'], ['support', '브라우저 지원'], ['reduce', '동작 줄이기'], ['touch', '휴대폰'], ['pause', '멈춤']];
+  function motionHTML(m) {
+    return '<div class="sec"><span class="label">가볍고 안전하게</span><ul class="pairs">' + MOTION.filter(function (k) { return m[k[0]]; }).map(function (k) {
+      return '<li><b>' + k[1] + '</b><span>' + esc(m[k[0]]) + '</span></li>';
+    }).join('') + '</ul></div>';
+  }
+
   function termHTML(t) {
     var scene = hasScene(t);
     var pairs = t.pairs.map(function (x) {
@@ -309,6 +318,7 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
       '<div class="sec prompt"><span class="label">요청 문장</span><p>' + promptHTML(t, t.defaults) + '</p>' +
         '<div class="legend"><span class="slot when">언제</span><span class="slot what">무엇</span><span class="slot how">어떻게</span></div>' +
         '<div class="row"><button class="btn" type="button" data-copy>문장 복사</button><span class="note" role="status"></span></div></div>' +
+      (t.motion ? motionHTML(t.motion) : '') +
       '<div class="cols">' +
         '<div class="sec"><span class="label">헷갈리는 짝</span><ul class="pairs">' + pairs + '</ul></div>' +
         '<div class="sec wrong"><span class="label">틀리기 쉬운 말</span>' + wrong + '<div><i class="o">○</i><span>' + esc(t.right) + '</span></div></div>' +
@@ -523,7 +533,7 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
     names.forEach(function (n) { promptHtml = promptHtml.split(esc(n)).join('\u0000' + n + '\u0001'); });
     promptHtml = promptHtml.replace(/\u0000/g, '<span class="slot what">').replace(/\u0001/g, '</span>');
     $('screensview').innerHTML =
-      '<p class="lead">용어 여러 개를 엮어 만든 업무 화면입니다. 실제로 눌러 볼 수 있습니다. "용어 보기"를 켜면 부품마다 용어 이름이 붙고, 이름을 누르면 그 용어 카드가 열립니다.</p>' +
+      '<p class="lead">용어 여러 개를 엮어 만든 화면입니다. 실제로 눌러 볼 수 있습니다. "용어 보기"를 켜면 부품마다 용어 이름이 붙고, 이름을 누르면 그 용어 카드가 열립니다.</p>' +
       '<div class="scbar">' + RECIPES.map(function (x) {
         return '<button type="button" class="opt" data-recipe="' + x.id + '" aria-pressed="' + (x.id === r.id) + '"' + (x.ready ? '' : ' disabled') + '>' + esc(x.name) + '<small>' + x.terms.length + '개' + (x.ready ? '' : ' · 준비 중') + '</small></button>';
       }).join('') + '<label class="termtoggle"><input type="checkbox" id="labels-on"> 용어 보기</label></div>' +

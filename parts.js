@@ -61,7 +61,8 @@
       if (!id || seen[id] || el.closest('.off') || el.closest('[hidden]')) return;
       var r = el.getBoundingClientRect();
       if (!r.width || !r.height) return;
-      var x = Math.max(0, r.left - a.left - 2), y = Math.max(0, r.top - a.top - 2), w = Math.min(r.width + 4, a.width - x), h = Math.min(r.height + 4, a.height - y);
+      // 틀 밖으로 스크롤된 요소는 건너뛰고, 걸친 요소는 보이는 부분만 감싼다
+      var x = Math.max(0, r.left - a.left - 2), y = Math.max(0, r.top - a.top - 2), w = Math.min(r.right - a.left + 2, a.width) - x, h = Math.min(r.bottom - a.top + 2, a.height) - y;
       if (w <= 0 || h <= 0) return;
       seen[id] = true;
       var k = place && place(id), pos;
@@ -1336,6 +1337,671 @@
       return ms < 500 ? '맨 아래 · 저장 누름' : !arrived ? '스크롤 중' : '오류 칸 도착 · 초점';
     } };
   };
+  /* ───── 움직임 › 스크롤 연출 (소개·랜딩) ───── */
+  // 스크롤 위치 길 [[ms, 0~1], ...]: 점 사이를 ease.inOut으로 잇는다
+  function scrollAlong(path, ms) {
+    if (ms <= path[0][0]) return path[0][1];
+    for (var i = 1; i < path.length; i++) if (ms < path[i][0]) return lerp(path[i - 1][1], path[i][1], ease.inOut(seg(ms, path[i - 1][0], path[i][0])));
+    return path[path.length - 1][1];
+  }
+  var SBAR = '<div class="sb" style="position:absolute;right:3px;top:3px;bottom:3px;width:4px;z-index:5;pointer-events:none"><i style="position:absolute;left:0;right:0;top:0;border-radius:2px;background:var(--u-muted);opacity:.45"></i></div>';
+  function scrollbar(st, y, vh, total) {
+    var sb = st.querySelector('.sb'), th = sb.firstChild, H = sb.clientHeight, h = Math.max(16, H * Math.min(1, vh / total));
+    th.style.height = h + 'px'; th.style.transform = 'translateY(' + ((total > vh ? y / (total - vh) : 0) * (H - h)) + 'px)';
+  }
+  function featCard(i, h) { return '<div class="cd" style="height:' + h + 'px;border-radius:10px;background:var(--u-accent-soft);border:1px solid var(--u-line);display:grid;place-items:center;font-weight:700;color:var(--u-accent)">기능 ' + i + '</div>'; }
+
+  S['scroll-driven-animation'] = function (st, c) {
+    var view = c.timeline === 'view()', scale = c.prop === '크기', MS = 3800, PATH = [[300, 0], [2600, 1], [3300, 0.45]];
+    st.innerHTML = '<div class="ct" style="position:absolute;left:0;right:0;top:0;padding:14px 18px;display:grid;gap:12px"><b style="font-size:15px">이렇게 쓰세요</b>' + fakes(2) +
+      [1, 2, 3].map(function (i) { return featCard(i, 96) + fakes(1); }).join('') + fakes(3) + '</div>' + SBAR;
+    var ct = st.querySelector('.ct'), cds = st.querySelectorAll('.cd');
+    return { ms: MS, rest: 0.45, at: function (t) {
+      var ms = t * MS, vh = st.clientHeight, maxS = Math.max(0, ct.scrollHeight - vh), y = maxS * scrollAlong(PATH, ms);
+      ct.style.transform = 'translateY(' + (-y) + 'px)';
+      scrollbar(st, y, vh, ct.scrollHeight);
+      cds.forEach(function (cd) {
+        var p = view ? clamp((vh - (cd.offsetTop - y)) / (vh * 0.6)) : maxS ? y / maxS : 1;
+        cd.style.opacity = scale ? lerp(0.35, 1, p) : p;
+        cd.style.transform = scale ? 'scale(' + lerp(0.7, 1, p) + ')' : 'translateY(' + (28 * (1 - p)) + 'px)';
+      });
+      return ms < 300 ? '맨 위' : ms < 2600 ? (view ? '카드마다 화면을 지나는 만큼 진행' : '모든 카드가 페이지 스크롤 하나를 따라감 ' + Math.round(y / (maxS || 1) * 100) + '%') : ms < 3300 ? '위로 되돌리면 되감김' : '스크롤을 멈추면 그 자리에서 멈춤';
+    } };
+  };
+
+  S['scroll-reveal'] = function (st, c) {
+    var dist = +c.distance_px, dur = +c.duration_ms, every = c.once === '들어올 때마다', MS = 4300, PATH = [[300, 0], [1900, 1], [2700, 0.25], [3500, 1]];
+    st.innerHTML = '<div class="ct" style="position:absolute;left:0;right:0;top:0;padding:14px 18px;display:grid;gap:12px"><b style="font-size:15px">이렇게 쓰세요</b>' + fakes(2) +
+      [1, 2, 3, 4].map(function (i) { return featCard(i, 80) + fakes(1); }).join('') + fakes(2) + '</div>' + SBAR;
+    var ct = st.querySelector('.ct'), cds = [].slice.call(st.querySelectorAll('.cd'));
+    return { ms: MS, rest: 0.8, at: function (t) {
+      var ms = t * MS, vh = st.clientHeight, maxS = Math.max(0, ct.scrollHeight - vh);
+      function yAt(m) { return maxS * scrollAlong(PATH, m); }
+      var y = yAt(ms), n = 0;
+      ct.style.transform = 'translateY(' + (-y) + 'px)';
+      scrollbar(st, y, vh, ct.scrollHeight);
+      cds.forEach(function (cd) {
+        function inside(m) { var top = cd.offsetTop - yAt(m); return top < vh * 0.88 && top + cd.offsetHeight > 0; }
+        // 들어온 시각: 한 번만이면 처음, 들어올 때마다면 마지막으로 들어온 때
+        var start = -1, was = false;
+        for (var m = 0; m <= ms; m += 20) { var on = inside(m); if (on && !was && (every || start < 0)) start = m; was = on; }
+        var p = start < 0 || (every && !inside(ms)) ? 0 : ease.out(seg(ms, start, start + dur));
+        show(cd, p, dist);
+        if (p > 0.5) n++;
+      });
+      return '나타난 카드 ' + n + '개' + (ms > 1900 && ms < 2700 ? ' · 위로 올림' : ms > 2700 && ms < 3500 ? (every ? ' · 다시 들어온 카드는 다시 재생' : ' · 이미 나온 카드는 그대로') : '');
+    } };
+  };
+
+  S['parallax'] = function (st, c) {
+    var three = c.layers === '3층', sp = +c.speed / 100, mid = (sp + 1) / 2, MS = 3600, PATH = [[300, 0], [2300, 1], [2900, 1], [3500, 0]];
+    var hill = function (mix, poly) { return 'background:color-mix(in srgb, var(--u-accent) ' + mix + '%, var(--u-accent-soft));clip-path:polygon(' + poly + ')'; };
+    st.innerHTML = '<div class="ct" style="position:absolute;left:0;right:0;top:0">' +
+      '<div style="position:relative;height:250px;overflow:hidden;background:var(--u-accent-soft)">' +
+        '<div class="l0" style="position:absolute;left:0;right:0;top:-40px;height:330px"><i style="position:absolute;right:18%;top:70px;width:54px;height:54px;border-radius:50%;background:var(--u-flash)"></i>' +
+          '<i style="position:absolute;left:-10%;right:-10%;bottom:40px;height:150px;' + hill(35, '0 100%,0 60%,18% 25%,32% 55%,50% 10%,68% 50%,82% 30%,100% 58%,100% 100%') + '"></i></div>' +
+        (three ? '<div class="l1" style="position:absolute;left:0;right:0;top:0;height:290px"><i style="position:absolute;left:-5%;right:-5%;bottom:0;height:110px;' + hill(65, '0 100%,0 55%,25% 30%,45% 60%,70% 20%,100% 50%,100% 100%') + '"></i></div>' : '') +
+        '<div style="position:absolute;left:18px;top:56px;display:grid;gap:6px;justify-items:start"><b style="font-size:20px">여름 산행 예약</b><span>주말마다 열리는 작은 산행</span><button type="button" class="u-btn primary">일정 보기</button></div>' +
+      '</div><div style="padding:14px 18px;display:grid;gap:10px;background:var(--u-panel)">' + fakes(8) + '</div></div>' + SBAR;
+    var ct = st.querySelector('.ct'), l0 = st.querySelector('.l0'), l1 = st.querySelector('.l1');
+    return { ms: MS, rest: 0.7, at: function (t) {
+      var ms = t * MS, vh = st.clientHeight, maxS = Math.min(200, Math.max(0, ct.scrollHeight - vh)), y = maxS * scrollAlong(PATH, ms);
+      ct.style.transform = 'translateY(' + (-y) + 'px)';
+      scrollbar(st, y, vh, ct.scrollHeight);
+      // 층은 글과 함께 올라가되, 뒤층일수록 덜 올라가게 아래로 되민다
+      l0.style.transform = 'translateY(' + (y * (1 - sp)) + 'px)';
+      if (l1) l1.style.transform = 'translateY(' + (y * (1 - mid)) + 'px)';
+      return '배경 ' + Math.round(sp * 100) + '%' + (three ? ' · 중간 ' + Math.round(mid * 100) + '%' : '') + ' · 글 100% 속도';
+    } };
+  };
+
+  S['sticky-scrollytelling'] = function (st, c) {
+    var n = +c.steps, slide = c.swap === '밀어 올림', H = 150, PIN = 40, MS = 1200 + n * 900;
+    var STEPS = [['요청 쓰기', '용어 이름으로 화면을 말한다', '✎'], ['화면 받기', 'AI가 이름대로 만든다', '▦'], ['이름표로 확인', '부품마다 이름을 붙여 본다', '◎'], ['다듬기', '조절판 값으로 고친다', '✓']].slice(0, n);
+    st.innerHTML = '<div class="ct" style="position:absolute;left:0;right:0;top:0;padding:0 16px">' +
+      '<div style="height:70px;display:grid;align-content:center;gap:6px"><b style="font-size:15px">이렇게 동작해요</b>' + fakes(1) + '</div>' +
+      '<div class="sec" style="position:relative;display:grid;grid-template-columns:1fr 1fr;gap:14px"><div>' +
+        STEPS.map(function (s, i) { return '<div class="tx" style="height:' + H + 'px;display:grid;align-content:center;gap:4px;font-size:12.5px"><b style="font-size:14px">' + (i + 1) + '. ' + s[0] + '</b><span style="color:var(--u-muted)">' + s[1] + '</span></div>'; }).join('') + '</div>' +
+        '<div class="pin" style="position:absolute;right:0;top:0;width:calc(50% - 7px);height:170px;border-radius:12px;border:1px solid var(--u-line);background:var(--u-panel);overflow:hidden">' +
+          STEPS.map(function (s, i) { return '<div class="pg" style="position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:6px"><span style="font-size:44px;line-height:1;color:var(--u-accent)">' + s[2] + '</span><span style="font-size:12px;color:var(--u-muted)">' + (i + 1) + ' / ' + n + '</span></div>'; }).join('') + '</div>' +
+      '</div><div style="padding:16px 0;display:grid;gap:10px">' + fakes(5) + '</div></div>' + SBAR;
+    var ct = st.querySelector('.ct'), sec = st.querySelector('.sec'), pin = st.querySelector('.pin'), pgs = st.querySelectorAll('.pg'), txs = st.querySelectorAll('.tx');
+    return { ms: MS, rest: 0.5, at: function (t) {
+      var ms = t * MS, vh = st.clientHeight, maxS = Math.max(0, ct.scrollHeight - vh), y = maxS * scrollAlong([[300, 0], [MS - 500, 1]], ms);
+      ct.style.transform = 'translateY(' + (-y) + 'px)';
+      scrollbar(st, y, vh, ct.scrollHeight);
+      // position: sticky 흉내: 구역 안에서는 화면 위 PIN px에 붙어 있다
+      var secTop = sec.offsetTop, room = sec.offsetHeight - pin.offsetHeight, top = Math.max(0, Math.min(room, y + PIN - secTop));
+      pin.style.transform = 'translateY(' + top + 'px)';
+      // 지금 단계: 설명의 가운데가 화면 가운데를 지나면 넘어간다. 경계 근처에서만 바뀐다
+      var f = (y + vh / 2 - secTop - H / 2) / H, fl = Math.floor(f), F = Math.max(0, Math.min(n - 1, fl + clamp((f - fl - 0.3) / 0.4))), now = Math.round(F);
+      pgs.forEach(function (pg, i) {
+        pg.style.opacity = slide ? 1 : clamp(1 - Math.abs(i - F));
+        pg.style.transform = slide ? 'translateY(' + ((i - F) * 100) + '%)' : '';
+      });
+      txs.forEach(function (tx, i) { tx.style.opacity = i === now ? 1 : 0.4; });
+      return y + PIN < secTop ? '구역 전' : top >= room ? '구역 끝 · 그림 칸도 함께 올라감' : (now + 1) + '단계 · 그림 칸은 붙어 있음';
+    } };
+  };
+
+  S['horizontal-scroll'] = function (st, c) {
+    var snap = c.snap === '카드마다 멈춤', peek = +c.peek_px, G = 10, MS = 3800, NAMES = ['물류 회사', '병원 예약', '학원 관리', '카페 주문', '공방 수업', '동네 서점'];
+    st.innerHTML = '<div class="u-pad" style="gap:10px"><b style="font-size:14px">고객 사례</b>' +
+      '<div class="vp" style="position:relative;overflow:hidden;margin:0 -14px;padding:0 14px"><div class="row" style="display:flex;gap:' + G + 'px">' +
+        NAMES.map(function (nm, i) { return '<div class="cd" style="flex:none;height:110px;box-sizing:border-box;border-radius:10px;border:1px solid var(--u-line);background:var(--u-panel);padding:10px;display:grid;align-content:space-between"><b>' + nm + '</b>' + fakes(2) + '<span style="font-family:var(--u-mono);font-size:11px;color:var(--u-muted)">' + (i + 1) + ' / 6</span></div>'; }).join('') +
+      '</div></div><div style="display:flex;gap:6px;justify-content:flex-end"><button type="button" class="u-btn pv" aria-label="이전">‹</button><button type="button" class="u-btn nx" aria-label="다음">›</button></div></div>';
+    var vp = st.querySelector('.vp'), row = st.querySelector('.row'), cds = st.querySelectorAll('.cd'), nx = st.querySelector('.nx'), cur = cursor(st);
+    return { ms: MS, rest: 0.95, at: function (t) {
+      var ms = t * MS, see = vp.clientWidth - 28, W = Math.max(80, see - peek - G), step = W + G;
+      cds.forEach(function (cd) { cd.style.width = W + 'px'; });
+      var maxX = 6 * W + 5 * G - see;
+      // 두 번 밀고 놓은 뒤, › 단추로 한 장. 자유면 미는 힘만큼 더 흐른다
+      var a1 = 0.6, a2 = a1 + (snap ? 0.4 : 0.35), b2 = a2 + 1.6, b3 = snap ? 3 : b2 + 0.35, c3 = b3 + 1, x;
+      if (ms < 400) x = 0;
+      else if (ms < 1000) x = a1 * seg(ms, 400, 1000);
+      else if (ms < 1700) x = lerp(a1, a2, ease.out(seg(ms, 1000, snap ? 1300 : 1500)));
+      else if (ms < 2300) x = lerp(a2, b2, seg(ms, 1700, 2300));
+      else if (ms < 2900) x = lerp(b2, b3, ease.out(seg(ms, 2300, snap ? 2600 : 2800)));
+      else x = lerp(b3, c3, ease.inOut(seg(ms, 2900, 3250)));
+      x = Math.min(maxX, x * step);
+      row.style.transform = 'translateX(' + (-x) + 'px)';
+      var r = rel(st, vp), dragging = (ms > 400 && ms < 1000) || (ms > 1700 && ms < 2300), cy = r.y + 55;
+      if (ms < 1700) put(cur, lerp(r.x + see * 0.8, r.x + see * 0.8 - a1 * step, seg(ms, 400, 1000)), cy, dragging);
+      else if (ms < 2600) put(cur, lerp(r.x + see * 0.95, r.x + see * 0.95 - 1.6 * step, seg(ms, 1700, 2300)), cy, dragging);
+      else { var b = rel(st, nx); put(cur, b.x + b.w / 2, b.y + b.h / 2, ms > 2850 && ms < 2980); }
+      cur.style.opacity = ms > 250 && ms < 3500 ? 1 : 0;
+      return ms < 400 ? '다음 카드가 ' + peek + 'px 보임' : dragging ? '끌기' : ms < 2900 ? (snap ? '놓음 · 카드 앞머리에 맞춰 멈춤' : '놓음 · 미는 힘만큼 흐르다 멈춤') : '› 단추로 한 장';
+    } };
+  };
+
+  S['scroll-progress'] = function (st, c) {
+    var body = c.target === '본문만', MS = 3600;
+    st.innerHTML = '<div class="ct" style="position:absolute;left:0;right:0;top:0;padding-top:34px">' +
+      '<div class="ar" style="padding:12px 18px;display:grid;gap:9px"><b style="font-size:15px">휴대폰으로 화면 요청하는 법</b>' + fakes(16) + '</div>' +
+      '<div style="padding:16px 18px;background:var(--u-side);border-top:1px solid var(--u-line);display:grid;gap:8px;font-size:12px;color:var(--u-muted)">바닥글' + fakes(6) + '</div></div>' +
+      '<div style="position:absolute;left:0;right:0;top:0;height:34px;z-index:3;display:flex;align-items:center;padding:0 14px;background:var(--u-panel);border-bottom:1px solid var(--u-line);font-weight:700;font-size:12.5px">블로그</div>' +
+      '<div class="pb" style="position:absolute;left:0;right:0;top:34px;height:' + (+c.height_px) + 'px;z-index:4;background:var(--u-accent);transform-origin:left;transform:scaleX(0)"></div>' + SBAR;
+    var ct = st.querySelector('.ct'), ar = st.querySelector('.ar'), pb = st.querySelector('.pb');
+    return { ms: MS, rest: 0.5, at: function (t) {
+      var ms = t * MS, vh = st.clientHeight, maxS = Math.max(0, ct.scrollHeight - vh), y = maxS * scrollAlong([[300, 0], [3000, 1]], ms);
+      ct.style.transform = 'translateY(' + (-y) + 'px)';
+      scrollbar(st, y, vh, ct.scrollHeight);
+      var end = body ? ar.offsetTop + ar.offsetHeight - vh : maxS, p = clamp(y / Math.max(1, end));
+      pb.style.transform = 'scaleX(' + p + ')';
+      return '읽은 만큼 ' + Math.round(p * 100) + '%' + (body && p >= 1 && y < maxS - 1 ? ' · 본문 끝에서 다 참(바닥글은 빼고)' : '');
+    } };
+  };
+
+  /* ───── 움직임 › 화면 전환 (뷰 전환) ───── */
+  function centerOf(st, el) { var r = rel(st, el); return [r.x + r.w / 2, r.y + r.h / 2]; }
+
+  S['view-transition'] = function (st, c) {
+    var slide = c.kind === '밀기', dur = +c.duration_ms, T1 = 600, T2 = T1 + dur + 900, MS = T2 + dur + 700;
+    var PAGES = [['기능', '한 번에 정리되는 일정', 70], ['요금', '월 9,900원부터', 40], ['후기', '"팀 회의가 절반으로 줄었어요"', 20]];
+    st.innerHTML = '<div style="position:absolute;inset:0;display:grid;grid-template-rows:auto 1fr">' +
+      '<div style="display:flex;gap:4px;padding:8px 14px;border-bottom:1px solid var(--u-line);background:var(--u-panel)">' + PAGES.map(function (p) { return '<button type="button" class="u-btn tb" style="padding:3px 12px">' + p[0] + '</button>'; }).join('') + '</div>' +
+      '<div style="position:relative;overflow:hidden">' + PAGES.map(function (p) {
+        return '<div class="pg" style="position:absolute;inset:0;padding:14px;display:grid;gap:8px;align-content:start"><b style="font-size:17px">' + esc(p[1]) + '</b>' +
+          '<div style="height:70px;border-radius:10px;background:color-mix(in srgb, var(--u-accent) ' + p[2] + '%, var(--u-accent-soft))"></div>' + fakes(3) + '</div>';
+      }).join('') + '</div></div>';
+    var pgs = st.querySelectorAll('.pg'), tbs = st.querySelectorAll('.tb'), cur = cursor(st);
+    return { ms: MS, rest: 0.5, at: function (t) {
+      var ms = t * MS, from = ms < T2 ? 0 : 1, at = ms < T2 ? T1 : T2, p = ms < T1 ? 0 : ease.inOut(seg(ms, at, at + dur)), to = from + 1;
+      if (ms < T1) { from = 0; to = -1; }
+      pgs.forEach(function (pg, i) {
+        var o = 0, x = 0;
+        if (i === from) { o = slide ? 1 : 1 - p; x = slide ? -100 * p : 0; if (to < 0) o = 1; }
+        else if (i === to) { o = slide ? 1 : p; x = slide ? 100 * (1 - p) : 0; }
+        pg.style.opacity = o; pg.style.visibility = o > 0.001 && (x > -100 && x < 100) ? 'visible' : 'hidden'; pg.style.transform = x ? 'translateX(' + x + '%)' : '';
+      });
+      var active = ms < T1 ? 0 : ms < T2 ? 1 : 2;
+      tbs.forEach(function (b, i) { b.style.fontWeight = i === active ? 700 : 400; b.style.borderColor = i === active ? 'var(--u-accent)' : ''; });
+      var target = ms < T1 + 200 ? tbs[1] : tbs[2], xy = centerOf(st, target);
+      put(cur, xy[0], xy[1], (ms > T1 - 120 && ms < T1) || (ms > T2 - 120 && ms < T2));
+      cur.style.opacity = ms > 250 && ms < T2 + 300 ? 1 : 0;
+      var moving = ms >= T1 && (ms < T1 + dur || (ms >= T2 && ms < T2 + dur));
+      return moving ? '전·후 화면을 찍어 ' + (slide ? '밀며' : '교차 페이드로') + ' 잇는 중' : PAGES[active][0] + ' 화면';
+    } };
+  };
+
+  S['shared-element-transition'] = function (st, c) {
+    var dur = +c.duration_ms, back = c.back === '돌아갈 때도', T1 = 600, T2 = T1 + dur + 1100, MS = T2 + dur + 700;
+    var ITEMS = [['산책 가방', '39,000원', 30], ['캠핑 컵', '18,000원', 60], ['접이 의자', '54,000원', 85]];
+    function photo(mix, cls, h) { return '<div class="' + cls + '" style="height:' + h + 'px;border-radius:8px;background:color-mix(in srgb, var(--u-accent) ' + mix + '%, var(--u-accent-soft))"></div>'; }
+    st.innerHTML = '<div class="ls" style="position:absolute;inset:0;padding:14px;display:grid;gap:10px;align-content:start"><b style="font-size:14px">새로 나온 상품</b><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">' +
+        ITEMS.map(function (it, i) { return '<div class="cd" style="display:grid;gap:5px;padding:8px;border:1px solid var(--u-line);border-radius:10px;background:var(--u-panel);font-size:12px">' + photo(it[2], 'ph', 62) + '<b>' + it[0] + '</b><span style="color:var(--u-muted)">' + it[1] + '</span></div>'; }).join('') + '</div>' + fakes(2) + '</div>' +
+      '<div class="dt" style="position:absolute;inset:0;padding:14px;display:grid;gap:8px;align-content:start;background:var(--u-bg)"><span><button type="button" class="u-btn bk" style="padding:2px 10px">← 목록</button></span>' + photo(ITEMS[1][2], 'big', 100) +
+        '<b style="font-size:16px">' + ITEMS[1][0] + ' <span style="font-weight:400;color:var(--u-muted);font-size:13px">' + ITEMS[1][1] + '</span></b>' + fakes(2) + '</div>' +
+      '<div class="mv" style="position:absolute;z-index:4;border-radius:8px;background:color-mix(in srgb, var(--u-accent) ' + ITEMS[1][2] + '%, var(--u-accent-soft))"></div>';
+    var ls = st.querySelector('.ls'), dt = st.querySelector('.dt'), mv = st.querySelector('.mv'), card = st.querySelectorAll('.cd')[1], small = st.querySelectorAll('.ph')[1], big = st.querySelector('.big'), bk = st.querySelector('.bk'), cur = cursor(st);
+    return { ms: MS, rest: 0.45, at: function (t) {
+      var ms = t * MS, a = rel(st, small), b = rel(st, big);
+      // d: 상세 쪽으로 간 정도 (0 목록, 1 상세). 뒤로는 되돌아가거나 바로
+      var d = ms < T1 ? 0 : ms < T2 ? ease.inOut(seg(ms, T1, T1 + dur)) : back ? 1 - ease.inOut(seg(ms, T2, T2 + dur)) : 0;
+      var moving = (ms >= T1 && ms < T1 + dur) || (back && ms >= T2 && ms < T2 + dur);
+      ls.style.opacity = 1 - d; ls.style.visibility = d < 0.999 ? 'visible' : 'hidden';
+      dt.style.opacity = d; dt.style.visibility = d > 0.001 ? 'visible' : 'hidden';
+      small.style.visibility = moving || d > 0.5 ? 'hidden' : 'visible'; big.style.visibility = moving ? 'hidden' : 'visible';
+      mv.style.display = moving ? 'block' : 'none';
+      if (moving) { mv.style.left = lerp(a.x, b.x, d) + 'px'; mv.style.top = lerp(a.y, b.y, d) + 'px'; mv.style.width = lerp(a.w, b.w, d) + 'px'; mv.style.height = lerp(a.h, b.h, d) + 'px'; }
+      var tgt = ms < T1 + 300 ? card : bk, xy = centerOf(st, tgt);
+      put(cur, xy[0], xy[1], (ms > T1 - 120 && ms < T1) || (ms > T2 - 120 && ms < T2));
+      cur.style.opacity = ms > 250 && ms < T2 + 300 && (ms < T1 + 50 || ms > T1 + dur + 300) ? 1 : 0;
+      return moving ? '같은 사진이 자리와 크기를 옮기는 중' : ms < T1 ? '목록' : ms < T2 ? '상세 · 사진이 이어짐' : back ? '목록 · 사진이 제자리로 돌아옴' : '목록 · 바로 바뀜';
+    } };
+  };
+
+  S['entry-animation'] = function (st, c) {
+    var dur = +c.duration_ms, up = c.from === '아래에서', exit = c.exit === '닫을 때도', T1 = 600, T2 = T1 + dur + 1200, MS = T2 + dur + 700;
+    st.innerHTML = '<div class="u-pad" style="gap:10px"><b style="font-size:15px">매주 새 소식</b>' + fakes(2) + '<div style="position:relative;justify-self:start"><button type="button" class="u-btn primary op">새 소식 받기</button>' +
+      '<div class="pn" style="display:none;position:absolute;left:0;top:calc(100% + 6px);z-index:3;width:260px;max-width:calc(100vw - 60px);padding:12px;border:1px solid var(--u-line);border-radius:12px;background:var(--u-panel);box-shadow:var(--u-shadow)">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center"><b>소식 구독</b><button type="button" class="u-icon x" aria-label="닫기">×</button></div>' +
+        '<div style="margin-top:8px;border:1px solid var(--u-line);border-radius:6px;padding:5px 8px;color:var(--u-muted);font-size:12.5px">이메일</div></div></div>' + fakes(3) + '</div>';
+    var pn = st.querySelector('.pn'), op = st.querySelector('.op'), x = st.querySelector('.x'), cur = cursor(st);
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, open = ms >= T1 && ms < T2, p = open ? ease.out(seg(ms, T1, T1 + dur)) : exit && ms >= T2 ? 1 - ease.inOut(seg(ms, T2, T2 + dur)) : 0;
+      pn.style.display = p > 0.001 || open ? 'block' : 'none';
+      pn.style.opacity = p;
+      pn.style.transform = up ? 'translateY(' + (8 * (1 - p)) + 'px)' : 'scale(' + lerp(0.96, 1, p) + ')';
+      var xy = centerOf(st, ms < T1 + 300 || pn.style.display === 'none' ? op : x);
+      put(cur, xy[0], xy[1], (ms > T1 - 120 && ms < T1) || (ms > T2 - 120 && ms < T2));
+      cur.style.opacity = ms > 250 && ms < T2 + 200 ? 1 : 0;
+      return ms < T1 ? 'display: none' : open ? (p < 1 ? '생겨남 · @starting-style 모습에서 들어오는 중' : '열림') : p > 0 ? 'allow-discrete로 끝까지 보이며 사라지는 중' : exit ? '닫힘' : '닫힘 · 바로 사라짐';
+    } };
+  };
+
+  /* ───── 표현 › 글자 효과, 움직임 › 흐르기 (소개·랜딩) ───── */
+  function prand(i, k) { var x = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453; return x - Math.floor(x); }
+  // 5초 넘게 스스로 움직이는 예시의 멈춤 단추 (WCAG 2.2.2)
+  var PZ_ICON = { stop: '<svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><rect x="1.5" y="1" width="2.5" height="8"/><rect x="6" y="1" width="2.5" height="8"/></svg>', play: '<svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M2 1l7 4-7 4z"/></svg>' };
+  var PAUSE = '<button type="button" class="u-btn pz" style="position:absolute;right:12px;bottom:12px;z-index:3;padding:2px 10px;font-size:12px;gap:5px">' + PZ_ICON.stop + '멈춤</button>';
+  function pzLabel(b, stopped) { var k = stopped ? 'play' : 'stop'; if (b.getAttribute('data-k') !== k) { b.setAttribute('data-k', k); b.innerHTML = PZ_ICON[k] + (stopped ? '재생' : '멈춤'); } }
+  function secs(ms) { return (ms / 1000).toFixed(1) + '초'; }
+
+  S['text-split-reveal'] = function (st, c) {
+    var unit = c.unit, gap = +c.stagger_ms, mask = c.mask === '가림 틀 안에서', LINES = ['화면을 이름으로 부르면', 'AI가 알아듣는다'], n = 0;
+    function piece(s) { return '<span class="pc" style="display:inline-block;white-space:pre">' + esc(s) + '</span>'; }
+    st.innerHTML = '<div class="u-pad" style="gap:12px;align-content:center"><div style="font-size:24px;font-weight:800;line-height:1.25;letter-spacing:-0.01em">' + LINES.map(function (ln) {
+      var parts = unit === '줄' ? [ln] : unit === '단어' ? ln.split(/( )/) : ln.split('');
+      return '<div style="' + (mask ? 'overflow:hidden;' : '') + 'padding-bottom:2px">' + parts.map(function (p) { return p === ' ' ? ' ' : piece(p); }).join('') + '</div>';
+    }).join('') + '</div><span style="color:var(--u-muted)">용어 이름 하나로 요청이 짧아집니다</span></div>';
+    var pcs = st.querySelectorAll('.pc'); n = pcs.length;
+    var DUR = 500, MS = 300 + (n - 1) * gap + DUR + 700;
+    return { ms: MS, rest: 1, at: function (t) {
+      var ms = t * MS, done = 0;
+      pcs.forEach(function (pc, i) {
+        var p = ease.out(seg(ms, 300 + i * gap, 300 + i * gap + DUR));
+        if (mask) { pc.style.transform = 'translateY(' + (105 * (1 - p)) + '%)'; pc.style.opacity = ''; }
+        else { pc.style.transform = 'translateY(' + (12 * (1 - p)) + 'px)'; pc.style.opacity = p; }
+        if (p > 0.5) done++;
+      });
+      return '조각 ' + n + '개 중 ' + done + '개 드러남';
+    } };
+  };
+
+  S['text-scramble'] = function (st, c) {
+    var dur = +c.duration_ms, SET = { '기호': '#%&*@$!?', '영문 대문자': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', '숫자': '0123456789' }[c.chars], TEXT = '이름으로 만든 화면', MS = 300 + dur + 1200;
+    st.innerHTML = '<div class="u-pad" style="gap:10px;align-content:center;justify-items:start"><span style="font-size:12px;color:var(--u-muted)">오늘의 표어</span>' +
+      '<div class="tx" aria-label="' + TEXT + '" style="font-size:26px;font-weight:800;white-space:nowrap">' + TEXT.split('').map(function (ch) { return '<span style="display:inline-block;width:' + (ch === ' ' ? '0.35em' : '1em') + ';text-align:center"></span>'; }).join('') + '</div>' +
+      '<span style="font-size:12px;color:var(--u-muted)">글자 칸 폭을 1em으로 고정해 줄이 흔들리지 않습니다</span></div>';
+    var cells = st.querySelectorAll('.tx span');
+    return { ms: MS, rest: 1, at: function (t) {
+      var ms = t * MS, p = seg(ms, 300, 300 + dur), fixed = Math.floor(p * TEXT.length + 0.0001), frame = Math.floor(ms / 50);
+      cells.forEach(function (cell, i) {
+        var ch = TEXT[i];
+        cell.textContent = ch === ' ' || i < fixed ? ch : SET[Math.floor(prand(i, frame) * SET.length)];
+        cell.style.color = i < fixed ? '' : 'var(--u-muted)';
+      });
+      return p >= 1 ? '맞춰짐 · 한 번만' : ms < 300 ? '섞이기 전' : '앞에서부터 ' + fixed + '/' + TEXT.length + '자 맞춰짐';
+    } };
+  };
+
+  S['shine-text'] = function (st, c) {
+    var sp = +c.speed_ms, GAP = 800, cyc = sp + GAP, auto = c.repeat === '5초 안에 멈춤', MS = 7000, PZ = 5600;
+    var rounds = auto ? Math.max(1, Math.floor(5000 / cyc)) : Infinity;
+    st.innerHTML = '<div class="u-pad" style="gap:10px;align-content:center"><span style="font-size:12px;color:var(--u-muted)">새로 나왔어요</span>' +
+      '<div style="font-size:24px;font-weight:800;line-height:1.3">부품마다 <span class="sh" style="background-image:linear-gradient(100deg, var(--u-ink) 0 42%, var(--u-accent) 50%, var(--u-ink) 58% 100%);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent">이름표 보기</span></div>' + fakes(2) + '</div>' + (auto ? '' : PAUSE);
+    var sh = st.querySelector('.sh'), pz = st.querySelector('.pz'), cur = cursor(st);
+    return { ms: MS, rest: 0.3, at: function (t) {
+      var ms = t * MS, end = auto ? rounds * cyc : PZ, live = Math.min(ms, end), k = Math.floor(live / cyc), q = seg(live - k * cyc, 0, sp);
+      if (ms >= end) q = 0;
+      sh.style.backgroundPosition = (100 - q * 100) + '% 0';
+      if (pz) {
+        var r = rel(st, pz); put(cur, r.x + r.w / 2, r.y + r.h / 2, ms > PZ - 120 && ms < PZ);
+        cur.style.opacity = ms > PZ - 700 && ms < PZ + 500 ? 1 : 0;
+        pzLabel(pz, ms >= PZ);
+      } else cur.style.opacity = 0;
+      return secs(ms) + ' · ' + (ms < end ? (k + 1) + '번째 지나감' : auto ? rounds + '번 지나고 5초 안에 멈춤' : '멈춤 단추로 멈춤');
+    } };
+  };
+
+  S['typewriter'] = function (st, c) {
+    var sp = +c.speed_ms, loop = c.loop === '여러 문구 돌리기', HEAD = 'AI에게 맡기세요: ', WORDS = ['회의록 정리', '기획서 초안', '화면 만들기'], ONE = '이름으로 요청하면 화면이 맞게 나와요';
+    var DEL = 30, HOLD = 900, PZ = 6200, MS = loop ? 7200 : 400 + ONE.length * sp + 1600;
+    st.innerHTML = '<div class="u-pad" style="gap:10px;align-content:center"><b style="font-size:20px">작은 팀의 화면 도구</b>' +
+      '<div style="font-size:16px;min-height:3em" aria-label="' + (loop ? HEAD + WORDS.join(', ') : ONE) + '"><span class="tw"></span><span class="cr" style="display:inline-block;width:2px;height:1.1em;background:var(--u-accent);vertical-align:-3px;margin-left:1px"></span></div>' + fakes(2) + '</div>' + (loop ? PAUSE : '');
+    var tw = st.querySelector('.tw'), cr = st.querySelector('.cr'), pz = st.querySelector('.pz'), cur = cursor(st);
+    // 돌리기: 문구마다 치기 → 머묾 → 지우기
+    function loopText(ms) {
+      var m = ms - 400; if (m < 0) return HEAD;
+      for (var k = 0; ; k = (k + 1) % WORDS.length) {
+        var w = WORDS[k], typeT = w.length * sp, delT = w.length * DEL, all = typeT + HOLD + delT + 200;
+        if (m < typeT) return HEAD + w.slice(0, Math.floor(m / sp));
+        if (m < typeT + HOLD) return HEAD + w;
+        if (m < typeT + HOLD + delT) return HEAD + w.slice(0, w.length - Math.floor((m - typeT - HOLD) / DEL));
+        if (m < all) return HEAD;
+        m -= all;
+      }
+    }
+    return { ms: MS, rest: 1, at: function (t) {
+      var ms = t * MS, live = loop ? Math.min(ms, PZ) : ms;
+      tw.textContent = loop ? loopText(live) : ONE.slice(0, Math.max(0, Math.floor((ms - 400) / sp)));
+      var typing = loop ? ms < PZ : tw.textContent.length < ONE.length;
+      cr.style.opacity = typing || Math.floor(ms / 500) % 2 ? 1 : 0;
+      if (pz) {
+        var r = rel(st, pz); put(cur, r.x + r.w / 2, r.y + r.h / 2, ms > PZ - 120 && ms < PZ);
+        cur.style.opacity = ms > PZ - 700 && ms < PZ + 500 ? 1 : 0;
+        pzLabel(pz, ms >= PZ);
+      } else cur.style.opacity = 0;
+      return loop ? secs(ms) + (ms >= PZ ? ' · 멈춤 단추로 멈춤' : ' · 문구 돌리는 중') : typing ? '치는 중 ' + tw.textContent.length + '/' + ONE.length + '자' : '다 침 · 커서만 깜빡임';
+    } };
+  };
+
+  S['marquee'] = function (st, c) {
+    var v = +c.speed_px, btn = c.stop === '멈춤 단추', LOGOS = ['물류온', '케어노트', '학원24', '카페큐', '공방로그', '책방길'], H0 = 1600, H1 = 2600, PZ = 5600, MS = 6800;
+    function set() { return '<div class="set" style="display:flex;gap:10px;padding-right:10px;flex:none">' + LOGOS.map(function (l) { return '<span style="flex:none;padding:8px 14px;border:1px solid var(--u-line);border-radius:999px;background:var(--u-panel);font-weight:700;font-size:13px;color:var(--u-muted)">' + l + '</span>'; }).join('') + '</div>'; }
+    st.innerHTML = '<div class="u-pad" style="gap:12px;align-content:center"><b style="font-size:15px;text-align:center">이런 팀이 쓰고 있어요</b>' +
+      '<div class="vp" style="overflow:hidden;margin:0 -14px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)"><div class="row" style="display:flex;width:max-content">' + set() + set() + '</div></div>' + fakes(2) + '</div>' + (btn ? PAUSE : '');
+    var vp = st.querySelector('.vp'), row = st.querySelector('.row'), one = st.querySelector('.set'), pz = st.querySelector('.pz'), cur = cursor(st);
+    return { ms: MS, rest: 0.2, at: function (t) {
+      var ms = t * MS, end = btn ? PZ : 5000;
+      // 흐른 시간: 마우스를 올린 동안과 멈춘 뒤는 빼고 센다
+      var run = Math.min(ms, end) - Math.max(0, Math.min(ms, H1) - H0), W = one.offsetWidth;
+      row.style.transform = 'translateX(' + (-((run * v / 1000) % W)) + 'px)';
+      var r = rel(st, vp), hover = ms >= H0 && ms < H1;
+      if (ms < PZ - 700 || !btn) put(cur, r.x + r.w / 2, r.y + r.h / 2, false);
+      else { var b = rel(st, pz); put(cur, b.x + b.w / 2, b.y + b.h / 2, ms > PZ - 120 && ms < PZ); }
+      cur.style.opacity = (ms > H0 - 300 && ms < H1 + 200) || (btn && ms > PZ - 700 && ms < PZ + 500) ? 1 : 0;
+      if (pz) pzLabel(pz, ms >= PZ);
+      return secs(ms) + ' · ' + (hover ? '마우스를 올려 멈춤' : ms < end ? '흐르는 중' : btn ? '멈춤 단추로 멈춤' : '5초 지나 스스로 멈춤');
+    } };
+  };
+
+  /* ───── 표현 › 색·효과 › 배경·질감 (소개·랜딩) ───── */
+  function heroText(title, sub, btn) {
+    return '<div style="position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:8px;text-align:center;padding:16px">' +
+      '<b style="font-size:20px">' + title + '</b>' + (sub ? '<span>' + sub + '</span>' : '') + (btn ? '<button type="button" class="u-btn primary">' + btn + '</button>' : '') + '</div>';
+  }
+
+  S['aurora-gradient'] = function (st, c) {
+    var n = +c.blobs, move = c.motion === '천천히 움직임', PZ = 5600, MS = move ? 7000 : 2000;
+    var COL = ['var(--u-accent)', 'var(--u-ok)', 'var(--u-warn)', 'var(--u-info)'], POS = [[15, 20], [70, 15], [40, 70], [85, 75]];
+    st.innerHTML = '<div style="position:absolute;inset:0;overflow:hidden;background:var(--u-panel)">' + POS.slice(0, n).map(function (p, i) {
+      return '<i class="bl" style="position:absolute;left:' + p[0] + '%;top:' + p[1] + '%;width:55%;aspect-ratio:1;margin:-27% 0 0 -27%;border-radius:50%;background:' + COL[i] + ';opacity:0;filter:blur(40px)"></i>';
+    }).join('') + heroText('지금 무료로 시작하기', '카드 등록 없이 14일', '시작하기') + '</div>' + (move ? PAUSE : '');
+    var bls = st.querySelectorAll('.bl'), pz = st.querySelector('.pz'), cur = cursor(st);
+    return { ms: MS, rest: move ? 0.4 : 1, at: function (t) {
+      var ms = t * MS, live = move ? Math.min(ms, PZ) : 0;
+      bls.forEach(function (b, i) {
+        b.style.opacity = 0.45 * seg(ms, 0, 600);
+        b.style.transform = move ? 'translate(' + (Math.sin(live / 900 + i * 2) * 30) + 'px,' + (Math.cos(live / 1100 + i) * 20) + 'px)' : '';
+      });
+      if (pz) {
+        var r = rel(st, pz); put(cur, r.x + r.w / 2, r.y + r.h / 2, ms > PZ - 120 && ms < PZ);
+        cur.style.opacity = ms > PZ - 700 && ms < PZ + 500 ? 1 : 0;
+        pzLabel(pz, ms >= PZ);
+      } else cur.style.opacity = 0;
+      return move ? secs(ms) + (ms < PZ ? ' · 덩어리가 transform으로만 떠다님(예시는 빠르게)' : ' · 멈춤 단추로 멈춤') : '정지 · 한 번 흐리게 그리고 끝';
+    } };
+  };
+
+  S['grain'] = function (st, c) {
+    var fine = c.size === '고움', MS = 3000;
+    st.innerHTML = '<div style="position:absolute;inset:0;background:linear-gradient(135deg, var(--u-accent-soft), color-mix(in srgb, var(--u-accent) 55%, var(--u-accent-soft)))"></div>' +
+      '<div class="gr" style="position:absolute;inset:0;pointer-events:none;background-size:' + (fine ? 160 : 320) + 'px;opacity:' + (+c.opacity_pct / 100) + '"></div>' +
+      '<div class="ln" style="position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--u-ink);opacity:.4"></div>' +
+      '<span class="u-kbd" style="position:absolute;left:12px;top:10px;font-size:11px">잡음 없음</span><span class="u-kbd" style="position:absolute;right:12px;top:10px;font-size:11px">잡음 ' + c.opacity_pct + '%</span>' +
+      heroText('손으로 만든 듯한 화면', '', '');
+    var gr = st.querySelector('.gr'), ln = st.querySelector('.ln');
+    gr.style.backgroundImage = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='" + (fine ? 0.9 : 0.45) + "' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='3 0 0 0 -1 3 0 0 0 -1 3 0 0 0 -1 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")";
+    return { ms: MS, rest: 1, at: function (t) {
+      var ms = t * MS, x = lerp(100, 50, ease.inOut(seg(ms, 300, 1800)));
+      gr.style.clipPath = 'inset(0 0 0 ' + x + '%)'; ln.style.left = x + '%'; ln.style.opacity = x > 99.9 ? 0 : 0.4;
+      return x > 99.9 ? '매끈한 그라데이션' : '오른쪽만 잡음 타일 한 장을 반복해 덮음 · 움직이지 않음';
+    } };
+  };
+
+  S['glass'] = function (st, c) {
+    var b = +c.blur_px, MS = 3600;
+    var BLOCKS = [['var(--u-accent)', '새 기능'], ['var(--u-ok)', '요금'], ['var(--u-warn)', '후기'], ['var(--u-info)', '자주 묻는 질문']];
+    st.innerHTML = '<div class="ct" style="position:absolute;left:0;right:0;top:0;padding:52px 16px 16px;display:grid;gap:12px">' + BLOCKS.map(function (x) {
+      return '<div style="height:70px;border-radius:12px;background:' + x[0] + ';display:flex;align-items:flex-end;padding:10px"><span style="background:var(--u-panel);border-radius:6px;padding:2px 8px;font-weight:700;font-size:12.5px">' + x[1] + '</span></div>';
+    }).join('') + fakes(4) + '</div>' +
+      '<div style="position:absolute;left:0;right:0;top:0;height:40px;z-index:3;display:flex;align-items:center;gap:12px;padding:0 14px;font-weight:700;font-size:13px;border-bottom:1px solid var(--u-line);background:color-mix(in srgb, var(--u-panel) ' + (+c.tint_pct) + '%, transparent);-webkit-backdrop-filter:blur(' + b + 'px);backdrop-filter:blur(' + b + 'px)">작업함<span style="margin-left:auto;font-weight:400">기능 · 요금 · 후기</span></div>' + SBAR;
+    var ct = st.querySelector('.ct');
+    return { ms: MS, rest: 0.35, at: function (t) {
+      var ms = t * MS, vh = st.clientHeight, maxS = Math.max(0, ct.scrollHeight - vh), y = maxS * scrollAlong([[300, 0], [3200, 1]], ms);
+      ct.style.transform = 'translateY(' + (-y) + 'px)';
+      scrollbar(st, y, vh, ct.scrollHeight);
+      return y < 8 ? '유리 판 뒤가 비어 있음' : '판 뒤로 색이 지나가며 ' + b + 'px 흐리게 비침';
+    } };
+  };
+
+  S['shader-background'] = function (st, c) {
+    var lazy = c.start === '첫 입력 뒤', ON = lazy ? 1100 : 0, PZ = 5400, MS = 6600;
+    st.innerHTML = '<canvas class="cv" style="position:absolute;inset:0;width:100%;height:100%"></canvas>' +
+      '<div style="position:absolute;inset:0;display:grid;align-content:center;gap:6px;padding:18px"><b style="font-size:21px">흐르는 화면, 가벼운 페이지</b><span>셰이더는 히어로 한 곳에만</span></div>' +
+      '<span class="u-kbd tg" style="position:absolute;left:12px;bottom:12px;font-size:11px;background:var(--u-panel)"></span>' + PAUSE;
+    var cv = st.querySelector('.cv'), tg = st.querySelector('.tg'), pz = st.querySelector('.pz'), cur = cursor(st);
+    function rgb(v) { var e = document.createElement('i'); e.style.color = v; st.appendChild(e); var m = getComputedStyle(e).color.match(/[\d.]+/g).map(Number); e.remove(); return m; }
+    var C0 = rgb('var(--u-bg)'), C1 = rgb('var(--u-accent-soft)'), C2 = rgb('var(--u-accent)');
+    var W = Math.max(8, Math.round(96 * c.res_pct / 100)), H = Math.max(4, Math.round(W / 2)), ctx = cv.getContext('2d'), img = ctx.createImageData(W, H), last = -1;
+    cv.width = W; cv.height = H;
+    // 셰이더 흉내: 사인 세 개를 겹친 물결을 작은 캔버스에 그리고 늘려 보인다 (WebGL은 장면 여럿에 두지 않는다)
+    function draw(time) {
+      if (time === last) return; last = time;
+      var s = time / 700, d = img.data;
+      for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) {
+        var v = (Math.sin(x / W * 6 + s) + Math.sin(y / H * 5 - s * 0.7) + Math.sin((x / W + y / H) * 4 + s * 0.5)) / 3, k = (v + 1) / 2, o = (y * W + x) * 4;
+        var a = k < 0.6 ? C0 : C1, b = k < 0.6 ? C1 : C2, q = k < 0.6 ? k / 0.6 : (k - 0.6) / 0.4 * 0.7;
+        for (var j = 0; j < 3; j++) d[o + j] = a[j] + (b[j] - a[j]) * q;
+        d[o + 3] = 255;
+      }
+      ctx.putImageData(img, 0, 0);
+    }
+    return { ms: MS, rest: 0.5, at: function (t) {
+      var ms = t * MS, running = ms >= ON && ms < PZ;
+      draw(ms < ON ? 0 : Math.min(ms, PZ) - ON);
+      tg.textContent = ms < ON ? '정지 이미지 · 첫 입력을 기다림' : running ? '켜짐 · ' + W + '×' + H + ' 점으로 그려 늘림' : '멈춤';
+      var r = rel(st, pz);
+      if (lazy && ms < ON + 200) { put(cur, st.clientWidth * 0.6, lerp(st.clientHeight * 0.35, st.clientHeight * 0.55, seg(ms, 600, 1000)), ms > 600 && ms < 1000); cur.style.opacity = ms > 400 ? 1 : 0; }
+      else { put(cur, r.x + r.w / 2, r.y + r.h / 2, ms > PZ - 120 && ms < PZ); cur.style.opacity = ms > PZ - 700 && ms < PZ + 500 ? 1 : 0; }
+      pzLabel(pz, ms >= PZ);
+      return secs(ms) + ' · ' + (ms < ON ? '정지 이미지(같은 색)' : running ? '셰이더 도는 중' : '멈춤 단추로 멈춤');
+    } };
+  };
+
+  S['dot-grid'] = function (st, c) {
+    var g = +c.gap_px, dots = c.kind === '점', MS = 2000;
+    var bg = dots ? 'radial-gradient(circle, color-mix(in srgb, var(--u-muted) 60%, transparent) 1px, transparent 1.6px)' : 'linear-gradient(var(--u-line) 1px, transparent 1px), linear-gradient(90deg, var(--u-line) 1px, transparent 1px)';
+    var mask = c.fade === '가장자리 흐림' ? '-webkit-mask-image:radial-gradient(ellipse at center, #000 30%, transparent 75%);mask-image:radial-gradient(ellipse at center, #000 30%, transparent 75%);' : '';
+    st.innerHTML = '<div style="position:absolute;inset:0;background:var(--u-panel)"></div><div class="gd" style="position:absolute;inset:0;background-image:' + bg + ';background-size:' + g + 'px ' + g + 'px;background-position:center;' + mask + 'opacity:0"></div>' +
+      heroText('화면을 이름으로', '용어 하나로 짧아지는 요청', '둘러보기');
+    var gd = st.querySelector('.gd');
+    return { ms: MS, rest: 1, at: function (t) {
+      var ms = t * MS; gd.style.opacity = seg(ms, 200, 900);
+      return ms < 200 ? '빈 배경' : (dots ? '점' : '격자 선') + ' ' + g + 'px 간격 · CSS 그라디언트 하나 · 한 번 그리고 끝';
+    } };
+  };
+
+  S['border-beam'] = function (st, c) {
+    var sp = +c.speed_s * 1000, once = c.stop === '한 바퀴만', PZ = 5600, MS = once ? sp + 1200 : 7000, end = once ? sp : PZ;
+    st.innerHTML = '<div class="u-pad" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-content:center">' + ['기본', '팀', '회사'].map(function (n, i) {
+      var inner = '<div style="position:relative;z-index:1;height:100%;box-sizing:border-box;border-radius:11px;background:var(--u-panel);padding:10px;display:grid;gap:6px;align-content:start;font-size:12px">' +
+        (i === 1 ? '<span class="u-pill p-prog" style="justify-self:start">추천</span>' : '<span style="height:20px"></span>') + '<b style="font-size:14px">' + n + '</b><span style="color:var(--u-muted)">' + ['무료', '월 9,900원', '문의'][i] + '</span>' + fakes(2) + '</div>';
+      return i === 1 ? '<div style="position:relative;height:150px;border-radius:12px;padding:2px;overflow:hidden;background:var(--u-line)"><i class="rt" style="position:absolute;left:50%;top:50%;width:300%;aspect-ratio:1;margin:-150% 0 0 -150%;background:conic-gradient(transparent 0 250deg, color-mix(in srgb, var(--u-accent) 35%, transparent) 300deg, var(--u-accent) 352deg, transparent 360deg)"></i>' + inner + '</div>'
+        : '<div style="height:150px;border-radius:12px;border:1px solid var(--u-line);overflow:hidden">' + inner + '</div>';
+    }).join('') + '</div>' + (once ? '' : PAUSE);
+    var rt = st.querySelector('.rt'), pz = st.querySelector('.pz'), cur = cursor(st);
+    return { ms: MS, rest: 0.3, at: function (t) {
+      var ms = t * MS, a = 360 * Math.min(ms, end) / sp;
+      rt.style.transform = 'rotate(' + a + 'deg)';
+      if (pz) {
+        var r = rel(st, pz); put(cur, r.x + r.w / 2, r.y + r.h / 2, ms > PZ - 120 && ms < PZ);
+        cur.style.opacity = ms > PZ - 700 && ms < PZ + 500 ? 1 : 0;
+        pzLabel(pz, ms >= PZ);
+      } else cur.style.opacity = 0;
+      return secs(ms) + ' · ' + (ms < end ? '판이 rotate로 도는 중 · ' + Math.floor(a / 360 + 1) + '바퀴째' : once ? '한 바퀴 돌고 멈춤' : '멈춤 단추로 멈춤');
+    } };
+  };
+
+  /* ───── 움직임 › 인터랙션 패턴 › 포인터 반응 (소개·랜딩) ───── */
+  // 포인터 길 [[ms, x비율, y비율], ...]: 점 사이를 ease.inOut으로 잇는다 → [x, y] px
+  function pathAt(P, ms, w, h) {
+    var a = P[0], b = P[P.length - 1];
+    if (ms <= a[0]) return [a[1] * w, a[2] * h];
+    for (var i = 1; i < P.length; i++) if (ms < P[i][0]) { a = P[i - 1]; b = P[i]; var q = ease.inOut(seg(ms, a[0], b[0])); return [lerp(a[1], b[1], q) * w, lerp(a[2], b[2], q) * h]; }
+    return [b[1] * w, b[2] * h];
+  }
+
+  S['magnetic-button'] = function (st, c) {
+    var k = +c.strength_px, R = +c.range_px, MS = 3800, P = [[0, 0.08, 0.85], [700, 0.3, 0.62], [1300, 0.62, 0.36], [1900, 0.42, 0.62], [2500, 0.92, 0.15], [3200, 0.53, 0.52], [3800, 0.53, 0.52]];
+    st.innerHTML = '<div class="rg" style="position:absolute;left:50%;top:50%;width:' + (2 * R) + 'px;height:' + (2 * R) + 'px;margin:' + (-R) + 'px 0 0 ' + (-R) + 'px;border:1px dashed var(--u-line);border-radius:50%"></div>' +
+      '<span style="position:absolute;left:50%;top:calc(50% - ' + (R + 18) + 'px);transform:translateX(-50%);font-size:11px;color:var(--u-muted)">끌림 거리 ' + R + 'px</span>' +
+      '<button type="button" class="u-btn primary mb" style="position:absolute;left:50%;top:50%;padding:8px 18px;font-size:14px;margin:-18px 0 0 -48px;width:96px;justify-content:center">시작하기</button>';
+    var mb = st.querySelector('.mb'), cur = cursor(st);
+    return { ms: MS, rest: 0.45, at: function (t) {
+      var ms = t * MS, w = st.clientWidth, h = st.clientHeight, p = pathAt(P, ms, w, h), dx = p[0] - w / 2, dy = p[1] - h / 2, d = Math.hypot(dx, dy);
+      // 둘레 안에서는 포인터 쪽으로, 경계 가까이에서는 0으로 줄어 튀지 않게
+      var f = d < R ? clamp((R - d) / (R * 0.3)) : 0, ox = dx / R * k * f, oy = dy / R * k * f, press = ms > 3350 && ms < 3500;
+      mb.style.transform = 'translate(' + ox + 'px,' + oy + 'px)' + (press ? ' scale(.97)' : '');
+      put(cur, p[0], p[1], press);
+      return d < R ? '둘레 안 · ' + Math.round(Math.hypot(ox, oy)) + 'px 끌려옴' + (press ? ' · 누름' : '') : '둘레 밖 · 제자리';
+    } };
+  };
+
+  S['spotlight-hover'] = function (st, c) {
+    var size = +c.size_px, all = c.scope === '카드 줄 전체', MS = 3600, P = [[0, 0.05, 0.9], [600, 0.18, 0.45], [1500, 0.5, 0.6], [2400, 0.82, 0.4], [3200, 0.97, 0.9]];
+    st.innerHTML = '<div class="u-pad" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-content:center">' + ['빠른 검색', '이름표 보기', '요청 복사'].map(function (n) {
+      return '<div class="wr" style="height:140px;border-radius:12px;padding:1px;background:var(--u-line)"><div class="in" style="height:100%;box-sizing:border-box;border-radius:11px;padding:12px;display:grid;gap:6px;align-content:start;background:var(--u-panel)"><b style="font-size:13.5px">' + n + '</b>' + fakes(3) + '</div></div>';
+    }).join('') + '</div>';
+    var wrs = st.querySelectorAll('.wr'), cur = cursor(st);
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, w = st.clientWidth, h = st.clientHeight, p = pathAt(P, ms, w, h), on = -1;
+      wrs.forEach(function (wr, i) {
+        var r = rel(st, wr), x = p[0] - r.x, y = p[1] - r.y, inside = x >= 0 && y >= 0 && x <= r.w && y <= r.h, lit = inside || all;
+        if (inside) on = i;
+        var at = 'circle ' + (size / 2) + 'px at ' + x + 'px ' + y + 'px';
+        wr.style.background = lit ? 'radial-gradient(' + at + ', var(--u-accent), var(--u-line))' : 'var(--u-line)';
+        wr.firstChild.style.background = inside ? 'radial-gradient(' + at + ', color-mix(in srgb, var(--u-accent) 16%, var(--u-panel)), var(--u-panel))' : 'var(--u-panel)';
+      });
+      put(cur, p[0], p[1], false);
+      return on < 0 ? '카드 밖' + (all ? ' · 가까운 테두리만 비침' : '') : (on + 1) + '번째 카드 위 · 빛이 포인터를 따라감';
+    } };
+  };
+
+  S['tilt-3d'] = function (st, c) {
+    var mx = +c.max_deg, glare = c.glare === '빛 반사', MS = 3600, P = [[0, 0.12, 0.88], [500, 0.36, 0.38], [1200, 0.64, 0.38], [1900, 0.64, 0.64], [2500, 0.36, 0.64], [2800, 0.5, 0.5], [3300, 0.95, 0.12]];
+    st.innerHTML = '<div style="position:absolute;inset:0;display:grid;place-items:center;perspective:600px"><div class="cd" style="position:relative;width:200px;height:130px;border-radius:14px;border:1px solid var(--u-line);background:var(--u-panel);box-shadow:var(--u-shadow);padding:14px;display:grid;gap:6px;align-content:start;overflow:hidden">' +
+      '<b style="font-size:15px">작업함 프로</b><span style="color:var(--u-muted);font-size:12px">월 9,900원</span>' + fakes(2) + '<i class="gl" style="position:absolute;inset:0;pointer-events:none"></i></div></div>';
+    var cd = st.querySelector('.cd'), gl = st.querySelector('.gl'), cur = cursor(st);
+    function rot(ms) {
+      var w = st.clientWidth, h = st.clientHeight, p = pathAt(P, ms, w, h), r = rel(st, cd), nx = (p[0] - (r.x + r.w / 2)) / (r.w / 2), ny = (p[1] - (r.y + r.h / 2)) / (r.h / 2);
+      return { p: p, inside: Math.abs(nx) <= 1 && Math.abs(ny) <= 1, rx: -ny * mx, ry: nx * mx, gx: (nx + 1) * 50, gy: (ny + 1) * 50 };
+    }
+    return { ms: MS, rest: 0.3, at: function (t) {
+      cd.style.transform = '';
+      var ms = t * MS, now = rot(ms), rx = now.rx, ry = now.ry, g = now.inside ? 1 : 0;
+      // 카드를 벗어나면 마지막 기울기에서 0도로 돌아온다 (rel은 기울기와 상관없는 카드 틀로 잰다)
+      if (!now.inside) {
+        var last = null; for (var m = ms; m >= 0; m -= 20) { var o = rot(m); if (o.inside) { last = { m: m, o: o }; break; } }
+        var back = last ? 1 - ease.out(seg(ms, last.m, last.m + 350)) : 0;
+        rx = last ? last.o.rx * back : 0; ry = last ? last.o.ry * back : 0; g = back;
+      }
+      cd.style.transform = 'rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)';
+      gl.style.background = glare ? 'radial-gradient(circle at ' + now.gx + '% ' + now.gy + '%, color-mix(in srgb, var(--u-accent) 22%, rgb(255 255 255 / ' + (0.45 * g) + ')), transparent 60%)' : '';
+      put(cur, now.p[0], now.p[1], false);
+      return now.inside ? '기울기 ' + Math.round(Math.abs(rx)) + '° · ' + Math.round(Math.abs(ry)) + '° (최대 ' + mx + '°)' : g > 0.01 ? '벗어남 · 0도로 돌아오는 중' : '평평함';
+    } };
+  };
+
+  S['cursor-follower'] = function (st, c) {
+    var lag = +c.lag_ms, grow = c.grow === '링크 위에서 커짐', MS = 3600, P = null;
+    st.innerHTML = '<div class="u-pad" style="gap:10px"><b style="font-size:16px">작은 팀의 화면 도구</b>' + fakes(3) + '<span style="justify-self:center;margin-top:16px"><button type="button" class="u-btn primary lk">둘러보기</button></span></div>' +
+      '<i class="fw" style="position:absolute;left:0;top:0;width:16px;height:16px;border-radius:50%;border:2px solid var(--u-accent);background:color-mix(in srgb, var(--u-accent) 12%, transparent);pointer-events:none;z-index:19"></i>';
+    var fw = st.querySelector('.fw'), lk = st.querySelector('.lk'), cur = cursor(st);
+    return { ms: MS, rest: 0.7, at: function (t) {
+      var ms = t * MS, w = st.clientWidth, h = st.clientHeight, r = rel(st, lk);
+      // 단추 위에 잠시 머무는 길 (단추 자리는 무대 폭에 따라 다르다)
+      if (!P) { var bx = (r.x + r.w / 2) / w, by = (r.y + r.h / 2) / h; P = [[0, 0.1, 0.85], [700, 0.35, 0.25], [1400, 0.75, 0.3], [2100, bx, by], [2700, bx, by], [3300, 0.15, 0.4]]; }
+      var p = pathAt(P, ms, w, h), q = pathAt(P, ms - lag, w, h);
+      var near = grow ? clamp(1 - Math.hypot(q[0] - (r.x + r.w / 2), q[1] - (r.y + r.h / 2)) / 70) : 0, s = 16 + 28 * near;
+      fw.style.width = fw.style.height = s + 'px';
+      fw.style.transform = 'translate(' + (q[0] - s / 2) + 'px,' + (q[1] - s / 2) + 'px)';
+      put(cur, p[0], p[1], false);
+      return '원은 ' + lag + 'ms 늦게 따라옴' + (near > 0.5 ? ' · 단추 위라 커짐' : '') + ' · 기본 커서는 그대로';
+    } };
+  };
+
+  /* ───── 움직임 › 기본 움직임 › 기법 ───── */
+  // 곡선 그림: f(0~1) → SVG 선. 0과 1에 기준선, 지금 점
+  function curveSVG(w, h) {
+    return '<svg class="cg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" style="overflow:visible;display:block">' +
+      '<line x1="0" x2="' + w + '" y1="' + (h * 0.8) + '" y2="' + (h * 0.8) + '" style="stroke:var(--u-line)"/><line x1="0" x2="' + w + '" y1="' + (h * 0.2) + '" y2="' + (h * 0.2) + '" style="stroke:var(--u-line);stroke-dasharray:3 3"/>' +
+      '<polyline class="c0" fill="none" style="stroke:var(--u-muted);stroke-width:1"/><polyline class="c1" fill="none" style="stroke:var(--u-accent);stroke-width:2"/><g class="pts"></g>' +
+      '<circle class="dt" r="4" style="fill:var(--u-accent)"/></svg>';
+  }
+  function curvePts(f, w, h, n) { var s = []; for (var i = 0; i <= n; i++) { var p = i / n; s.push((p * w).toFixed(1) + ',' + (h * 0.8 - f(p) * h * 0.6).toFixed(1)); } return s.join(' '); }
+  function springF(d, w) { return function (p) { return p >= 1 ? 1 : 1 - Math.exp(-d * p) * Math.cos(w * p); }; }
+  function bounceF(p) { var n = 7.5625, k = 2.75; if (p < 1 / k) return n * p * p; if (p < 2 / k) return n * (p -= 1.5 / k) * p + 0.75; if (p < 2.5 / k) return n * (p -= 2.25 / k) * p + 0.9375; return n * (p -= 2.625 / k) * p + 0.984375; }
+
+  S['flip'] = function (st, c) {
+    var drop = c.change === '항목 빠짐', dur = +c.duration_ms, H = 34, T0 = 700, MS = T0 + 300 + dur + 900;
+    var ROWS = [[31, '환불 금액 표시 오류', 3], [28, '사유 직접 입력 칸', 5], [27, '알림 메일 두 번 발송', 1], [25, '결제 수단 열 넣기', 4], [22, '정산 자동 재시도', 2]];
+    var to = drop ? [0, -1, 1, 2, 3] : ROWS.map(function (r) { return r[2] - 1; });
+    st.innerHTML = '<div class="u-pad" style="gap:8px"><div style="display:flex;justify-content:space-between;align-items:center"><b>이슈 목록</b><button type="button" class="u-btn sb">' + (drop ? '#28 닫기' : '우선순위순') + '</button></div>' +
+      '<div style="position:relative;height:' + (ROWS.length * H) + 'px">' + ROWS.map(function (r) {
+        return '<div class="rw" style="position:absolute;left:0;right:0;height:' + (H - 4) + 'px;display:flex;align-items:center;gap:8px;padding:0 10px;border:1px solid var(--u-line);border-radius:8px;background:var(--u-panel);font-size:12.5px"><span style="font-family:var(--u-mono);color:var(--u-muted)">#' + r[0] + '</span><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + r[1] + '</span><span class="u-kbd">P' + r[2] + '</span></div>';
+      }).join('') + '</div></div>';
+    var rws = st.querySelectorAll('.rw'), sb = st.querySelector('.sb'), cur = cursor(st);
+    return { ms: MS, rest: 1, at: function (t) {
+      var ms = t * MS, after = ms >= T0 + 300, play = ease.out(seg(ms, T0 + 300, T0 + 300 + dur));
+      rws.forEach(function (rw, i) {
+        var n = to[i];
+        if (n < 0) { var o = 1 - seg(ms, T0, T0 + 150); rw.style.top = i * H + 'px'; rw.style.opacity = o; rw.style.visibility = o > 0 ? 'visible' : 'hidden'; rw.style.transform = ''; return; }
+        // Last 자리(top)에 두고, Invert(처음 자리와의 차이)를 transform으로 되돌렸다가 Play로 0까지 푼다
+        rw.style.top = (after ? n : i) * H + 'px';
+        rw.style.transform = after ? 'translateY(' + ((i - n) * H * (1 - play)) + 'px)' : '';
+      });
+      var b = rel(st, sb); put(cur, b.x + b.w / 2, b.y + b.h / 2, ms > T0 - 120 && ms < T0);
+      cur.style.opacity = ms > 300 && ms < T0 + 400 ? 1 : 0;
+      return ms < T0 ? '처음 모습' : ms < T0 + 100 ? 'First · 처음 자리를 잼' : ms < T0 + 200 ? 'Last · 바뀐 뒤 새 자리를 잼' : ms < T0 + 300 ? 'Invert · 차이만큼 되돌려 그대로 보임' : play < 1 ? 'Play · transform을 0으로 푸는 중' : '새 자리에 도착';
+    } };
+  };
+
+  S['spring'] = function (st, c) {
+    var dur = +c.duration_ms, B = { '없음': [7, 0], '조금': [6, 9], '많이': [4.5, 16] }[c.bounce], f = springF(B[0], B[1]), T0 = 500, MS = T0 + dur + 900, GW = 150, GH = 110;
+    st.innerHTML = '<div class="u-pad" style="grid-template-columns:minmax(0,1fr) auto;gap:16px;align-content:center;align-items:center">' +
+      '<div style="position:relative;height:150px;border:1px dashed var(--u-line);border-radius:10px;overflow:hidden"><div class="bx" style="position:absolute;left:14px;right:14px;top:40px;padding:10px 12px;border-radius:10px;background:var(--u-panel);border:1px solid var(--u-line);box-shadow:var(--u-shadow);font-size:12.5px"><b>저장했어요</b><div style="color:var(--u-muted)">변경 3건</div></div></div>' +
+      '<div style="display:grid;gap:4px;font-size:11px;color:var(--u-muted)">' + curveSVG(GW, GH) + '<span>목표선(점선)을 지나쳤다 돌아옴</span></div></div>';
+    var bx = st.querySelector('.bx'), dt = st.querySelector('.dt');
+    st.querySelector('.c1').setAttribute('points', curvePts(f, GW, GH, 60));
+    return { ms: MS, rest: 1, at: function (t) {
+      var ms = t * MS, p = seg(ms, T0, T0 + dur), v = f(p);
+      bx.style.transform = 'translateY(' + (110 * (1 - v)) + 'px)';
+      dt.setAttribute('cx', p * GW); dt.setAttribute('cy', GH * 0.8 - v * GH * 0.6);
+      return ms < T0 ? '대기' : p < 1 ? '도착 정도 ' + Math.round(v * 100) + '%' + (v > 1.005 ? ' · 지나침' : '') : '멈춤';
+    } };
+  };
+
+  S['linear-easing'] = function (st, c) {
+    var n = +c.points, f = c.shape === '튕김' ? bounceF : springF(6, 9), T0 = 400, MS = T0 + 1200 + 800, GW = 200, GH = 120;
+    var S2 = []; for (var i = 0; i < n; i++) S2.push(f(i / (n - 1)));
+    function approx(p) { var x = p * (n - 1), i = Math.min(n - 2, Math.floor(x)); return lerp(S2[i], S2[i + 1], x - i); }
+    st.innerHTML = '<div class="u-pad" style="grid-template-columns:auto minmax(0,1fr);gap:16px;align-content:center;align-items:center">' +
+      '<div style="display:grid;gap:4px;font-size:11px;color:var(--u-muted)">' + curveSVG(GW, GH) + '<span>회색: 원래 곡선 · 파랑: linear() 점 ' + n + '개</span></div>' +
+      '<div style="display:grid;gap:8px;font-size:12px"><code style="font-family:var(--u-mono);font-size:11px;color:var(--u-muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis">linear(' + S2.slice(0, 4).map(function (v) { return v.toFixed(2); }).join(', ') + ', …)</code>' +
+      '<div style="position:relative;height:30px;border-bottom:1px solid var(--u-line)"><i class="bl" style="position:absolute;left:0;bottom:2px;width:22px;height:22px;border-radius:50%;background:var(--u-accent)"></i></div></div></div>';
+    var bl = st.querySelector('.bl'), dt = st.querySelector('.dt');
+    st.querySelector('.c0').setAttribute('points', curvePts(f, GW, GH, 120));
+    st.querySelector('.c1').setAttribute('points', curvePts(approx, GW, GH, (n - 1) * 4));
+    st.querySelector('.pts').innerHTML = S2.map(function (v, i) { return '<circle r="2" cx="' + (i / (n - 1) * GW) + '" cy="' + (GH * 0.8 - v * GH * 0.6) + '" style="fill:var(--u-accent)"/>'; }).join('');
+    return { ms: MS, rest: 1, at: function (t) {
+      var ms = t * MS, p = seg(ms, T0, T0 + 1200), v = approx(p), track = bl.parentNode.clientWidth - 22;
+      bl.style.transform = 'translateX(' + (v * track) + 'px)';
+      dt.setAttribute('cx', p * GW); dt.setAttribute('cy', GH * 0.8 - v * GH * 0.6);
+      return ms < T0 ? '대기' : p < 1 ? '점 사이를 곧게 이어 곡선을 흉내 냄 · ' + Math.round(p * 100) + '%' : '도착 · 점이 많을수록 원래 곡선에 가깝다';
+    } };
+  };
+
+  S['web-animations-api'] = function (st, c) {
+    var dur = +c.duration_ms, act = c.action, T0 = 500, MS = T0 + { '되감기': dur * 1.2, '멈춤': dur + 700, '속도 2배': dur * 0.7 }[act] + 900;
+    var CODE = { '되감기': 'a.reverse()', '멈춤': 'a.pause() … a.play()', '속도 2배': 'a.playbackRate = 2' }[act];
+    // 진행 정도(0~1)와 그때 줄: 시작 → 도중에 할 일 → 끝
+    function prog(ms) {
+      var m = ms - T0;
+      if (m < 0) return [0, 0];
+      if (act === '되감기') { var M = dur * 0.6; return m < M ? [m / dur, 1] : [Math.max(0, 0.6 - (m - M) / dur), m - M < M ? 2 : 3]; }
+      if (act === '멈춤') { var h = dur / 2; return m < h ? [m / dur, 1] : m < h + 700 ? [0.5, 2] : [Math.min(1, 0.5 + (m - h - 700) / dur), m - h - 700 < h ? 2 : 3]; }
+      var q = dur * 0.4; return m < q ? [m / dur, 1] : [Math.min(1, 0.4 + (m - q) * 2 / dur), m - q < dur * 0.3 ? 2 : 3];
+    }
+    st.innerHTML = '<div style="position:absolute;inset:0;display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr)">' +
+      '<div style="padding:14px;display:grid;gap:6px;align-content:start;font-family:var(--u-mono);font-size:11px;overflow:hidden;min-width:0">' +
+        '<span style="color:var(--u-muted)">// frames: translateX 100% → 0</span><span class="l1">const a = el.animate(<br>&nbsp;&nbsp;frames, { duration: ' + dur + ' })</span><span class="l2">' + CODE + '</span><span class="l3">await a.finished</span>' +
+        '<div style="margin-top:8px;height:6px;border-radius:3px;background:var(--u-line);overflow:hidden"><i class="pg" style="display:block;height:100%;background:var(--u-accent);transform-origin:left"></i></div><span class="ct" style="color:var(--u-muted)"></span></div>' +
+      '<div style="position:relative;overflow:hidden;border-left:1px solid var(--u-line)">' + '<div style="padding:14px;display:grid;gap:8px">' + fakes(5) + '</div>' +
+        '<div class="dr" style="position:absolute;top:0;bottom:0;right:0;width:80%;background:var(--u-panel);border-left:1px solid var(--u-line);box-shadow:var(--u-shadow);padding:12px;display:grid;gap:8px;align-content:start;font-size:12.5px"><b>연결 이슈</b>' + fakes(3) + '</div></div></div>';
+    var dr = st.querySelector('.dr'), pg = st.querySelector('.pg'), ct = st.querySelector('.ct'), ls = [st.querySelector('.l1'), st.querySelector('.l2'), st.querySelector('.l3')];
+    return { ms: MS, rest: 1, at: function (t) {
+      var ms = t * MS, r = prog(ms), v = ease.out(r[0]);
+      dr.style.transform = 'translateX(' + (100 * (1 - v)) + '%)';
+      pg.style.transform = 'scaleX(' + r[0] + ')';
+      ct.textContent = 'currentTime ' + Math.round(r[0] * dur) + ' / ' + dur + 'ms';
+      ls.forEach(function (l, i) { l.style.color = r[1] === i + 1 ? 'var(--u-accent)' : ''; l.style.fontWeight = r[1] === i + 1 ? 700 : 400; });
+      return r[1] === 0 ? '대기' : r[1] === 1 ? 'animate()로 시작' : r[1] === 2 ? CODE : act === '되감기' ? '되감겨 처음 자리로' : '끝 · finished로 다음 일';
+    } };
+  };
+
   /* ───── 신청·설정 묶음 ───── */
   var FIELD = 'border:1px solid var(--u-line);border-radius:var(--u-r);background:var(--u-panel);padding:7px 10px;font-size:13.5px;min-height:34px;position:relative';
   function caretHTML() { return '<span style="display:inline-block;width:1.5px;height:1em;background:var(--u-accent);vertical-align:-2px;margin-left:1px"></span>'; }
