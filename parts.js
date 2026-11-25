@@ -2002,6 +2002,861 @@
     } };
   };
 
+  /* ───── 표현 › 차트 › 차트 종류 ───── */
+  // 차트 색: 범주 4색은 dataviz 기준 팔레트 앞 4색(밝음·어두움 따로 검사, parts.css의 --c1~--c4). 밝은 화면의 3·4번은 바탕 대비가 3:1 아래라 범례나 값 라벨을 꼭 붙인다
+  var CC = ['var(--c1)', 'var(--c2)', 'var(--c3)', 'var(--c4)'], VW = 480, VH = 230;
+  function niceMax(m) { var s = Math.pow(10, Math.floor(Math.log10(m))); return [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].filter(function (k) { return k * s >= m; })[0] * s; }
+  function tx(x, y, s, a, cls) { return '<text x="' + x + '" y="' + y + '"' + (a ? ' text-anchor="' + a + '"' : '') + (cls ? ' class="' + cls + '"' : '') + '>' + s + '</text>'; }
+  function ln(x1, y1, x2, y2, st) { return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" style="' + st + '"/>'; }
+  var GRID = 'stroke:var(--u-muted);stroke-opacity:.3;stroke-width:1;stroke-dasharray:2 3', BASE = 'stroke:var(--u-muted);stroke-width:1;opacity:.6';
+  // 값 축(4칸): 바닥선은 실선, 격자선은 점선으로 물러나게. b = {x, y, w, h}
+  function yAxis(b, max, unit) {
+    var s = '';
+    for (var i = 0; i <= 4; i++) { var y = b.y + b.h - b.h * i / 4; s += ln(b.x, y, b.x + b.w, y, i ? GRID : BASE) + tx(b.x - 6, y + 4, fmt(max * i / 4, true) + (i === 4 && unit ? unit : ''), 'end', 'tk'); }
+    return s;
+  }
+  // 막대: 값 쪽 끝만 둥글게(4px), 바닥에 붙인다
+  function barPath(x, y, w, h, horiz) {
+    var r = Math.min(4, horiz ? h / 2 : w / 2, horiz ? w : h);
+    if (w <= 0.1 || h <= 0.1) return 'M0 0';
+    return horiz ? 'M' + x + ' ' + y + 'H' + (x + w - r) + 'Q' + (x + w) + ' ' + y + ' ' + (x + w) + ' ' + (y + r) + 'V' + (y + h - r) + 'Q' + (x + w) + ' ' + (y + h) + ' ' + (x + w - r) + ' ' + (y + h) + 'H' + x + 'Z'
+      : 'M' + x + ' ' + (y + h) + 'V' + (y + r) + 'Q' + x + ' ' + y + ' ' + (x + r) + ' ' + y + 'H' + (x + w - r) + 'Q' + (x + w) + ' ' + y + ' ' + (x + w) + ' ' + (y + r) + 'V' + (y + h) + 'Z';
+  }
+  // 장면 틀: SVG(480×230 좌표) + 툴팁 + 커서. 좌표는 SVG 기준으로 주고 화면 px로 바꿔 놓는다
+  function chartKit(st, inner) {
+    st.innerHTML = '<svg class="u-chart" viewBox="0 0 ' + VW + ' ' + VH + '" preserveAspectRatio="xMidYMid meet">' + inner + '</svg><div class="u-ctip off"></div>';
+    var svg = st.querySelector('svg'), tip = st.querySelector('.u-ctip'), cur = cursor(st);
+    function px(x, y) { var r = rel(st, svg), k = Math.min(r.w / VW, r.h / VH); return [r.x + (r.w - VW * k) / 2 + x * k, r.y + (r.h - VH * k) / 2 + y * k]; }
+    return {
+      q: function (sel) { return [].slice.call(svg.querySelectorAll(sel)); },
+      // 툴팁은 틀 안에 머물게 좌우를 당긴다
+      tip: function (on, x, y, html) { tip.classList.toggle('off', !on); if (on) { var p = px(x, y), hw; tip.innerHTML = html; hw = tip.offsetWidth / 2 + 4; tip.style.left = Math.max(hw, Math.min(st.clientWidth - hw, p[0])) + 'px'; tip.style.top = p[1] + 'px'; } },
+      noCursor: function () { cur.remove(); },
+      px: px,
+      cur: function (x, y, press) { var p = px(x, y); put(cur, p[0], p[1], press); }
+    };
+  }
+  function sw(i) { return '<i style="background:' + (typeof i === 'number' ? CC[i] : i) + '"></i>'; }
+  // 커서가 SVG 좌표 a에서 b로 (t0~t1)
+  function glide(ms, t0, t1, a, b) { var q = ease.inOut(seg(ms, t0, t1)); return [lerp(a[0], b[0], q), lerp(a[1], b[1], q)]; }
+
+  S['bar-chart'] = function (st, c) {
+    var horiz = c.orient === '가로', D = [['민지', 24], ['준호', 17], ['서연', 31], ['도윤', 12], ['하은', 20]];
+    if (c.sort === '큰 순서') D = D.slice().sort(function (a, b) { return b[1] - a[1]; });
+    var n = D.length, max = niceMax(31), MS = 3200, top = D.reduce(function (m, d, i) { return d[1] > D[m][1] ? i : m; }, 0);
+    var b = horiz ? { x: 56, y: 10, w: 380, h: 186 } : { x: 40, y: 18, w: 425, h: 178 }, s = '', band = (horiz ? b.h : b.w) / n, th = band * 0.56;
+    if (horiz) for (var i = 0; i <= 4; i++) { var x = b.x + b.w * i / 4; s += ln(x, b.y, x, b.y + b.h, i ? GRID : BASE) + tx(x, b.y + b.h + 16, fmt(max * i / 4), 'middle', 'tk'); }
+    else s += yAxis(b, max);
+    D.forEach(function (d, i) {
+      var o = (horiz ? b.y : b.x) + band * i + (band - th) / 2;
+      s += '<path class="bar" style="fill:var(--c1)"/>' + (horiz ? tx(b.x - 8, o + th / 2 + 4, d[0], 'end', 'tk') : tx(o + th / 2, b.y + b.h + 16, d[0], 'middle', 'tk')) + '<text class="vl" text-anchor="' + (horiz ? 'start' : 'middle') + '"></text>';
+    });
+    s += tx(horiz ? b.x + b.w : b.x - 6, horiz ? b.y + b.h + 30 : 10, '처리 건수', horiz ? 'end' : 'start', 'tk');
+    var k = chartKit(st, s), bars = k.q('.bar'), vls = k.q('.vl');
+    function geo(i, p) {
+      var o = (horiz ? b.y : b.x) + band * i + (band - th) / 2, L = D[i][1] / max * (horiz ? b.w : b.h) * p;
+      return horiz ? { x: b.x, y: o, w: L, h: th, ex: b.x + L, ey: o + th / 2 } : { x: o, y: b.y + b.h - L, w: th, h: L, ex: o + th / 2, ey: b.y + b.h - L };
+    }
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, hov = ms > 2050 && ms < 2950;
+      D.forEach(function (d, i) {
+        var g = geo(i, ease.out(seg(ms, 150 + i * 90, 750 + i * 90)));
+        bars[i].setAttribute('d', barPath(g.x, g.y, g.w, g.h, horiz)); bars[i].style.opacity = hov && i !== top ? 0.4 : 1;
+        vls[i].textContent = d[1]; vls[i].setAttribute('x', horiz ? g.ex + 6 : g.ex); vls[i].setAttribute('y', horiz ? g.ey + 4 : g.ey - 6); vls[i].style.opacity = seg(ms, 650 + i * 90, 900 + i * 90);
+      });
+      var e = geo(top, 1), at = horiz ? [e.ex - 20, e.ey] : [e.ex, e.ey + 24], p = glide(ms, 1500, 2050, [VW - 10, VH - 4], at);
+      k.cur(p[0], p[1], false); k.tip(hov, horiz ? e.ex - 20 : e.ex, horiz ? e.ey - 10 : e.ey - 18, sw(0) + '<b>' + D[top][0] + '</b> ' + D[top][1] + '건');
+      return ms < 1100 ? '막대가 0에서 자라남' : hov ? '가장 큰 값 · ' + D[top][0] + ' ' + D[top][1] + '건' : (horiz ? '가로' : '세로') + ' 막대 · ' + c.sort;
+    } };
+  };
+
+  S['stacked-bar-chart'] = function (st, c) {
+    var pct = c.mode === '100% 비율', ns = c.series === '2개' ? 2 : 4, NAMES = ['완료', '진행', '검토', '대기'], WEEK = ['1주', '2주', '3주', '4주'], MS = 3400;
+    var V = [[12, 8, 4, 6], [15, 9, 5, 4], [18, 7, 6, 3], [22, 6, 4, 2]].map(function (r) { r = r.slice(0, ns); var sum = r.reduce(function (a, v) { return a + v; }, 0); return r.map(function (v) { return pct ? v / sum * 100 : v; }); });
+    var max = pct ? 100 : niceMax(Math.max.apply(null, V.map(function (r) { return r.reduce(function (a, v) { return a + v; }, 0); }))), b = { x: 40, y: 34, w: 425, h: 162 }, band = b.w / 4, th = band * 0.5, s = yAxis(b, max, pct ? '%' : '');
+    for (var j = 0; j < ns; j++) s += '<rect x="' + (b.x + j * 64) + '" y="4" width="10" height="10" rx="2" style="fill:' + CC[j] + '"/>' + tx(b.x + 14 + j * 64, 13, NAMES[j], '', 'tk');
+    V.forEach(function (r, i) { s += tx(b.x + band * i + band / 2, b.y + b.h + 16, WEEK[i], 'middle', 'tk'); r.forEach(function (v, j) { s += '<rect class="sg" style="fill:' + CC[j] + '"/><text class="in" text-anchor="middle" style="fill:' + (j < 2 ? '#ffffff' : '#1d1f22') + '"></text>'; }); });
+    var k = chartKit(st, s), sg = k.q('.sg'), ins = k.q('.in'), HI = [2, 1], hv = null;
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, hov = ms > 2200 && ms < 3100;
+      V.forEach(function (r, i) {
+        var y0 = b.y + b.h, x = b.x + band * i + (band - th) / 2;
+        r.forEach(function (v, j) {
+          var h = v / max * b.h, p = ease.out(seg(ms, 150 + j * 260 + i * 60, 480 + j * 260 + i * 60)), hh = Math.max(0, h * p - (j ? 2 : 0)), el = sg[i * ns + j], tl = ins[i * ns + j];
+          el.setAttribute('x', x); el.setAttribute('width', th); el.setAttribute('y', y0 - (j ? 2 : 0) - hh); el.setAttribute('height', hh);
+          el.style.opacity = hov && !(i === HI[0] && j === HI[1]) ? 0.4 : 1;
+          tl.setAttribute('x', x + th / 2); tl.setAttribute('y', y0 - h / 2 + 4); tl.textContent = h >= 15 && p >= 1 ? (pct ? Math.round(v) + '%' : v) : '';
+          if (i === HI[0] && j === HI[1]) hv = [x + th / 2, y0 - h / 2];
+          y0 -= h;
+        });
+      });
+      var p = glide(ms, 1700, 2200, [VW - 10, VH - 4], [hv[0] + 6, hv[1] + 6]), raw = [[12, 8, 4, 6], [15, 9, 5, 4], [18, 7, 6, 3], [22, 6, 4, 2]][HI[0]];
+      k.cur(p[0], p[1], false); k.tip(hov, hv[0], hv[1] - 12, sw(1) + '<b>' + WEEK[HI[0]] + ' · ' + NAMES[1] + '</b> ' + raw[1] + '건' + (pct ? ' (' + Math.round(V[HI[0]][1]) + '%)' : ''));
+      return ms < 1500 ? '계열이 아래부터 쌓임' : hov ? '가운데 칸 하나를 가리킴 · 값은 툴팁으로' : (pct ? '주마다 합을 100%로' : '쌓인 높이가 그 주의 합') + ' · 계열 ' + ns + '개';
+    } };
+  };
+
+  // 선·면 차트가 같이 쓰는 12주 데이터
+  var WK = ['1주', '2주', '3주', '4주', '5주', '6주', '7주', '8주', '9주', '10주', '11주', '12주'];
+  var LINES = [['열린 이슈', [32, 35, 38, 36, 40, 43, 41, 45, 44, 48, 46, 50]], ['닫힌 이슈', [20, 24, 22, 27, 29, 28, 33, 35, 34, 38, 41, 43]], ['새 이슈', [14, 12, 17, 15, 18, 16, 19, 17, 21, 18, 20, 22]]];
+  function xAxis12(b) { var s = ''; WK.forEach(function (w, i) { if (i % 3 === 0 || i === 11) s += tx(b.x + b.w * i / 11, b.y + b.h + 16, w, 'middle', 'tk'); }); return s; }
+
+  S['line-chart'] = function (st, c) {
+    var L = c.lines === '1개' ? LINES.slice(0, 1) : LINES, mk = c.markers, max = niceMax(55), b = { x: 34, y: 12, w: 360, h: 182 }, MS = 3600, HW = [3, 8];
+    var X = function (i) { return b.x + b.w * i / 11; }, Y = function (v) { return b.y + b.h - v / max * b.h; }, s = yAxis(b, max) + xAxis12(b) + '<line class="xh" style="stroke:var(--u-muted);stroke-width:1;opacity:0"/>';
+    L.forEach(function (l, j) {
+      s += '<polyline class="ln" pathLength="1" points="' + l[1].map(function (v, i) { return X(i) + ',' + Y(v); }).join(' ') + '" style="fill:none;stroke:' + CC[j] + ';stroke-width:2;stroke-linejoin:round;stroke-linecap:round;stroke-dasharray:1"/>';
+      l[1].forEach(function (v, i) { if (mk === '모든 점' || (mk === '마지막 점만' && i === 11)) s += '<circle class="mk" data-j="' + j + '" data-i="' + i + '" cx="' + X(i) + '" cy="' + Y(v) + '" r="4" style="fill:' + CC[j] + ';stroke:var(--u-panel);stroke-width:2"/>'; });
+      s += '<circle class="hd" r="4.5" style="fill:' + CC[j] + ';stroke:var(--u-panel);stroke-width:2;opacity:0"/>' + tx(X(11) + 10, Y(l[1][11]) + 4, l[0], '', 'nm');
+    });
+    var k = chartKit(st, s), lns = k.q('.ln'), mks = k.q('.mk'), hds = k.q('.hd'), nms = k.q('.nm'), xh = k.q('.xh')[0];
+    return { ms: MS, rest: 0.35, at: function (t) {
+      var ms = t * MS, p = ease.inOut(seg(ms, 150, 1250)), on = ms > 1850 && ms < 3200;
+      lns.forEach(function (e) { e.style.strokeDashoffset = 1 - p; });
+      mks.forEach(function (e) { e.style.opacity = seg(ms, 150 + 1100 * (+e.getAttribute('data-i')) / 11, 250 + 1100 * (+e.getAttribute('data-i')) / 11); });
+      nms.forEach(function (e) { e.style.opacity = seg(ms, 1200, 1450); });
+      var f = lerp(HW[0], HW[1], ease.inOut(seg(ms, 2150, 3000))), wi = Math.round(f), cx = X(f), q = glide(ms, 1500, 1850, [VW - 8, VH - 4], [X(HW[0]), b.y + 40]);
+      if (ms >= 1850) q = [cx, b.y + 40];
+      xh.setAttribute('x1', X(wi)); xh.setAttribute('x2', X(wi)); xh.setAttribute('y1', b.y); xh.setAttribute('y2', b.y + b.h); xh.style.opacity = on ? 0.5 : 0;
+      hds.forEach(function (e, j) { e.setAttribute('cx', X(wi)); e.setAttribute('cy', Y(L[j][1][wi])); e.style.opacity = on ? 1 : 0; });
+      k.cur(q[0], q[1], false);
+      k.tip(on, Math.min(X(wi), b.x + b.w - 40), b.y + 8, '<b>' + WK[wi] + '</b>' + L.map(function (l, j) { return sw(j) + l[1][wi]; }).join(' '));
+      return ms < 1300 ? '선이 왼쪽에서 그려짐' : on ? WK[wi] + ' · ' + L.map(function (l) { return l[0].split(' ')[0] + ' ' + l[1][wi]; }).join(' · ') : '선 ' + L.length + '개 · 끝에 이름 · 점: ' + mk;
+    } };
+  };
+
+  S['area-chart'] = function (st, c) {
+    var stack = c.kind === '누적', op = (+c.opacity_pct) / 100, MS = 3400, HI = 8;
+    var L = stack ? [['진행', [10, 12, 11, 14, 13, 15, 14, 16, 15, 17, 16, 18]], ['검토', [6, 7, 9, 8, 10, 9, 11, 10, 12, 11, 13, 12]], ['대기', [8, 9, 7, 10, 9, 11, 10, 9, 11, 10, 12, 11]]] : LINES.slice(0, 1);
+    var cum = WK.map(function () { return 0; }), layers = L.map(function (l) { var lo = cum.slice(); cum = cum.map(function (v, i) { return v + l[1][i]; }); return { name: l[0], lo: lo, hi: cum.slice(), v: l[1] }; });
+    var max = niceMax(Math.max.apply(null, cum) * 1.08), b = { x: 34, y: 12, w: 372, h: 182 }, X = function (i) { return b.x + b.w * i / 11; }, Y = function (v) { return b.y + b.h - v / max * b.h; };
+    var s = yAxis(b, max) + xAxis12(b) + '<line class="xh" style="stroke:var(--u-muted);stroke-width:1;opacity:0"/>';
+    layers.forEach(function (l, j) { s += '<polygon class="ar" style="fill:' + CC[j] + ';opacity:' + op + '"/><polyline class="tp" style="fill:none;stroke:' + CC[j] + ';stroke-width:2;stroke-linejoin:round"/>' + tx(X(11) + 8, 0, l.name, '', 'nm'); });
+    var k = chartKit(st, s), ars = k.q('.ar'), tps = k.q('.tp'), nms = k.q('.nm'), xh = k.q('.xh')[0];
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, p = ease.out(seg(ms, 150, 1050)), on = ms > 2000 && ms < 3000;
+      layers.forEach(function (l, j) {
+        var hi = l.hi.map(function (v, i) { return X(i) + ',' + Y(v * p); }), lo = l.lo.map(function (v, i) { return X(i) + ',' + Y(v * p); }).reverse();
+        ars[j].setAttribute('points', hi.concat(lo).join(' ')); tps[j].setAttribute('points', hi.join(' '));
+        nms[j].setAttribute('y', Y((l.lo[11] + l.hi[11]) / 2) + 4); nms[j].style.opacity = seg(ms, 1050, 1300);
+      });
+      var q = glide(ms, 1500, 2000, [VW - 8, VH - 4], [X(HI), Y(cum[HI]) - 14]);
+      xh.setAttribute('x1', X(HI)); xh.setAttribute('x2', X(HI)); xh.setAttribute('y1', b.y); xh.setAttribute('y2', b.y + b.h); xh.style.opacity = on ? 0.5 : 0;
+      k.cur(q[0], q[1], false);
+      k.tip(on, X(HI), Y(cum[HI]) - 26, '<b>' + WK[HI] + '</b>' + layers.map(function (l, j) { return sw(j) + l.name + ' ' + l.v[HI]; }).join(' ') + (stack ? ' · 합 ' + cum[HI] : ''));
+      return ms < 1100 ? '면이 바닥(0)에서 차오름' : on ? WK[HI] + (stack ? ' · 층마다 값, 맨 위가 합 ' + cum[HI] : ' · ' + L[0][1][HI] + '건') : (stack ? '누적 면 · 맨 아래 층만 바닥이 곧다' : '한 계열 면 · 채움 ' + c.opacity_pct + '%');
+    } };
+  };
+
+  S['donut-chart'] = function (st, c) {
+    var five = c.slices === '5개', D = five ? [['보통', 34], ['높음', 21], ['낮음', 18], ['긴급', 9], ['기타', 8]] : [['보통', 34], ['높음', 21], ['기타', 35]], MS = 3600, HI = 1;
+    var tot = D.reduce(function (a, d) { return a + d[1]; }, 0), CX = 140, CY = 115, R = 92, RI = 58, GAP = 0.025, col = function (i) { return D[i][0] === '기타' ? 'var(--c-other)' : CC[i]; };
+    var s = D.map(function (d, i) { return '<path class="sl" style="fill:' + col(i) + '"/>'; }).join('') + tx(CX, CY - 2, '', 'middle', 'big') + tx(CX, CY + 18, '', 'middle', 'tk');
+    D.forEach(function (d, i) { var y = 52 + i * 28; s += '<rect x="282" y="' + (y - 10) + '" width="11" height="11" rx="2" style="fill:' + col(i) + '"/>' + tx(300, y, d[0], '', 'nm') + tx(452, y, Math.round(d[1] / tot * 100) + '%', 'end', 'tk'); });
+    var k = chartKit(st, s), sls = k.q('.sl'), big = k.q('.big')[0], sub = k.q('text.tk')[0];
+    function arc(a0, a1, dr) {
+      var m = (a0 + a1) / 2, ox = Math.sin(m) * dr, oy = -Math.cos(m) * dr, P = function (r, a) { return (CX + ox + Math.sin(a) * r).toFixed(1) + ' ' + (CY + oy - Math.cos(a) * r).toFixed(1); }, lg = a1 - a0 > Math.PI ? 1 : 0;
+      return a1 - a0 <= 0.001 ? 'M0 0' : 'M' + P(R, a0) + 'A' + R + ' ' + R + ' 0 ' + lg + ' 1 ' + P(R, a1) + 'L' + P(RI, a1) + 'A' + RI + ' ' + RI + ' 0 ' + lg + ' 0 ' + P(RI, a0) + 'Z';
+    }
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, sweep = Math.PI * 2 * ease.inOut(seg(ms, 150, 1150)), on = ms > 2000 && ms < 3100, a = 0, mid = 0;
+      D.forEach(function (d, i) {
+        var a0 = a, a1 = a + d[1] / tot * Math.PI * 2; a = a1;
+        if (i === HI) mid = (a0 + a1) / 2;
+        sls[i].setAttribute('d', arc(Math.min(a0 + GAP, sweep), Math.min(a1 - GAP, sweep), on && i === HI ? 6 : 0));
+        sls[i].style.opacity = on && i !== HI ? 0.45 : 1;
+      });
+      var center = c.center === '가리킨 조각' && on;
+      big.textContent = center ? Math.round(D[HI][1] / tot * 100) + '%' : Math.round(tot * ease.out(seg(ms, 150, 1150))) + '건';
+      sub.textContent = center ? D[HI][0] + ' ' + D[HI][1] + '건' : '이슈 합계';
+      var hx = CX + Math.sin(mid) * (R + RI) / 2, hy = CY - Math.cos(mid) * (R + RI) / 2, q = glide(ms, 1500, 2000, [VW - 8, VH - 4], [hx + 4, hy + 4]);
+      k.cur(q[0], q[1], false); k.tip(on && c.center === '합계', hx, hy - 12, sw(HI) + '<b>' + D[HI][0] + '</b> ' + D[HI][1] + '건 (' + Math.round(D[HI][1] / tot * 100) + '%)');
+      return ms < 1200 ? '조각이 12시부터 시계 방향으로 채워짐' : on ? D[HI][0] + ' 조각을 가리킴 · ' + (center ? '가운데 글이 그 조각으로' : '툴팁에 값') : '조각 ' + D.length + '개 · 오른쪽에 이름과 비율';
+    } };
+  };
+
+  S['scatter-plot'] = function (st, c) {
+    var n = +c.points, trend = c.trend === '추세선', MS = 3600, b = { x: 40, y: 12, w: 420, h: 178 }, P = [];
+    for (var i = 0; i < n; i++) { var x = prand(i, 1) * 38 + 1, y = Math.max(0.3, 1.5 + x * 0.32 + (prand(i, 2) - 0.5) * 7 + (prand(i, 3) > 0.94 ? 6 : 0)); P.push([x, Math.min(y, 19.5)]); }
+    var out = P.reduce(function (m, p, i) { return p[1] - (1.5 + p[0] * 0.32) > P[m][1] - (1.5 + P[m][0] * 0.32) ? i : m; }, 0);
+    var mx = P.reduce(function (a, p) { return a + p[0]; }, 0) / n, my = P.reduce(function (a, p) { return a + p[1]; }, 0) / n, sxy = 0, sxx = 0;
+    P.forEach(function (p) { sxy += (p[0] - mx) * (p[1] - my); sxx += (p[0] - mx) * (p[0] - mx); });
+    var sl = sxy / sxx, ic = my - sl * mx, X = function (v) { return b.x + v / 40 * b.w; }, Y = function (v) { return b.y + b.h - v / 20 * b.h; };
+    var s = yAxis(b, 20, '일');
+    [0, 10, 20, 30, 40].forEach(function (v) { s += tx(X(v), b.y + b.h + 16, v, 'middle', 'tk'); });
+    s += tx(b.x + b.w, b.y + b.h + 30, '댓글 수 →', 'end', 'tk') + P.map(function (p) { return '<circle class="pt" cx="' + X(p[0]).toFixed(1) + '" cy="' + Y(p[1]).toFixed(1) + '" r="4" style="fill:var(--c1);fill-opacity:.55;stroke:var(--u-panel);stroke-width:1"/>'; }).join('');
+    s += '<line class="tr" pathLength="1" x1="' + X(0) + '" y1="' + Y(ic) + '" x2="' + X(40) + '" y2="' + Y(Math.min(20, ic + sl * 40)) + '" style="stroke:var(--c2);stroke-width:2;stroke-dasharray:1;stroke-dashoffset:1"/>';
+    s += '<circle class="rg" r="8" cx="' + X(P[out][0]) + '" cy="' + Y(P[out][1]) + '" style="fill:none;stroke:var(--u-ink);stroke-width:1.5;opacity:0"/>';
+    var k = chartKit(st, s), pts = k.q('.pt'), tr = k.q('.tr')[0], rg = k.q('.rg')[0];
+    return { ms: MS, rest: 0.35, at: function (t) {
+      var ms = t * MS, on = ms > 2300 && ms < 3300;
+      pts.forEach(function (e, i) { var a = 100 + prand(i, 4) * 800; e.style.opacity = seg(ms, a, a + 200); });
+      tr.style.strokeDashoffset = trend ? 1 - ease.inOut(seg(ms, 1100, 1700)) : 1;
+      rg.style.opacity = on ? 1 : 0;
+      var q = glide(ms, 1800, 2300, [VW - 8, VH - 4], [X(P[out][0]) + 5, Y(P[out][1]) + 5]);
+      k.cur(q[0], q[1], false); k.tip(on, X(P[out][0]), Y(P[out][1]) - 12, '댓글 ' + Math.round(P[out][0]) + '개 · <b>' + P[out][1].toFixed(1) + '일</b> 걸림');
+      return ms < 1000 ? '점 ' + n + '개가 나타남' : on ? '추세에서 멀리 떨어진 점 하나' : trend ? '댓글이 많을수록 오래 걸림(추세선)' : '점 하나 = 이슈 하나(댓글 수, 처리 일수)';
+    } };
+  };
+
+  // 순서 색: 두 끝 색(--seq-lo → --seq-hi)을 섞는다. 발산은 가운데 회색에서 양쪽 색으로
+  function seqFill(p) { return 'color-mix(in oklab, var(--seq-hi) ' + Math.round(p * 100) + '%, var(--seq-lo))'; }
+  function divFill(p) { return 'color-mix(in oklab, ' + (p < 0 ? 'var(--div-neg)' : 'var(--div-pos)') + ' ' + Math.round(Math.abs(p) * 100) + '%, var(--div-mid))'; }
+
+  S['heatmap'] = function (st, c) {
+    var div = c.scale === '두 색(가운데 회색)', vals = c.labels === '값 적기', DAY = ['월', '화', '수', '목', '금', '토', '일'], MS = 3400, x0 = 30, y0 = 8, cw = 36, ch = 22, HI = [2, 7];
+    var V = DAY.map(function (d, r) { return WK.map(function (w, j) { var h = j * 2, base = Math.exp(-Math.pow((h - 14) / 5, 2)) * 20 * (r < 5 ? 1 : 0.25); return Math.round(Math.max(0, base + prand(r * 12 + j, 5) * 4)); }); });
+    var D2 = DAY.map(function (d, r) { return WK.map(function (w, j) { return Math.round((prand(r * 12 + j, 6) - 0.5) * 16 + (j > 5 && r < 5 ? 3 : 0)); }); }), max = 22, dm = 10;
+    var s = '';
+    DAY.forEach(function (d, r) { s += tx(x0 - 8, y0 + r * ch + ch / 2 + 4, d, 'end', 'tk'); WK.forEach(function (w, j) { s += '<rect class="cl" x="' + (x0 + j * cw + 1) + '" y="' + (y0 + r * ch + 1) + '" width="' + (cw - 2) + '" height="' + (ch - 2) + '" rx="3"/><text class="cv" text-anchor="middle" x="' + (x0 + j * cw + cw / 2) + '" y="' + (y0 + r * ch + ch / 2 + 4) + '"></text>'; }); });
+    [0, 3, 6, 9].forEach(function (j) { s += tx(x0 + j * cw + 1, y0 + 7 * ch + 14, (j * 2) + '시', '', 'tk'); });
+    s += '<rect class="hl" x="' + (x0 + HI[1] * cw) + '" y="' + (y0 + HI[0] * ch) + '" width="' + cw + '" height="' + ch + '" rx="4" style="fill:none;stroke:var(--u-ink);stroke-width:2;opacity:0"/>';
+    for (var g = 0; g < 10; g++) s += '<rect x="' + (250 + g * 16) + '" y="' + (y0 + 7 * ch + 22) + '" width="16" height="10" style="fill:' + (div ? divFill(g / 9 * 2 - 1) : seqFill(g / 9)) + '"/>';
+    s += tx(246, y0 + 7 * ch + 31, div ? '줄어듦' : '적음', 'end', 'tk') + tx(414, y0 + 7 * ch + 31, div ? '늘어남' : '많음', '', 'tk');
+    var k = chartKit(st, s), cls = k.q('.cl'), cvs = k.q('.cv'), hl = k.q('.hl')[0];
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, on = ms > 2100 && ms < 3100;
+      cls.forEach(function (e, i) {
+        var r = Math.floor(i / 12), j = i % 12, v = div ? D2[r][j] / dm : V[r][j] / max, a = seg(ms, 100 + j * 55, 400 + j * 55);
+        e.style.fill = div ? divFill(Math.max(-1, Math.min(1, v))) : seqFill(Math.min(1, v)); e.style.opacity = a;
+        cvs[i].textContent = vals && a >= 1 ? (div && D2[r][j] > 0 ? '+' : '') + (div ? D2[r][j] : V[r][j]) : '';
+        cvs[i].style.fill = Math.abs(v) > 0.55 ? '#ffffff' : 'var(--u-ink)';
+      });
+      hl.style.opacity = on ? 1 : 0;
+      var hx = x0 + HI[1] * cw + cw / 2, hy = y0 + HI[0] * ch + ch / 2, q = glide(ms, 1600, 2100, [VW - 8, VH - 4], [hx + 4, hy + 4]), hv = div ? D2[HI[0]][HI[1]] : V[HI[0]][HI[1]];
+      k.cur(q[0], q[1], false); k.tip(on, hx, hy - 12, '<b>' + DAY[HI[0]] + '요일 ' + HI[1] * 2 + '–' + (HI[1] * 2 + 2) + '시</b> ' + (div ? (hv > 0 ? '+' : '') + hv + '건(지난주 대비)' : hv + '건'));
+      return ms < 900 ? '칸이 시간 순서로 칠해짐' : on ? '칸 하나를 가리킴 · 값은 글자로도' : div ? '가운데(0)는 회색, 늘면 파랑·줄면 빨강' : '진할수록 많음 · 한 색 진하기';
+    } };
+  };
+
+  S['calendar-heatmap'] = function (st, c) {
+    var W = +c.weeks, steps = c.steps === '5단계', MS = 3400, cell = Math.min(22, Math.floor(420 / W) - 3), gap = 3, x0 = 34, y0 = 22, MON = ['일', '월', '화', '수', '목', '금', '토'];
+    var end = new Date(2026, 10, 25), start = new Date(end); start.setDate(end.getDate() - end.getDay() - (W - 1) * 7);
+    var days = [], s = '', lastM = -1, lastW = -9;
+    for (var w = 0; w < W; w++) for (var d = 0; d < 7; d++) {
+      var dt = new Date(start); dt.setDate(start.getDate() + w * 7 + d);
+      if (dt > end) continue;
+      var v = d === 0 || d === 6 ? (prand(w * 7 + d, 7) > 0.7 ? 1 : 0) : Math.round(prand(w * 7 + d, 8) * 8 * (0.6 + w / W * 0.6));
+      days.push({ w: w, d: d, dt: dt, v: v });
+      // 달 이름은 바뀌는 주에 하나, 앞 이름과 3주 넘게 떨어질 때만(겹치지 않게)
+      if (d === 0 && dt.getMonth() !== lastM) { lastM = dt.getMonth(); if (w - lastW >= 3) { lastW = w; s += tx(x0 + w * (cell + gap), 12, (lastM + 1) + '월', '', 'tk'); } }
+    }
+    [1, 3, 5].forEach(function (d) { s += tx(x0 - 6, y0 + d * (cell + gap) + cell - 3, MON[d], 'end', 'tk'); });
+    var max = Math.max.apply(null, days.map(function (x) { return x.v; })), lvl = function (v) { return v === 0 ? -1 : steps ? Math.ceil(v / max * 4) / 4 : v / max; };
+    days.forEach(function (x) { s += '<rect class="dy" x="' + (x0 + x.w * (cell + gap)) + '" y="' + (y0 + x.d * (cell + gap)) + '" width="' + cell + '" height="' + cell + '" rx="3"/>'; });
+    var ly = y0 + 7 * (cell + gap) + 8;
+    s += tx(x0, ly + 9, '적음', '', 'tk');
+    [-1, 0.25, 0.5, 0.75, 1].forEach(function (l, i) { s += '<rect x="' + (x0 + 30 + i * 15) + '" y="' + ly + '" width="12" height="12" rx="3" style="fill:' + (l < 0 ? 'var(--u-line)' : seqFill(l)) + '"/>'; });
+    s += tx(x0 + 30 + 5 * 15 + 2, ly + 9, '많음', '', 'tk');
+    var HI = days.length - 6, k = chartKit(st, s), dys = k.q('.dy');
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, on = ms > 2100 && ms < 3100;
+      days.forEach(function (x, i) {
+        var L = lvl(x.v), a = seg(ms, 100 + x.w / W * 900, 300 + x.w / W * 900);
+        dys[i].style.fill = L < 0 ? 'var(--u-line)' : seqFill(0.15 + L * 0.85); dys[i].style.opacity = a;
+        dys[i].style.stroke = on && i === HI ? 'var(--u-ink)' : 'none'; dys[i].style.strokeWidth = 2;
+      });
+      var h = days[HI], hx = x0 + h.w * (cell + gap) + cell / 2, hy = y0 + h.d * (cell + gap) + cell / 2, q = glide(ms, 1600, 2100, [VW - 8, VH - 4], [hx + 4, hy + 4]);
+      k.cur(q[0], q[1], false); k.tip(on, hx, hy - 10, '<b>' + (h.dt.getMonth() + 1) + '월 ' + h.dt.getDate() + '일(' + MON[h.d] + ')</b> 이슈 ' + h.v + '건 처리');
+      return ms < 1100 ? '지난 ' + W + '주가 왼쪽부터 칠해짐' : on ? '날짜 칸 하나 · 값은 툴팁으로' : (steps ? '진하기 5단계(0은 회색)' : '진하기 연속') + ' · 한 줄이 한 요일';
+    } };
+  };
+
+  S['histogram'] = function (st, c) {
+    var nb = +c.bins, mean = c.mean === '평균선', MS = 3400, b = { x: 40, y: 18, w: 420, h: 172 }, N = 200, R = 15, vals = [];
+    for (var i = 0; i < N; i++) vals.push(Math.min(R - 0.01, Math.exp(Math.log(3) + (prand(i, 9) + prand(i, 10) + prand(i, 11) - 1.5) * 1.1)));
+    var bw = R / nb, cnt = []; for (var j = 0; j < nb; j++) cnt.push(0);
+    vals.forEach(function (v) { cnt[Math.floor(v / bw)]++; });
+    var max = niceMax(Math.max.apply(null, cnt) * 1.1), avg = vals.reduce(function (a, v) { return a + v; }, 0) / N, top = cnt.indexOf(Math.max.apply(null, cnt));
+    var X = function (v) { return b.x + v / R * b.w; }, s = yAxis(b, max);
+    [0, 3, 6, 9, 12, 15].forEach(function (v) { s += tx(X(v), b.y + b.h + 16, v + '일', 'middle', 'tk'); });
+    cnt.forEach(function () { s += '<rect class="hb" style="fill:var(--c1)"/>'; });
+    s += '<line class="mn" x1="' + X(avg) + '" x2="' + X(avg) + '" y1="' + b.y + '" y2="' + (b.y + b.h) + '" style="stroke:var(--c2);stroke-width:2;stroke-dasharray:5 4;opacity:0"/>' + tx(X(avg) + 6, b.y + 10, '평균 ' + avg.toFixed(1) + '일', '', 'mnt');
+    var k = chartKit(st, s), hbs = k.q('.hb'), mn = k.q('.mn')[0], mnt = k.q('.mnt')[0];
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, on = ms > 2200 && ms < 3100;
+      cnt.forEach(function (v, j) {
+        var p = ease.out(seg(ms, 150 + j * (500 / nb), 650 + j * (500 / nb))), h = v / max * b.h * p;
+        hbs[j].setAttribute('x', X(j * bw) + 0.5); hbs[j].setAttribute('width', Math.max(0.5, b.w / nb - 1)); hbs[j].setAttribute('y', b.y + b.h - h); hbs[j].setAttribute('height', h);
+        hbs[j].style.opacity = on && j !== top ? 0.45 : 1;
+      });
+      var mo = mean ? seg(ms, 1200, 1500) : 0; mn.style.opacity = mo; mnt.style.opacity = mo;
+      var hx = X((top + 0.5) * bw), hy = b.y + b.h - cnt[top] / max * b.h, q = glide(ms, 1700, 2200, [VW - 8, VH - 4], [hx + 4, hy + 18]);
+      k.cur(q[0], q[1], false); k.tip(on, hx, hy - 10, '<b>' + fmt(top * bw, false, bw % 1 ? 1 : 0) + '~' + fmt((top + 1) * bw, false, bw % 1 ? 1 : 0) + '일</b> ' + cnt[top] + '건');
+      return ms < 1100 ? '구간 ' + nb + '개 · 막대가 붙어 있음' : on ? '가장 많은 구간' : mean ? '평균선 · 오른쪽으로 꼬리가 김' : '이슈 ' + N + '건의 처리 일수 분포';
+    } };
+  };
+
+  S['funnel-chart'] = function (st, c) {
+    var cone = c.shape === '깔때기형', rate = c.show === '이전 단계 대비', D = [['접수', 120], ['분류', 96], ['진행', 71], ['검토', 52], ['완료', 44]], MS = 3400, HI = 3;
+    var x0 = 70, W = 340, rowH = 40, bh = 26, y0 = 12, CXm = x0 + W / 2, s = '';
+    D.forEach(function (d, i) { s += tx(x0 - 10, y0 + i * rowH + bh / 2 + 4, d[0], 'end', 'tk') + (i ? '<polygon class="cn" style="fill:var(--c1);opacity:.12"/>' : '') + '<path class="fb" style="fill:var(--c1)"/><text class="fv"></text>'; });
+    var k = chartKit(st, s), fbs = k.q('.fb'), fvs = k.q('.fv'), cns = k.q('.cn');
+    function g(i, p) { var w = d2w(i) * p, x = cone ? CXm - w / 2 : x0; return { x: x, y: y0 + i * rowH, w: w }; }
+    function d2w(i) { return D[i][1] / D[0][1] * W; }
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, on = ms > 2100 && ms < 3100;
+      D.forEach(function (d, i) {
+        var p = ease.out(seg(ms, 100 + i * 170, 550 + i * 170)), q = g(i, p);
+        fbs[i].setAttribute('d', cone ? 'M' + q.x + ' ' + q.y + 'h' + q.w + 'v' + bh + 'h' + (-q.w) + 'Z' : barPath(q.x, q.y, q.w, bh, true));
+        fvs[i].setAttribute('x', q.x + q.w + 8); fvs[i].setAttribute('y', q.y + bh / 2 + 4); fvs[i].style.opacity = seg(ms, 450 + i * 170, 650 + i * 170);
+        fvs[i].textContent = rate && i ? Math.round(d[1] / D[i - 1][1] * 100) + '%' : d[1] + '건';
+        if (i) { var a = g(i - 1, 1), bq = g(i, 1), y1 = a.y + bh + 1, y2 = bq.y - 1;
+          cns[i - 1].setAttribute('points', cone ? [a.x + ',' + y1, (a.x + a.w) + ',' + y1, (bq.x + bq.w) + ',' + y2, bq.x + ',' + y2].join(' ') : [x0 + ',' + y1, (x0 + a.w) + ',' + y1, (x0 + bq.w) + ',' + y2, x0 + ',' + y2].join(' '));
+          cns[i - 1].style.opacity = (on && i === HI ? 0.35 : 0.12) * seg(ms, 550 + i * 170, 700 + i * 170); }
+      });
+      var a = g(HI - 1, 1), hx = (cone ? CXm : x0 + a.w * 0.7), hy = y0 + HI * rowH - 7, q = glide(ms, 1600, 2100, [VW - 8, VH - 4], [hx + 4, hy + 4]), drop = D[HI - 1][1] - D[HI][1];
+      k.cur(q[0], q[1], false); k.tip(on, hx, hy - 8, '<b>' + D[HI - 1][0] + ' → ' + D[HI][0] + '</b> ' + drop + '건 빠짐(' + Math.round(drop / D[HI - 1][1] * 100) + '%)');
+      return ms < 1100 ? '단계가 위에서 아래로 줄어듦' : on ? '단계 사이에서 빠진 수' : (cone ? '깔때기형' : '막대형') + ' · ' + (rate ? '이전 단계 대비 %' : '건수');
+    } };
+  };
+
+  S['gauge-ring'] = function (st, c) {
+    var semi = c.shape === '반원 게이지', v = +c.value, TG = 80, MS = 3000, CX = 240, CY = semi ? 168 : 112, R = semi ? 118 : 86, sw2 = semi ? 22 : 18;
+    var A = function (p) { return semi ? Math.PI * (1 - p) : Math.PI / 2 - Math.PI * 2 * p; }, P = function (p, r) { var a = A(p); return [CX + Math.cos(a) * r, CY - Math.sin(a) * r]; };
+    var path = semi ? 'M' + P(0, R).join(' ') + 'A' + R + ' ' + R + ' 0 0 1 ' + P(1, R).join(' ') : 'M' + P(0, R).join(' ') + 'A' + R + ' ' + R + ' 0 1 1 ' + P(0.9999, R).join(' ');
+    var t1 = P(TG / 100, R - sw2 / 2 - 4), t2 = P(TG / 100, R + sw2 / 2 + 4), tl = P(TG / 100, R + sw2 / 2 + 16);
+    var s = '<path d="' + path + '" style="fill:none;stroke:var(--u-line);stroke-width:' + sw2 + ';stroke-linecap:round"/><path class="gv" d="' + path + '" pathLength="100" style="fill:none;stroke:var(--c1);stroke-width:' + sw2 + ';stroke-linecap:round"/>' +
+      ln(t1[0], t1[1], t2[0], t2[1], 'stroke:var(--u-ink);stroke-width:2') + tx(tl[0], tl[1] + 4, '목표 ' + TG, 'middle', 'tk') +
+      tx(CX, CY - (semi ? 18 : -4), '', 'middle', 'big') + tx(CX, CY + (semi ? 4 : 22), '스프린트 이슈 완료', 'middle', 'tk');
+    if (semi) s += tx(CX - R, CY + 20, '0', 'middle', 'tk') + tx(CX + R, CY + 20, '100', 'middle', 'tk');
+    var k = chartKit(st, s), gv = k.q('.gv')[0], big = k.q('.big')[0];
+    k.noCursor();
+    return { ms: MS, rest: 0.45, at: function (t) {
+      var ms = t * MS, p = ease.out(seg(ms, 200, 1400)), now = v * p;
+      gv.style.strokeDasharray = Math.max(0.01, now) + ' 100'; gv.style.opacity = v === 0 ? 0 : 1;
+      big.textContent = Math.round(now) + '%';
+      return ms < 1400 ? '원호가 0에서 ' + v + '%까지 참' : v >= TG ? '목표(' + TG + '%) 넘음' : '목표까지 ' + (TG - v) + '%p 남음';
+    } };
+  };
+
+  /* ───── 표현 › 차트 › 차트 부품 ───── */
+  // 선 차트 바탕(12주 데이터): 부품 예시들이 같이 쓴다. n = 선 수
+  function lineBase(b, L, max) {
+    var X = function (i) { return b.x + b.w * i / 11; }, Y = function (v) { return b.y + b.h - v / max * b.h; };
+    return { X: X, Y: Y, svg: L.map(function (l, j) { return '<polyline class="ln" data-j="' + j + '" points="' + l[1].map(function (v, i) { return X(i) + ',' + Y(v); }).join(' ') + '" style="fill:none;stroke:' + CC[j] + ';stroke-width:2;stroke-linejoin:round;stroke-linecap:round"/>'; }).join('') };
+  }
+
+  S['axis'] = function (st, c) {
+    var n = +c.ticks, zero = c.start === '0부터', D = [['1팀', 88], ['2팀', 92], ['3팀', 95], ['4팀', 90]], MS = 3200;
+    var lo = zero ? 0 : 80, hi = 100, b = { x: 46, y: 18, w: 400, h: 172 }, band = b.w / 4, th = band * 0.5, Y = function (v) { return b.y + b.h - (v - lo) / (hi - lo) * b.h; }, s = '';
+    for (var i = 0; i <= n - 1; i++) { var v = lo + (hi - lo) * i / (n - 1), y = Y(v); s += '<g class="tk1">' + ln(b.x - 4, y, b.x, y, BASE) + tx(b.x - 8, y + 4, fmt(v, false, (hi - lo) / (n - 1) % 1 ? 1 : 0), 'end', 'tk') + '</g>'; }
+    s += '<line class="ax" x1="' + b.x + '" y1="' + b.y + '" x2="' + b.x + '" y2="' + (b.y + b.h) + '" style="' + BASE + ';opacity:1"/><line class="ax" x1="' + b.x + '" y1="' + (b.y + b.h) + '" x2="' + (b.x + b.w) + '" y2="' + (b.y + b.h) + '" style="' + BASE + ';opacity:1"/>';
+    s += tx(b.x - 8, 10, '완료율(%)', 'start', 'tk1 tk');
+    D.forEach(function (d, i) { s += '<path class="bar" style="fill:var(--c1)"/>' + tx(b.x + band * i + band / 2, b.y + b.h + 16, d[0], 'middle', 'tk1 tk'); });
+    if (!zero) s += '<g class="brk">' + ln(b.x - 6, b.y + b.h - 6, b.x + 6, b.y + b.h - 10, 'stroke:var(--u-danger);stroke-width:2') + ln(b.x - 6, b.y + b.h - 1, b.x + 6, b.y + b.h - 5, 'stroke:var(--u-danger);stroke-width:2') + '</g>';
+    var k = chartKit(st, s), tks = k.q('.tk1'), bars = k.q('.bar'), axs = k.q('.ax'), brk = k.q('.brk')[0];
+    k.noCursor();
+    return { ms: MS, rest: 0.45, at: function (t) {
+      var ms = t * MS;
+      axs.forEach(function (a, i) { a.style.opacity = seg(ms, 100 + i * 150, 400 + i * 150); });
+      tks.forEach(function (e, i) { e.style.opacity = seg(ms, 400 + i * 70, 600 + i * 70); });
+      if (brk) brk.style.opacity = seg(ms, 2000, 2300);
+      D.forEach(function (d, i) { var p = ease.out(seg(ms, 900 + i * 80, 1500 + i * 80)), x = b.x + band * i + (band - th) / 2, y = lerp(b.y + b.h, Y(d[1]), p); bars[i].setAttribute('d', barPath(x, y, th, b.y + b.h - y)); });
+      return ms < 900 ? '축과 눈금 ' + n + '개가 먼저' : ms < 2000 ? '막대 88 · 92 · 95 · 90' : zero ? '0부터라 차이가 실제 크기대로(최대 8%p)' : '80부터 시작해 4팀 차이가 몇 배로 부풀어 보임';
+    } };
+  };
+
+  S['gridlines'] = function (st, c) {
+    var sty = c.style, both = c.direction === '가로·세로', L = LINES.slice(0, 1), max = 60, b = { x: 34, y: 12, w: 420, h: 182 }, MS = 3200, HI = 6;
+    var base = lineBase(b, L, max), s = '';
+    for (var i = 1; i <= 4; i++) { var y = b.y + b.h - b.h * i / 4; if (sty !== '없음') s += '<line class="gl" x1="' + b.x + '" x2="' + (b.x + b.w) + '" y1="' + y + '" y2="' + y + '" style="stroke:var(--u-muted);stroke-opacity:.3;stroke-width:1' + (sty === '점선' ? ';stroke-dasharray:2 3' : '') + '"/>'; s += tx(b.x - 6, y + 4, max * i / 4, 'end', 'tk'); }
+    if (both && sty !== '없음') [0, 3, 6, 9, 11].forEach(function (i) { s += '<line class="gl" x1="' + base.X(i) + '" x2="' + base.X(i) + '" y1="' + b.y + '" y2="' + (b.y + b.h) + '" style="stroke:var(--u-muted);stroke-opacity:.3;stroke-width:1' + (sty === '점선' ? ';stroke-dasharray:2 3' : '') + '"/>'; });
+    s += ln(b.x, b.y + b.h, b.x + b.w, b.y + b.h, BASE) + xAxis12(b) + base.svg + '<circle class="hd" r="4.5" cx="' + base.X(HI) + '" cy="' + base.Y(L[0][1][HI]) + '" style="fill:var(--c1);stroke:var(--u-panel);stroke-width:2;opacity:0"/>';
+    var k = chartKit(st, s), gls = k.q('.gl'), hd = k.q('.hd')[0];
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, on = ms > 1700;
+      gls.forEach(function (g, i) { g.style.opacity = seg(ms, 200 + i * 60, 500 + i * 60); });
+      hd.style.opacity = on ? 1 : 0;
+      var q = glide(ms, 1100, 1700, [VW - 8, VH - 4], [base.X(HI) + 4, base.Y(L[0][1][HI]) + 4]); k.cur(q[0], q[1], false);
+      return ms < 900 ? (sty === '없음' ? '격자선 없음' : '격자선이 옅게 깔림 · ' + sty) : sty === '없음' ? '7주 점의 값을 눈으로 축까지 따라가야 함' : '7주 점 ≈ 41: 가까운 선(45)을 보고 어림';
+    } };
+  };
+
+  S['legend'] = function (st, c) {
+    var pos = c.position, ns = c.series === '2개' ? 2 : 4, MS = 3400, HI = 1, NM = ['열린', '닫힌', '새', '보류'];
+    var L = LINES.concat([['보류 이슈', [6, 7, 6, 8, 9, 8, 7, 9, 8, 10, 9, 11]]]).slice(0, ns), max = 60;
+    var b = pos === '위' ? { x: 34, y: 34, w: 420, h: 160 } : { x: 34, y: 12, w: pos === '오른쪽' ? 330 : 360, h: 182 }, base = lineBase(b, L, max), s = yAxis(b, max) + xAxis12(b) + base.svg, lg = [];
+    L.forEach(function (l, j) {
+      var x, y, a = '';
+      if (pos === '위') { x = b.x + j * 86; y = 12; } else if (pos === '오른쪽') { x = b.x + b.w + 22; y = b.y + 20 + j * 22; } else { x = base.X(11) + 8; y = base.Y(l[1][11]) + 4 + (j === 3 ? 6 : 0); a = ''; }
+      s += '<g class="lg" data-j="' + j + '">' + (pos === '선 끝(바로 이름)' ? '' : '<rect x="' + x + '" y="' + (y - 9) + '" width="14" height="3" rx="1.5" style="fill:' + CC[j] + '"/>') + tx(x + (pos === '선 끝(바로 이름)' ? 0 : 19), y, NM[j], a, 'nm') + '</g>';
+      lg.push([x + 20, y - 4]);
+    });
+    var k = chartKit(st, s), lns = k.q('.ln'), lgs = k.q('.lg');
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, on = ms > 1800 && ms < 3000;
+      lgs.forEach(function (g, j) { g.style.opacity = seg(ms, 200 + j * 120, 450 + j * 120) * (on && j !== HI ? 0.4 : 1); });
+      lns.forEach(function (e, j) { e.style.opacity = on && j !== HI ? 0.2 : 1; e.style.strokeWidth = on && j === HI ? 3 : 2; });
+      var q = glide(ms, 1200, 1800, [VW - 8, VH - 4], [lg[HI][0] + 6, lg[HI][1] + 4]); k.cur(q[0], q[1], false);
+      return on ? '범례 "' + NM[HI] + '"에 올림 · 그 선만 진하게' : pos === '선 끝(바로 이름)' ? '범례 상자 대신 선 끝에 이름(눈이 덜 오감)' : '범례 · ' + pos + ' · 계열 ' + ns + '개';
+    } };
+  };
+
+  S['chart-tooltip'] = function (st, c) {
+    var all = c.content === '같은 시점 모두', tap = c.trigger === '누름(터치)', L = LINES, max = 60, b = { x: 34, y: 12, w: 420, h: 182 }, MS = 3800, base = lineBase(b, L, max);
+    var s = yAxis(b, max) + xAxis12(b) + base.svg + L.map(function (l, j) { return '<circle class="hd" r="4.5" style="fill:' + CC[j] + ';stroke:var(--u-panel);stroke-width:2;opacity:0"/>'; }).join('');
+    var k = chartKit(st, s), hds = k.q('.hd'), stops = [[1100, 3], [2100, 6], [3000, 9]];
+    return { ms: MS, rest: 0.3, at: function (t) {
+      var ms = t * MS, wi = -1, pressAt = -1;
+      stops.forEach(function (sp, i) { if (ms >= sp[0]) { wi = sp[1]; pressAt = sp[0]; } });
+      var from = [VW - 8, VH - 4], cur = from;
+      stops.forEach(function (sp, i) { var a = i ? [base.X(stops[i - 1][1]), base.Y(L[0][1][stops[i - 1][1]]) + 6] : from, bb = [base.X(sp[1]), base.Y(L[0][1][sp[1]]) + 6]; if (ms >= sp[0] - 600) cur = glide(ms, sp[0] - 600, sp[0] - 100, a, bb); });
+      var shown = tap ? (pressAt > 0 && ms >= pressAt) : (wi >= 0 && ms >= pressAt - 100);
+      var press = tap && stops.some(function (sp) { return ms > sp[0] - 100 && ms < sp[0] + 150; });
+      k.cur(cur[0], cur[1], press);
+      hds.forEach(function (e, j) { var on = shown && (all || j === 0); e.style.opacity = on ? 1 : 0; if (wi >= 0) { e.setAttribute('cx', base.X(wi)); e.setAttribute('cy', base.Y(L[j][1][wi])); } });
+      if (wi >= 0) k.tip(shown, base.X(wi), base.Y(Math.max.apply(null, L.map(function (l) { return l[1][wi]; }))) - 12, '<b>' + WK[wi] + '</b>' + (all ? L.map(function (l, j) { return sw(j) + l[0].split(' ')[0] + ' ' + l[1][wi]; }).join(' ') : sw(0) + '열린 이슈 ' + L[0][1][wi] + '건'));
+      else k.tip(false);
+      return !shown ? (tap ? '누르면 뜸(터치에는 올림이 없음)' : '점 가까이 가면 뜸') : WK[wi] + ' · ' + (all ? '세 선의 값을 한 상자에' : '가리킨 선의 값만') + (tap ? ' · 다른 곳을 누를 때까지 남음' : '');
+    } };
+  };
+
+  S['crosshair'] = function (st, c) {
+    var both = c.lines === '세로·가로', snap = c.snap === '점에 붙음', L = LINES.slice(0, 1), max = 60, b = { x: 40, y: 12, w: 414, h: 178 }, MS = 3600, base = lineBase(b, L, max);
+    var s = yAxis(b, max) + xAxis12(b) + base.svg + '<line class="vx" style="stroke:var(--u-ink);stroke-width:1;stroke-dasharray:3 3;opacity:.55"/><line class="hx" style="stroke:var(--u-ink);stroke-width:1;stroke-dasharray:3 3;opacity:.55"/>' +
+      '<circle class="hd" r="4.5" style="fill:var(--c1);stroke:var(--u-panel);stroke-width:2"/><g class="bx"><rect class="bxr" rx="3" height="16" style="fill:var(--u-ink)"/><text class="bxt" text-anchor="middle" style="fill:var(--u-panel);font-weight:600"></text></g><g class="by"><rect class="byr" rx="3" height="16" width="30" style="fill:var(--u-ink)"/><text class="byt" text-anchor="middle" style="fill:var(--u-panel);font-weight:600"></text></g>';
+    var k = chartKit(st, s), vx = k.q('.vx')[0], hx = k.q('.hx')[0], hd = k.q('.hd')[0], bx = k.q('.bx')[0], by = k.q('.by')[0];
+    return { ms: MS, rest: 0.3, at: function (t) {
+      var ms = t * MS, on = ms > 900, f = lerp(1.3, 10.6, ease.inOut(seg(ms, 1000, 3100))), wi = Math.round(f), fx = snap ? wi : f;
+      var x = base.X(fx), v = snap ? L[0][1][wi] : lerp(L[0][1][Math.floor(f)], L[0][1][Math.min(11, Math.floor(f) + 1)], f - Math.floor(f)), y = base.Y(v), q = glide(ms, 400, 1000, [VW - 8, VH - 4], [base.X(1.3), b.y + 50]);
+      if (ms >= 1000) q = [base.X(f), b.y + 50];
+      [vx, hx, hd, bx, by].forEach(function (e) { e.style.display = on ? '' : 'none'; });
+      vx.setAttribute('x1', x); vx.setAttribute('x2', x); vx.setAttribute('y1', b.y); vx.setAttribute('y2', b.y + b.h);
+      hx.setAttribute('x1', b.x); hx.setAttribute('x2', b.x + b.w); hx.setAttribute('y1', y); hx.setAttribute('y2', y); hx.style.display = on && both ? '' : 'none'; by.style.display = on && both ? '' : 'none';
+      hd.setAttribute('cx', x); hd.setAttribute('cy', y); hd.style.display = on && snap ? '' : 'none';
+      var lab = snap ? WK[wi] : (f + 1).toFixed(1) + '주';
+      bx.querySelector('rect').setAttribute('x', x - 20); bx.querySelector('rect').setAttribute('y', b.y + b.h + 3); bx.querySelector('rect').setAttribute('width', 40); bx.querySelector('text').setAttribute('x', x); bx.querySelector('text').setAttribute('y', b.y + b.h + 15); bx.querySelector('text').textContent = lab;
+      by.querySelector('rect').setAttribute('x', b.x - 34); by.querySelector('rect').setAttribute('y', y - 8); by.querySelector('text').setAttribute('x', b.x - 19); by.querySelector('text').setAttribute('y', y + 4); by.querySelector('text').textContent = Math.round(v);
+      k.cur(q[0], q[1], false);
+      return !on ? '포인터가 차트에 들어오면 나타남' : (snap ? '가까운 점에 붙음 · ' : '포인터 자리 그대로 · ') + lab + (both ? ' · 값 ' + Math.round(v) : '');
+    } };
+  };
+
+  S['data-label'] = function (st, c) {
+    var inside = c.where === '막대 안', topOnly = c.which === '가장 큰 것만', D = [['민지', 24], ['준호', 17], ['서연', 31], ['도윤', 12], ['하은', 20]], MS = 3000;
+    var max = 40, b = { x: 56, y: 12, w: 390, h: 190 }, band = b.h / 5, th = band * 0.6, top = 2, s = '';
+    D.forEach(function (d, i) { var y = b.y + band * i + (band - th) / 2; s += tx(b.x - 8, y + th / 2 + 4, d[0], 'end', 'tk') + '<path class="bar" style="fill:var(--c1)"/><text class="dl" text-anchor="' + (inside ? 'end' : 'start') + '" style="' + (inside ? 'fill:#ffffff;' : '') + 'font-size:12.5px;font-weight:700"></text>'; });
+    s += ln(b.x, b.y, b.x, b.y + b.h, BASE);
+    var k = chartKit(st, s), bars = k.q('.bar'), dls = k.q('.dl');
+    k.noCursor();
+    return { ms: MS, rest: 0.45, at: function (t) {
+      var ms = t * MS;
+      D.forEach(function (d, i) {
+        var p = ease.out(seg(ms, 100 + i * 80, 700 + i * 80)), w = d[1] / max * b.w * p, y = b.y + band * i + (band - th) / 2, show = !topOnly || i === top;
+        bars[i].setAttribute('d', barPath(b.x, y, w, th, true)); bars[i].style.fill = topOnly && i !== top ? 'var(--c-other)' : 'var(--c1)';
+        dls[i].setAttribute('x', inside ? b.x + w - 8 : b.x + w + 6); dls[i].setAttribute('y', y + th / 2 + 4.5); dls[i].textContent = d[1] + '건';
+        dls[i].style.opacity = show ? seg(ms, 900 + i * 90, 1100 + i * 90) : 0; if (!inside) dls[i].style.fill = 'var(--u-ink)';
+      });
+      return ms < 900 ? '막대가 자람' : (topOnly ? '가장 큰 값에만 숫자, 나머지는 회색' : '값을 ' + c.where + '에 바로 적어 축을 안 읽어도 됨');
+    } };
+  };
+
+  S['reference-line'] = function (st, c) {
+    var avgK = c.kind === '평균선', band = c.band === '범위 띠', L = [LINES[1]], max = 60, b = { x: 34, y: 12, w: 380, h: 182 }, MS = 3400, base = lineBase(b, L, max);
+    var vals = L[0][1], ref = avgK ? Math.round(vals.reduce(function (a, v) { return a + v; }, 0) / 12) : 35, ry = base.Y(ref), first = vals.findIndex(function (v) { return v >= ref; });
+    var s = yAxis(b, max) + xAxis12(b) + (band ? '<rect class="bd" x="' + b.x + '" width="' + b.w + '" y="' + base.Y(ref + 5) + '" height="' + (base.Y(ref - 5) - base.Y(ref + 5)) + '" style="fill:var(--c2);opacity:0"/>' : '') +
+      base.svg + '<line class="rl" pathLength="1" x1="' + b.x + '" x2="' + (b.x + b.w) + '" y1="' + ry + '" y2="' + ry + '" style="stroke:var(--c2);stroke-width:2;stroke-dasharray:1;stroke-dashoffset:1"/>' + tx(b.x + b.w + 6, ry + 4, (avgK ? '평균 ' : '목표 ') + ref, '', 'nm rlt') +
+      vals.map(function (v, i) { return '<circle class="pt" cx="' + base.X(i) + '" cy="' + base.Y(v) + '" r="4" style="fill:' + (v >= ref ? 'var(--c1)' : 'var(--u-panel)') + ';stroke:var(--c1);stroke-width:2;opacity:0"/>'; }).join('');
+    var k = chartKit(st, s), rl = k.q('.rl')[0], rlt = k.q('.rlt')[0], bd = k.q('.bd')[0], pts = k.q('.pt'), lns = k.q('.ln');
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, on = ms > 2300 && ms < 3200;
+      lns[0].setAttribute('stroke-dasharray', '1'); lns[0].setAttribute('pathLength', '1'); lns[0].style.strokeDashoffset = 1 - ease.inOut(seg(ms, 100, 900));
+      rl.style.strokeDashoffset = 1 - ease.out(seg(ms, 1000, 1500)); rlt.style.opacity = seg(ms, 1400, 1600); if (bd) bd.style.opacity = 0.12 * seg(ms, 1000, 1400);
+      pts.forEach(function (p, i) { p.style.opacity = seg(ms, 1600 + i * 30, 1800 + i * 30); });
+      var hx = base.X(first), hy = base.Y(vals[first]), q = glide(ms, 1800, 2300, [VW - 8, VH - 4], [hx + 4, hy + 4]);
+      k.cur(q[0], q[1], false); k.tip(on, hx, hy - 12, '<b>' + WK[first] + '</b> 닫힌 ' + vals[first] + '건 · ' + (avgK ? '평균' : '목표') + '(' + ref + ') 처음 넘음');
+      return ms < 1000 ? '선이 그려짐' : ms < 1700 ? (avgK ? '평균선' : '목표선') + '이 가로로 그어짐 · 오른쪽 끝에 값' : on ? WK[first] + '부터 ' + (avgK ? '평균' : '목표') + ' 위' : '넘은 주는 속이 찬 점' + (band ? ' · ±5 범위 띠' : '');
+    } };
+  };
+
+  /* ───── 표현 › 차트 › 차트 조작 ───── */
+  var CLIP_N = 0;
+  // 눌림 표시: 커서가 t0 근처에서 누른다
+  function pressAt(ms, list) { return list.some(function (x) { return ms > x - 60 && ms < x + 140; }); }
+  // 값 축을 매 프레임 다시 그릴 때 쓰는 눈금 5개(글자와 격자선)
+  function liveAxis(b) { var s = ''; for (var i = 0; i <= 4; i++) s += '<line class="ag" x1="' + b.x + '" x2="' + (b.x + b.w) + '" style="' + (i ? GRID : BASE) + '"/><text class="at tk" text-anchor="end" x="' + (b.x - 6) + '"></text>'; return s; }
+  function setAxis(k, b, max) {
+    var ag = k.q('.ag'), at = k.q('.at');
+    for (var i = 0; i <= 4; i++) { var y = b.y + b.h - b.h * i / 4; ag[i].setAttribute('y1', y); ag[i].setAttribute('y2', y); at[i].setAttribute('y', y + 4); var v = max * i / 4; at[i].textContent = fmt(v, false, Math.abs(v - Math.round(v)) > 0.05 ? 1 : 0); }
+  }
+
+  S['legend-toggle'] = function (st, c) {
+    var iso = c.mode === '눌러서 그것만 보기', fit = c.rescale === '축 다시 맞춤', L = LINES, b = { x: 34, y: 36, w: 420, h: 158 }, MS = 3800, T1 = 1250, T2 = 2650;
+    var tg = iso ? 1 : 0, aff = function (j) { return iso ? j !== tg : j === tg; }, rest = L.filter(function (l, j) { return !aff(j); }), m2 = fit ? niceMax(Math.max.apply(null, rest.map(function (l) { return Math.max.apply(null, l[1]); })) * 1.1) : 60;
+    var s = liveAxis(b) + xAxis12(b) + L.map(function (l, j) { return '<polyline class="ln" style="fill:none;stroke:' + CC[j] + ';stroke-width:2;stroke-linejoin:round"/>'; }).join('');
+    L.forEach(function (l, j) { var x = b.x + j * 104; s += '<g class="chip"><rect x="' + (x - 6) + '" y="2" width="96" height="22" rx="11" style="fill:var(--u-panel);stroke:var(--u-line)"/><rect class="sq" x="' + x + '" y="8" width="10" height="10" rx="2" style="stroke:' + CC[j] + ';stroke-width:1.5"/>' + tx(x + 16, 17, l[0], '', 'nm') + '</g>'; });
+    var k = chartKit(st, s), lns = k.q('.ln'), sqs = k.q('.sq'), nms = k.q('.nm'), cx = b.x + tg * 104 + 40;
+    return { ms: MS, rest: 0.25, at: function (t) {
+      var ms = t * MS, a = ease.inOut(seg(ms, T1, T1 + 300)) - ease.inOut(seg(ms, T2, T2 + 300)), max = lerp(60, m2, a);
+      setAxis(k, b, max);
+      L.forEach(function (l, j) {
+        var off = aff(j) ? a : 0;
+        lns[j].setAttribute('points', l[1].map(function (v, i) { return (b.x + b.w * i / 11) + ',' + (b.y + b.h - Math.min(v, max * 1.15) / max * b.h); }).join(' '));
+        lns[j].style.opacity = 1 - off;
+        sqs[j].style.fill = off > 0.5 ? 'transparent' : CC[j];
+        nms[j].style.opacity = off > 0.5 ? 0.45 : 1; nms[j].style.textDecoration = off > 0.5 ? 'line-through' : 'none';
+      });
+      var q = glide(ms, 650, T1 - 100, [VW - 8, VH - 4], [cx, 18]);
+      k.cur(q[0], q[1], pressAt(ms, [T1, T2]));
+      var who = iso ? '"' + L[tg][0] + '"만 보기' : '"' + L[tg][0] + '" 끔';
+      return ms < T1 ? '범례 칩을 누르면 계열이 켜지고 꺼짐' : ms < T2 ? who + (fit ? ' · 축이 남은 선에 맞춰 ' + Math.round(m2) + '까지' : ' · 축은 그대로') : '다시 누름 · 모두 켬';
+    } };
+  };
+
+  S['brush-zoom'] = function (st, c) {
+    var mini = c.how === '아래 미니맵에서 끌기', dbl = c.reset === '두 번 눌러 되돌리기', N = 52, MS = 4400, S0 = 20, S1 = 32, id = 'ubz' + (++CLIP_N);
+    var V = []; for (var i = 0; i < N; i++) V.push(Math.round(30 + 9 * Math.sin(i / 6) + i * 0.25 + prand(i, 12) * 7));
+    var b = mini ? { x: 34, y: 14, w: 420, h: 128 } : { x: 34, y: 14, w: 420, h: 168 }, m = { x: 34, y: 176, w: 420, h: 34 }, max = 60;
+    var s = '<defs><clipPath id="' + id + '"><rect x="' + b.x + '" y="' + (b.y - 6) + '" width="' + b.w + '" height="' + (b.h + 8) + '"/></clipPath></defs>' + yAxis(b, max) +
+      '<g class="xl"></g><polyline class="mln" clip-path="url(#' + id + ')" style="fill:none;stroke:var(--c1);stroke-width:2;stroke-linejoin:round"/>' +
+      '<rect class="sel" style="fill:var(--c1);fill-opacity:.15;stroke:var(--c1);stroke-width:1"/>';
+    if (mini) s += '<rect x="' + m.x + '" y="' + m.y + '" width="' + m.w + '" height="' + m.h + '" rx="4" style="fill:none;stroke:var(--u-line)"/><polyline points="' + V.map(function (v, i) { return (m.x + m.w * i / (N - 1)) + ',' + (m.y + m.h - 3 - v / max * (m.h - 6)); }).join(' ') + '" style="fill:none;stroke:var(--u-muted);stroke-width:1"/>';
+    s += '<g class="rs"><rect x="374" y="0" width="80" height="22" rx="6" style="fill:var(--u-panel);stroke:var(--u-line)"/>' + tx(414, 15, dbl ? '두 번 눌러 전체' : '↺ 전체 보기', 'middle', 'nm') + '</g>';
+    var k = chartKit(st, s), mln = k.q('.mln')[0], sel = k.q('.sel')[0], xl = k.q('.xl')[0], rs = k.q('.rs')[0];
+    var DR = [900, 1700], ZM = [1850, 2400], RS = dbl ? [3250, 3420] : [3300], ZB = [3500, 4050];
+    return { ms: MS, rest: 0.25, at: function (t) {
+      var ms = t * MS, z = ease.inOut(seg(ms, ZM[0], ZM[1])) - ease.inOut(seg(ms, ZB[0], ZB[1])), d0 = lerp(0, S0, z), d1 = lerp(N - 1, S1, z);
+      mln.setAttribute('points', V.map(function (v, i) { return (b.x + (i - d0) / (d1 - d0) * b.w).toFixed(1) + ',' + (b.y + b.h - v / max * b.h).toFixed(1); }).join(' '));
+      var step = d1 - d0 > 20 ? 10 : 2, h = '';
+      for (var w = Math.ceil(d0 / step) * step; w <= d1; w += step) h += tx(b.x + (w - d0) / (d1 - d0) * b.w, b.y + b.h + 14, (w + 1) + '주', 'middle', 'tk');
+      xl.innerHTML = h;
+      // 고르는 사각형: 미니맵(또는 차트) 위에서 S0부터 끌어 S1까지
+      var g = ease.inOut(seg(ms, DR[0], DR[1])), box = mini ? m : b, sx = function (wk) { return box.x + wk / (N - 1) * box.w; }, cur1 = lerp(S0, S1, g);
+      var showSel = mini ? ms >= DR[0] && ms < ZB[0] : ms >= DR[0] && ms < ZM[0] + 150;
+      var selR = mini ? [sx(S0), sx(lerp(S0, S1, g)) - sx(S0)] : [sx(S0), sx(cur1) - sx(S0)];
+      if (mini && ms >= ZB[0]) showSel = false;
+      sel.style.display = showSel ? '' : 'none'; sel.setAttribute('x', selR[0]); sel.setAttribute('width', Math.max(0, selR[1])); sel.setAttribute('y', box.y + 1); sel.setAttribute('height', box.h - 2);
+      sel.style.opacity = mini ? 1 : 1 - seg(ms, ZM[0], ZM[0] + 150);
+      rs.style.opacity = z > 0.9 && ms < ZB[0] ? 1 : 0;
+      var dragY = box.y + box.h / 2, q = ms < DR[0] ? glide(ms, 300, DR[0] - 80, [VW - 8, VH - 4], [sx(S0), dragY]) : ms < RS[0] - 500 ? [sx(cur1), dragY] : glide(ms, RS[0] - 500, RS[0] - 80, [sx(S1), dragY], dbl ? [b.x + b.w / 2, b.y + b.h / 2] : [414, 12]);
+      k.cur(q[0], q[1], (ms > DR[0] - 40 && ms < DR[1]) || pressAt(ms, RS));
+      return ms < DR[0] ? '전체 52주' : ms < DR[1] ? (mini ? '아래 미니맵에서' : '차트 위에서') + ' 구간을 끌어 고름' : ms < ZB[0] ? Math.round(d0 + 1) + '주–' + Math.round(d1 + 1) + '주로 확대' + (z > 0.9 ? (dbl ? ' · 두 번 누르면 전체' : ' · "전체 보기" 단추') : '') : '전체로 되돌림';
+    } };
+  };
+
+  S['drilldown'] = function (st, c) {
+    var crumb = c.back === '이동 경로(Breadcrumb)', anim = c.motion === '막대가 펼쳐짐', MS = 4200, T1 = 1300, T2 = 3000, DUR = anim ? 550 : 1;
+    var TEAMS = [['결제팀', 42], ['정산팀', 31], ['앱팀', 27], ['운영팀', 18]], MEM = [['민지', 15], ['준호', 12], ['서연', 9], ['도윤', 6]];
+    var b = { x: 40, y: 40, w: 420, h: 150 }, band = b.w / 4, th = band * 0.5, s = liveAxis(b);
+    TEAMS.forEach(function () { s += '<path class="tb" style="fill:var(--c1)"/><text class="tl tk" text-anchor="middle"></text>'; });
+    MEM.forEach(function () { s += '<path class="mb" style="fill:var(--c1)"/><text class="ml tk" text-anchor="middle"></text>'; });
+    s += crumb ? '<g class="cr">' + tx(b.x - 30, 18, '전체 팀', '', 'crt') + tx(b.x + 20, 18, '› 결제팀', '', 'crd') + '</g>'
+      : '<g class="bk"><rect x="' + (b.x - 30) + '" y="4" width="64" height="22" rx="6" style="fill:var(--u-panel);stroke:var(--u-line)"/>' + tx(b.x + 2, 19, '← 뒤로', 'middle', 'nm') + '</g>' + tx(b.x - 30, 18, '팀별 열린 이슈', '', 'ttl nm') + tx(b.x + 44, 19, '결제팀 담당자별', '', 'ttl2 nm');
+    var k = chartKit(st, s), tbs = k.q('.tb'), tls = k.q('.tl'), mbs = k.q('.mb'), mls = k.q('.ml');
+    var crt = k.q('.crt')[0], crd = k.q('.crd')[0], bk = k.q('.bk')[0], ttl = k.q('.ttl')[0], ttl2 = k.q('.ttl2')[0];
+    function bx(i) { return b.x + band * i + (band - th) / 2; }
+    return { ms: MS, rest: 0.25, at: function (t) {
+      var ms = t * MS, d = ease.inOut(seg(ms, T1 + 80, T1 + 80 + DUR)) - ease.inOut(seg(ms, T2 + 80, T2 + 80 + DUR)), max = lerp(60, 20, d), Y = function (v) { return b.y + b.h - v / max * b.h; };
+      setAxis(k, b, max);
+      TEAMS.forEach(function (tm, i) {
+        // 팀 막대는 처음 축(60)에 고정하고 흐려지기만 한다
+        var y = b.y + b.h - tm[1] / 60 * b.h, keep = 1 - Math.min(1, d * 2);
+        tbs[i].setAttribute('d', barPath(bx(i), y, th, b.y + b.h - y)); tbs[i].style.opacity = i === 0 ? (d > 0.02 ? 0 : 1) : keep;
+        tls[i].setAttribute('x', bx(i) + th / 2); tls[i].setAttribute('y', b.y + b.h + 16); tls[i].textContent = tm[0]; tls[i].style.opacity = 1 - d;
+      });
+      // 결제팀 막대 안에 쌓인 조각이 담당자 막대 4개로 펼쳐진다
+      var acc = 0;
+      MEM.forEach(function (mm, j) {
+        var sx = bx(0), sy0 = acc; acc += mm[1];
+        var x = lerp(sx, bx(j), d), w = th, yTop = lerp(Y(acc), Y(mm[1]), d), yBot = lerp(Y(sy0), b.y + b.h, d);
+        mbs[j].setAttribute('d', barPath(x, yTop, w, Math.max(0, yBot - yTop - (d < 0.98 && j ? 1 : 0)))); mbs[j].style.opacity = d > 0.02 ? 1 : 0;
+        mls[j].setAttribute('x', bx(j) + th / 2); mls[j].setAttribute('y', b.y + b.h + 16); mls[j].textContent = mm[0]; mls[j].style.opacity = d;
+      });
+      if (crumb) { crd.style.opacity = d; crt.style.fill = d > 0.5 ? 'var(--u-accent)' : 'var(--u-ink)'; crt.style.textDecoration = d > 0.5 ? 'underline' : 'none'; }
+      else { bk.style.opacity = d; ttl.style.opacity = 1 - d; ttl2.style.opacity = d; }
+      var backAt = crumb ? [b.x - 8, 14] : [b.x + 2, 14], q = ms < T2 - 500 ? glide(ms, 650, T1 - 100, [VW - 8, VH - 4], [bx(0) + th / 2, Y(30)]) : glide(ms, T2 - 500, T2 - 80, [bx(0) + th / 2, Y(10)], backAt);
+      k.cur(q[0], q[1], pressAt(ms, [T1, T2]));
+      return ms < T1 ? '팀 막대를 누르면 한 단계 아래로' : ms < T2 ? '결제팀 → 담당자 4명' + (anim ? '(막대가 펼쳐짐)' : '') + ' · ' + (crumb ? '위에 이동 경로' : '"뒤로" 단추') : '다시 전체 팀으로';
+    } };
+  };
+
+  S['range-selector'] = function (st, c) {
+    var rel3 = c.presets === '오늘·이번 주·이번 달', custom = c.custom === '단추 + 날짜 직접 고르기', MS = 4400, T1 = 1300, T2 = 2500, T3 = 3300, NP = 40;
+    var OPT = rel3 ? ['오늘', '이번 주', '이번 달'] : ['7일', '30일', '90일'], TITLE = rel3 ? ['오늘 (11월 25일, 시간별)', '이번 주 (11월 23일–29일)', '이번 달 (11월 1일–30일)'] : ['최근 7일 (11월 19일–25일)', '최근 30일 (10월 27일–11월 25일)', '최근 90일 (8월 28일–11월 25일)'];
+    var series = function (k) { var r = []; for (var i = 0; i < NP; i++) r.push(18 + 10 * Math.sin(i / (3 + k * 2) + k) + prand(i, 20 + k) * (8 - k * 2) + k * 4); return r; };
+    var SER = [series(0), series(1), series(2), series(3)], b = { x: 34, y: 62, w: 420, h: 130 }, max = 50, segW = 62;
+    var s = yAxis(b, max) + '<rect x="' + b.x + '" y="2" width="' + (segW * 3 + 4) + '" height="26" rx="7" style="fill:var(--u-hover);stroke:var(--u-line)"/><rect class="ind" y="4" width="' + segW + '" height="22" rx="5" style="fill:var(--u-panel);stroke:var(--u-line)"/>';
+    OPT.forEach(function (o, i) { s += tx(b.x + 2 + segW * i + segW / 2, 19, o, 'middle', 'seg'); });
+    if (custom) s += '<g class="cb"><rect x="' + (b.x + segW * 3 + 12) + '" y="2" width="84" height="26" rx="7" style="fill:var(--u-panel);stroke:var(--u-line)"/>' + tx(b.x + segW * 3 + 54, 19, '직접 고르기…', 'middle', 'nm') + '</g>';
+    s += tx(b.x, 48, '', '', 'ttl nm') + '<polygon class="ar" style="fill:var(--c1);opacity:.18"/><polyline class="ln" style="fill:none;stroke:var(--c1);stroke-width:2;stroke-linejoin:round"/>';
+    if (custom) s += '<g class="pop"><rect x="250" y="34" width="210" height="64" rx="8" style="fill:var(--u-panel);stroke:var(--u-line)"/>' + tx(262, 56, '10월 1일  –  10월 31일', '', 'nm') + '<rect x="398" y="68" width="50" height="22" rx="6" style="fill:var(--u-accent)"/>' + tx(423, 83, '적용', 'middle', 'apply') + '</g>';
+    var k = chartKit(st, s), ind = k.q('.ind')[0], segs = k.q('.seg'), ttl = k.q('.ttl')[0], ar = k.q('.ar')[0], lnE = k.q('.ln')[0], pop = k.q('.pop')[0], ap = k.q('.apply')[0];
+    if (ap) ap.style.fill = 'var(--u-accent-ink)';
+    return { ms: MS, rest: 0.25, at: function (t) {
+      var ms = t * MS, sel = ms < T1 ? 1 : 2, m1 = ease.inOut(seg(ms, T1, T1 + 350)), m2 = custom ? ease.inOut(seg(ms, T3, T3 + 350)) : 0;
+      var A = ms >= T3 && custom ? SER[2] : SER[1], B = ms >= T3 && custom ? SER[3] : SER[2], p = ms >= T3 && custom ? m2 : m1, vals = A.map(function (v, i) { return lerp(v, B[i], p); });
+      var pts = vals.map(function (v, i) { return (b.x + b.w * i / (NP - 1)).toFixed(1) + ',' + (b.y + b.h - v / max * b.h).toFixed(1); });
+      lnE.setAttribute('points', pts.join(' ')); ar.setAttribute('points', b.x + ',' + (b.y + b.h) + ' ' + pts.join(' ') + ' ' + (b.x + b.w) + ',' + (b.y + b.h));
+      var cus = custom && ms >= T3 + 100;
+      ind.setAttribute('x', b.x + 2 + segW * lerp(1, 2, m1)); ind.style.opacity = cus ? 0 : 1;
+      segs.forEach(function (e, i) { e.style.fill = !cus && i === Math.round(lerp(1, 2, m1)) ? 'var(--u-ink)' : 'var(--u-muted)'; e.style.fontWeight = !cus && i === Math.round(lerp(1, 2, m1)) ? 700 : 400; });
+      ttl.textContent = cus ? '직접 고름 (10월 1일–31일)' : TITLE[sel];
+      if (pop) pop.style.display = custom && ms > T2 + 100 && ms < T3 + 100 ? '' : 'none';
+      var segX = function (i) { return b.x + 2 + segW * i + segW / 2; }, q = glide(ms, 650, T1 - 100, [VW - 8, VH - 4], [segX(2), 16]);
+      if (custom && ms >= T1 + 300) q = ms < T2 ? glide(ms, T2 - 600, T2 - 80, [segX(2), 16], [b.x + segW * 3 + 54, 16]) : glide(ms, T3 - 500, T3 - 80, [b.x + segW * 3 + 54, 16], [423, 80]);
+      k.cur(q[0], q[1], pressAt(ms, custom ? [T1, T2, T3] : [T1]));
+      return ms < T1 ? '기간 단추: ' + OPT.join(' · ') : !custom || ms < T2 ? OPT[2] + ' 누름 · 제목의 기간도 같이 바뀜' : ms < T3 ? '"직접 고르기" · 시작일과 끝일' : '직접 고른 기간 · 단추 선택은 풀림';
+    } };
+  };
+
+  /* ───── 움직임 › 차트 모션 ───── */
+  S['bar-grow-in'] = function (st, c) {
+    var scale = c.method === 'transform: scaleY', gap = +c.stagger_ms, D = [18, 26, 22, 34, 29, 38], MS = 2400 + gap * 6, b = { x: 40, y: 30, w: 420, h: 166 }, band = b.w / 6, th = band * 0.56, max = 40;
+    var s = yAxis(b, max) + D.map(function (v, i) { return '<path class="bar" style="fill:var(--c1)"/>' + tx(b.x + band * i + band / 2, b.y + b.h + 16, (i + 1) + '월', 'middle', 'tk'); }).join('') +
+      '<rect x="' + (b.x + b.w - 190) + '" y="0" width="190" height="22" rx="6" style="fill:' + (scale ? 'var(--u-ok-soft)' : 'var(--u-warn-soft)') + '"/>' + tx(b.x + b.w - 95, 15, '', 'middle', 'cnt nm');
+    var k = chartKit(st, s), bars = k.q('.bar'), cnt = k.q('.cnt')[0], DUR = 600;
+    k.noCursor();
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, moving = 0;
+      D.forEach(function (v, i) {
+        var t0 = 200 + i * gap, p = ease.out(seg(ms, t0, t0 + DUR)), x = b.x + band * i + (band - th) / 2, full = v / max * b.h;
+        if (p > 0 && p < 1) moving++;
+        // scaleY: 완성 모양을 한 번 그리고 바닥 기준으로 늘린다 / height: 매 프레임 모양을 다시 계산
+        if (scale) { bars[i].setAttribute('d', barPath(x, b.y + b.h - full, th, full)); bars[i].setAttribute('transform', 'translate(0 ' + (b.y + b.h) + ') scale(1 ' + Math.max(0.001, p) + ') translate(0 ' + -(b.y + b.h) + ')'); }
+        else bars[i].setAttribute('d', barPath(x, b.y + b.h - full * p, th, full * p));
+      });
+      var frames = Math.round(seg(ms, 200, 200 + 5 * gap + DUR) * (5 * gap + DUR) / 16.7);
+      cnt.textContent = scale ? '레이아웃 다시 계산 0번 · 합성만' : '레이아웃 다시 계산 약 ' + frames + '번';
+      return ms < 200 ? '처음' : moving ? '막대 ' + moving + '개가 자라는 중 · ' + gap + 'ms 간격' : '다 자람 · ' + (scale ? 'scaleY라 모양 계산은 처음 한 번' : 'height라 프레임마다 모양 계산');
+    } };
+  };
+
+  S['line-draw'] = function (st, c) {
+    var clip = c.method === 'clip 사각형 밀기', dur = +c.duration_ms, L = LINES.slice(0, 2), max = 60, b = { x: 34, y: 14, w: 370, h: 180 }, MS = dur + 2000, id = 'uld' + (++CLIP_N), base = lineBase(b, L, max);
+    var s = '<defs><clipPath id="' + id + '"><rect class="cr" x="' + b.x + '" y="0" height="' + VH + '" width="0"/></clipPath></defs>' + yAxis(b, max) + xAxis12(b) +
+      '<g' + (clip ? ' clip-path="url(#' + id + ')"' : '') + '>' + base.svg + '</g>' + L.map(function (l, j) { return '<circle class="end" cx="' + base.X(11) + '" cy="' + base.Y(l[1][11]) + '" r="4" style="fill:' + CC[j] + ';stroke:var(--u-panel);stroke-width:2"/>' + tx(base.X(11) + 9, base.Y(l[1][11]) + 4, l[0], '', 'nm end'); }).join('') +
+      '<line class="edge" y1="' + b.y + '" y2="' + (b.y + b.h) + '" style="stroke:var(--u-accent);stroke-width:1;stroke-dasharray:3 3"/>';
+    var k = chartKit(st, s), cr = k.q('.cr')[0], lns = k.q('.ln'), ends = k.q('.end'), edge = k.q('.edge')[0];
+    k.noCursor();
+    if (!clip) lns.forEach(function (e) { e.setAttribute('pathLength', '1'); e.style.strokeDasharray = '1'; });
+    return { ms: MS, rest: 0.35, at: function (t) {
+      var ms = t * MS, p = ease.inOut(seg(ms, 300, 300 + dur)), w = b.w * p;
+      if (clip) { cr.setAttribute('width', w); edge.setAttribute('x1', b.x + w); edge.setAttribute('x2', b.x + w); edge.style.opacity = p > 0 && p < 1 ? 0.8 : 0; }
+      else { lns.forEach(function (e) { e.style.strokeDashoffset = 1 - p; }); edge.style.opacity = 0; }
+      ends.forEach(function (e) { e.style.opacity = seg(ms, 300 + dur, 500 + dur); });
+      return p <= 0 ? '처음' : p < 1 ? (clip ? '잘라 낸 사각형을 넓혀 드러냄(점선이 그 끝)' : '선 길이를 대시로 조금씩 드러냄') + ' · ' + dur + 'ms' : '다 그려짐 · 끝점과 이름이 그다음에';
+    } };
+  };
+
+  S['chart-morph'] = function (st, c) {
+    var byKey = c.match === '이름(key)으로 짝', dur = +c.duration_ms, T1 = 1300, MS = T1 + dur + 1900;
+    var A = [['민지', 24], ['준호', 17], ['서연', 31], ['도윤', 12], ['하은', 20]], B = [['민지', 19], ['준호', 28], ['서연', 22], ['도윤', 30], ['하은', 9]];
+    var sortD = function (d) { return d.slice().sort(function (x, y) { return y[1] - x[1]; }); }, SA = sortD(A), SB = sortD(B), max = 40, b = { x: 56, y: 30, w: 380, h: 172 }, band = b.h / 5, th = band * 0.6;
+    var s = tx(b.x - 50, 14, '', '', 'per nm') + ln(b.x, b.y, b.x, b.y + b.h, BASE);
+    SA.forEach(function () { s += '<path class="bar" style="fill:var(--c1)"/><text class="nmL tk" text-anchor="end"></text><text class="vl"></text>'; });
+    var k = chartKit(st, s), bars = k.q('.bar'), nms = k.q('.nmL'), vls = k.q('.vl'), per = k.q('.per')[0];
+    k.noCursor();
+    return { ms: MS, rest: 0.3, at: function (t) {
+      var ms = t * MS, p = ease.inOut(seg(ms, T1, T1 + dur));
+      per.textContent = p < 0.5 ? '지난주 처리 건수' : '이번 주 처리 건수';
+      // 짝: 이름이면 같은 사람끼리(자리도 옮김), 순서면 n번째 막대끼리(이름이 중간에 바뀜)
+      SA.forEach(function (d, i) {
+        var from = { r: i, v: d[1], n: d[0] }, to;
+        if (byKey) { var r2 = SB.findIndex(function (x) { return x[0] === d[0]; }); to = { r: r2, v: SB[r2][1], n: d[0] }; } else to = { r: i, v: SB[i][1], n: SB[i][0] };
+        var r = lerp(from.r, to.r, p), v = lerp(from.v, to.v, p), y = b.y + band * r + (band - th) / 2, w = v / max * b.w;
+        bars[i].setAttribute('d', barPath(b.x, y, w, th, true));
+        nms[i].setAttribute('x', b.x - 8); nms[i].setAttribute('y', y + th / 2 + 4); nms[i].textContent = p < 0.5 ? from.n : to.n;
+        vls[i].setAttribute('x', b.x + w + 6); vls[i].setAttribute('y', y + th / 2 + 4); vls[i].textContent = Math.round(v);
+      });
+      return ms < T1 ? '지난주(큰 순서)' : p < 1 ? (byKey ? '같은 사람 막대가 새 순위 자리로 이동' : '같은 자리 막대끼리 길이만 바뀌고 이름이 중간에 바뀜') + ' · ' + dur + 'ms' : byKey ? '이번 주 · 누가 어디로 갔는지 보임' : '이번 주 · 누가 올랐는지 따라가기 어려움';
+    } };
+  };
+
+  S['live-stream'] = function (st, c) {
+    var W = +c.window, every = c.rate === '1초마다' ? 1000 : 250, MS = 6000, PZ = 4300, b = { x: 34, y: 26, w: 420, h: 160 }, max = 40;
+    var val = function (n) { return 20 + 8 * Math.sin(n / 7) + 5 * Math.sin(n / 2.3) + prand(n, 13) * 4; };
+    var s = yAxis(b, max) + '<polyline class="ln" style="fill:none;stroke:var(--c1);stroke-width:2;stroke-linejoin:round"/><circle class="hd" r="4" style="fill:var(--c1);stroke:var(--u-panel);stroke-width:2"/>' +
+      tx(b.x, 14, '', '', 'lv nm') + tx(b.x + b.w, b.y + b.h + 16, '지금', 'end', 'tk') + tx(b.x, b.y + b.h + 16, '', '', 'ago tk');
+    var k = chartKit(st, s), lnE = k.q('.ln')[0], hd = k.q('.hd')[0], lv = k.q('.lv')[0], ago = k.q('.ago')[0];
+    st.insertAdjacentHTML('beforeend', PAUSE);
+    var pz = st.querySelector('.pz');
+    ago.textContent = Math.round(W * every / 1000) + '초 전';
+    return { ms: MS, rest: 0, at: function (t) {
+      var ms = t * MS, run = Math.min(ms, PZ), f = run / every, n0 = Math.floor(f), frac = f - n0;
+      // 창 크기는 고정: 새 점이 오른쪽에서 들어오고 맨 왼쪽 점은 밀려난다
+      var pts = []; for (var i = 0; i <= W; i++) { var n = n0 - W + i, x = b.x + b.w * (i - frac) / W; if (x >= b.x - 0.5) pts.push(x.toFixed(1) + ',' + (b.y + b.h - val(n) / max * b.h).toFixed(1)); }
+      lnE.setAttribute('points', pts.join(' '));
+      var last = val(n0); hd.setAttribute('cx', b.x + b.w * (W - frac) / W); hd.setAttribute('cy', b.y + b.h - last / max * b.h);
+      lv.textContent = (ms >= PZ ? '■ 멈춤 · ' : '● 실시간 · ') + '들어오는 이슈 ' + Math.round(last) + '건/분';
+      pzLabel(pz, ms >= PZ);
+      var pr = rel(st, pz); k.cur(VW - 8, VH - 4, false);
+      if (ms > PZ - 700) { var cu = st.querySelector('.u-cursor'); put(cu, pr.x + pr.w / 2, pr.y + pr.h / 2, ms > PZ - 120 && ms < PZ + 60); }
+      return ms < PZ ? '최근 ' + W + '개만 보이게 창을 밀며 그림 · ' + (every === 1000 ? '1초' : '0.25초') + '마다 새 값' : '멈춤 단추 · 다시 누르면 지금 값부터';
+    } };
+  };
+
+  S['bar-chart-race'] = function (st, c) {
+    var nb = +c.bars, step = +c.step_ms, NAMES = ['민지', '준호', '서연', '도윤', '하은', '지후', '수아', '예준', '하린', '시우', '유나', '건우'], PER = ['1분기', '2분기', '3분기', '4분기', '5분기', '6분기', '7분기', '8분기'];
+    var NP = PER.length, MS = 400 + step * (NP - 1) + 1600, b = { x: 56, y: 10, w: 360, h: 196 }, band = b.h / nb, th = band * 0.68, ITEMS = NAMES.slice(0, nb), auto = MS > 5000;
+    // 분기별 누적 처리 건수: 사람마다 속도가 달라 순위가 바뀐다
+    var VAL = ITEMS.map(function (n, i) { var acc = 0, r = []; for (var q = 0; q < NP; q++) { acc += 4 + prand(i, 30 + q) * 9 + (i % 3 === 0 ? q * 1.2 : 0); r.push(acc); } return r; });
+    var s = ''; ITEMS.forEach(function (n, i) { s += '<path class="bar" style="fill:' + CC[i % 4] + '"/><text class="nmL tk" text-anchor="end"></text><text class="vl"></text>'; });
+    s += tx(b.x + b.w + 54, b.y + b.h - 4, '', 'end', 'big per');
+    var k = chartKit(st, s), bars = k.q('.bar'), nms = k.q('.nmL'), vls = k.q('.vl'), per = k.q('.per')[0];
+    if (auto) st.insertAdjacentHTML('beforeend', PAUSE);
+    var pz = st.querySelector('.pz');
+    k.noCursor();
+    function at(f) { var q = Math.min(NP - 1, Math.floor(f)), r = f - q; return ITEMS.map(function (n, i) { return q >= NP - 1 ? VAL[i][NP - 1] : lerp(VAL[i][q], VAL[i][q + 1], r); }); }
+    return { ms: MS, rest: 0, at: function (t) {
+      var fOf = function (m) { return Math.max(0, Math.min(NP - 1, (m - 400) / step)); }, ranks = function (vv) { return vv.map(function (x, i) { return i; }).sort(function (a, z) { return vv[z] - vv[a]; }); };
+      var ms = t * MS, f = fOf(ms), v = at(f), mx = Math.max.apply(null, v) * 1.12, rank = ranks(v);
+      // 자리 = 최근 280ms 동안의 순위 평균. 순위가 바뀌면 막대가 이어서 미끄러지고, 멈추면 정확한 순위 자리에 선다
+      var past = []; for (var j = 0; j < 10; j++) past.push(ranks(at(fOf(ms - 280 * j / 9))));
+      ITEMS.forEach(function (n, i) {
+        var r = past.reduce(function (acc, rk) { return acc + rk.indexOf(i); }, 0) / past.length, y = b.y + band * r + (band - th) / 2, w = v[i] / mx * b.w;
+        bars[i].setAttribute('d', barPath(b.x, y, w, th, true));
+        nms[i].setAttribute('x', b.x - 8); nms[i].setAttribute('y', y + th / 2 + 4); nms[i].textContent = n;
+        vls[i].setAttribute('x', b.x + w + 6); vls[i].setAttribute('y', y + th / 2 + 4); vls[i].textContent = Math.round(v[i]);
+      });
+      per.textContent = PER[Math.round(f)];
+      if (pz) pzLabel(pz, f >= NP - 1);
+      var lead = ITEMS[rank[0]];
+      return f >= NP - 1 ? '끝 · 마지막 순위에서 멈춤' + (auto ? '(5초 넘게 움직여 멈춤 단추를 둠)' : '') : PER[Math.round(f)] + ' · 1위 ' + lead + ' · 순위가 바뀌면 막대가 자리를 바꿈';
+    } };
+  };
+
+  /* ───── 만들기 › 차트 기법 ───── */
+  // SVG 좌표 상자 b에 딱 맞는 캔버스를 장면 위에 얹는다(해상도는 화면 배율만큼)
+  function canvasOver(st, k, b) {
+    var cv = document.createElement('canvas'), a = k.px(b.x, b.y), z = k.px(b.x + b.w, b.y + b.h), dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.style.cssText = 'position:absolute;pointer-events:none;left:' + a[0] + 'px;top:' + a[1] + 'px;width:' + (z[0] - a[0]) + 'px;height:' + (z[1] - a[1]) + 'px';
+    cv.width = Math.max(1, Math.round((z[0] - a[0]) * dpr)); cv.height = Math.max(1, Math.round((z[1] - a[1]) * dpr));
+    st.insertBefore(cv, st.querySelector('.u-ctip'));
+    return cv;
+  }
+  function cssColor(st, v) { return getComputedStyle(st).getPropertyValue(v).trim() || '#2a78d6'; }
+
+  S['renderer-choice'] = function (st, c) {
+    var N = +c.points, mode = c.renderer, MS = 3200, b = { x: 34, y: 14, w: 250, h: 170 }, auto = mode === '자동(1천 넘으면 Canvas)', use = auto ? (N > 1000 ? 'Canvas' : 'SVG') : mode;
+    var s = yAxis(b, 20, '') + tx(b.x + b.w, b.y + b.h + 16, '점 ' + fmt(N, true) + '개', 'end', 'tk');
+    // 오른쪽: 표식 수 눈금(로그). 경계는 조사에서 겹친 대략 구간이다
+    var mx0 = 306, mw = 160, L = function (n) { return mx0 + (Math.log10(n) - 2) / 3 * mw; };
+    s += tx(mx0, 26, '그릴 표식 수', '', 'nm') +
+      '<rect x="' + L(100) + '" y="36" width="' + (L(1000) - L(100)) + '" height="10" style="fill:var(--c3);opacity:.55"/><rect x="' + L(1000) + '" y="36" width="' + (L(30000) - L(1000)) + '" height="10" style="fill:var(--c4);opacity:.55"/><rect x="' + L(30000) + '" y="36" width="' + (L(100000) - L(30000)) + '" height="10" style="fill:var(--c2);opacity:.55"/>' +
+      tx(L(100), 60, 'SVG', '', 'tk') + tx(L(3000), 60, 'Canvas', 'middle', 'tk') + tx(L(100000), 60, 'WebGL', 'end', 'tk') + tx(L(100), 72, '100', '', 'tk') + tx(L(100000), 72, '10만', 'end', 'tk') +
+      '<path class="mk" d="M0 0l-5 -8h10z" style="fill:var(--u-ink)"/>' +
+      tx(mx0, 104, '', '', 'r1 nm') + tx(mx0, 124, '', '', 'r2 tk') + tx(mx0, 144, '', '', 'r3 tk') + tx(mx0, 176, '경계는 대략(실측 아님)', '', 'tk');
+    var k = chartKit(st, s), mk = k.q('.mk')[0], r1 = k.q('.r1')[0], r2 = k.q('.r2')[0], r3 = k.q('.r3')[0], cv = canvasOver(st, k, b), g = cv.getContext('2d'), col = cssColor(st, '--c1'), P = [];
+    for (var i = 0; i < N; i++) P.push([prand(i, 40), Math.min(0.98, Math.max(0.02, prand(i, 41) * 0.5 + prand(i, 42) * 0.5))]);
+    k.noCursor();
+    var drawn = -1;
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, n = Math.round(N * ease.out(seg(ms, 100, 1300)));
+      if (n !== drawn) { drawn = n; g.clearRect(0, 0, cv.width, cv.height); g.fillStyle = col; g.globalAlpha = N > 5000 ? 0.35 : 0.6; var sz = Math.max(1.5, cv.width / 160); for (var i = 0; i < n; i++) g.fillRect(P[i][0] * (cv.width - sz), P[i][1] * (cv.height - sz), sz, sz); }
+      var m = ease.out(seg(ms, 1300, 1800)); mk.setAttribute('transform', 'translate(' + lerp(L(100), L(Math.max(100, Math.min(100000, N))), m) + ' 34)');
+      var rec = N <= 1000 ? 'SVG' : N <= 30000 ? 'Canvas' : 'WebGL 또는 Downsampling';
+      r1.textContent = '지금: ' + use + (auto ? '(자동)' : '');
+      r2.textContent = use === 'SVG' ? 'DOM 노드 약 ' + fmt(N, true) + '개(점마다 하나)' : 'DOM 노드 1개(캔버스 하나)';
+      r3.textContent = '권장: ' + rec;
+      r1.style.fill = use === rec || (rec !== 'SVG' && rec !== 'Canvas' && use === 'Canvas') ? 'var(--u-ink)' : 'var(--u-danger)';
+      return ms < 1300 ? '점 ' + fmt(N, true) + '개를 그리는 중' : use === rec ? use + ' · 이 개수에 맞는 선택' : rec === 'SVG' ? 'Canvas도 되지만 점이 적으면 SVG가 다루기 쉬움' : use + '로 ' + fmt(N, true) + '개 · 권장은 ' + rec;
+    } };
+  };
+
+  // LTTB(Largest-Triangle-Three-Buckets): 구간마다 앞뒤 점과 가장 큰 삼각형을 만드는 점을 골라 모양(봉우리)을 남긴다
+  function lttb(d, n) {
+    if (n >= d.length || n < 3) return d.slice();
+    var out = [d[0]], every = (d.length - 2) / (n - 2), a = 0;
+    for (var i = 0; i < n - 2; i++) {
+      var s0 = Math.floor((i + 1) * every) + 1, s1 = Math.min(d.length, Math.floor((i + 2) * every) + 1), ax = 0, ay = 0;
+      for (var j = s0; j < s1; j++) { ax += d[j][0]; ay += d[j][1]; } ax /= (s1 - s0) || 1; ay /= (s1 - s0) || 1;
+      var r0 = Math.floor(i * every) + 1, r1 = Math.floor((i + 1) * every) + 1, best = r0, area = -1;
+      for (var q = r0; q < r1; q++) { var ar = Math.abs((d[a][0] - ax) * (d[q][1] - d[a][1]) - (d[a][0] - d[q][0]) * (ay - d[a][1])); if (ar > area) { area = ar; best = q; } }
+      out.push(d[best]); a = best;
+    }
+    out.push(d[d.length - 1]);
+    return out;
+  }
+  S['downsampling'] = function (st, c) {
+    var N = +c.points, M = +c.target, smart = c.method === 'LTTB(모양 유지)', MS = 3400, b = { x: 34, y: 14, w: 420, h: 170 }, max = 60, SP = Math.floor(N * 0.63) + 7;
+    var D = []; for (var i = 0; i < N; i++) D.push([i, 28 + 10 * Math.sin(i / N * 9) + (prand(i, 50) - 0.5) * 10 + (Math.abs(i - SP) <= 2 ? 22 : 0)]);
+    var R = smart ? lttb(D, M) : D.filter(function (p, i) { return i % Math.ceil(N / M) === 0; });
+    var X = function (i) { return b.x + i / (N - 1) * b.w; }, Y = function (v) { return b.y + b.h - v / max * b.h; };
+    var s = yAxis(b, max) + '<polyline class="rd" points="' + R.map(function (p) { return X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1); }).join(' ') + '" pathLength="1" style="fill:none;stroke:var(--c1);stroke-width:2;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1"/>' +
+      '<circle class="sp" cx="' + X(SP) + '" cy="' + Y(D[SP][1]) + '" r="9" style="fill:none;stroke:var(--c2);stroke-width:2;opacity:0"/>' + tx(b.x, b.y + b.h + 16, '', '', 'cnt nm');
+    var k = chartKit(st, s), rd = k.q('.rd')[0], sp = k.q('.sp')[0], cnt = k.q('.cnt')[0], cv = canvasOver(st, k, b), g = cv.getContext('2d'), keep = R.some(function (p) { return Math.abs(p[0] - SP) <= 2 && p[1] > 45; });
+    g.strokeStyle = cssColor(st, '--u-muted'); g.globalAlpha = 0.45; g.lineWidth = 1; g.beginPath();
+    D.forEach(function (p, i) { var x = i / (N - 1) * cv.width, y = cv.height - p[1] / max * cv.height; if (i) g.lineTo(x, y); else g.moveTo(x, y); }); g.stroke();
+    k.noCursor();
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, raw = 1 - seg(ms, 1700, 2100) * 0.75;
+      cv.style.opacity = raw; rd.style.strokeDashoffset = 1 - ease.inOut(seg(ms, 900, 1700)); sp.style.opacity = seg(ms, 2100, 2300);
+      cnt.textContent = ms < 900 ? '원본 ' + fmt(N, true) + '점' : '원본 ' + fmt(N, true) + '점 → ' + R.length + '점으로 줄여 그림';
+      return ms < 900 ? '원본 ' + fmt(N, true) + '점(회색)' : ms < 2100 ? (smart ? 'LTTB로 구간마다 모양을 남기는 점을 고름' : Math.ceil(N / M) + '개마다 하나씩만 남김') : keep ? '튀는 값(주황 원)이 줄인 선에도 남음' : '튀는 값(주황 원)이 줄이면서 사라짐';
+    } };
+  };
+
+  S['data-table-view'] = function (st, c) {
+    var below = c.layout === '차트 아래에 표', pct = c.format === '값과 비율', MS = 3400, T1 = 1300;
+    var D = [['완료', 22], ['진행', 6], ['검토', 4], ['대기', 2]], tot = 34, b = below ? { x: 40, y: 34, w: 400, h: 70 } : { x: 40, y: 34, w: 400, h: 150 }, band = b.w / 4, th = band * 0.5, max = 24;
+    var s = '<g class="ch">' + yAxis(b, max) + D.map(function (d, i) { var h = d[1] / max * b.h, x = b.x + band * i + (band - th) / 2; return '<path d="' + barPath(x, b.y + b.h - h, th, h) + '" style="fill:var(--c1)"/>' + tx(x + th / 2, b.y + b.h + 14, d[0], 'middle', 'tk'); }).join('') + '</g>' +
+      '<g class="sw"><rect x="' + (b.x + b.w - 96) + '" y="2" width="96" height="22" rx="6" style="fill:var(--u-panel);stroke:var(--u-line)"/>' + tx(b.x + b.w - 48, 17, below ? '표 펼치기' : '표로 보기', 'middle', 'swt nm') + '</g>' + tx(b.x - 30, 17, '4주차 상태별 이슈', '', 'nm');
+    var k = chartKit(st, s), ch = k.q('.ch')[0], swt = k.q('.swt')[0];
+    var a = below ? k.px(b.x - 30, b.y + b.h + 20) : k.px(b.x - 30, b.y), z = k.px(b.x + b.w, below ? VH - 2 : b.y + b.h);
+    st.insertAdjacentHTML('beforeend', '<table class="u-dtv" style="left:' + a[0] + 'px;top:' + a[1] + 'px;width:' + (z[0] - a[0]) + 'px"><caption>4주차 상태별 이슈(합계 ' + tot + '건)</caption><thead><tr><th scope="col">상태</th><th scope="col">건수</th>' + (pct ? '<th scope="col">비율</th>' : '') + '</tr></thead><tbody>' +
+      D.map(function (d) { return '<tr><th scope="row">' + d[0] + '</th><td>' + d[1] + '</td>' + (pct ? '<td>' + Math.round(d[1] / tot * 100) + '%</td>' : '') + '</tr>'; }).join('') + '</tbody></table>');
+    var tb = st.querySelector('.u-dtv');
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, on = ease.inOut(seg(ms, T1, T1 + 300));
+      if (below) { ch.style.opacity = 1; tb.style.opacity = on; tb.style.transform = 'translateY(' + (1 - on) * 8 + 'px)'; }
+      else { ch.style.opacity = 1 - on; tb.style.opacity = on; }
+      tb.style.visibility = on > 0.01 ? 'visible' : 'hidden';
+      swt.textContent = ms < T1 ? (below ? '표 펼치기' : '표로 보기') : (below ? '표 접기' : '차트로 보기');
+      var q = glide(ms, 600, T1 - 100, [VW - 8, VH - 4], [b.x + b.w - 48, 13]); k.cur(q[0], q[1], pressAt(ms, [T1]));
+      return ms < T1 ? '차트 위 단추로 같은 값을 표로' : below ? '차트는 두고 아래에 같은 값의 표' : '차트 자리에 같은 값의 표(제목·머리글 포함)';
+    } };
+  };
+
+  S['non-color-encoding'] = function (st, c) {
+    var m = c.method, gray = c.view === '색약 흉내(흑백)', MS = 3600, T1 = 1500, id = 'unc' + (++CLIP_N), b = { x: 34, y: 14, w: 360, h: 176 }, s = '';
+    var PAT = ['', '<pattern id="' + id + 'a" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" style="fill:var(--c2)"/><line x1="0" y1="0" x2="0" y2="6" style="stroke:var(--u-panel);stroke-width:2"/></pattern>',
+      '<pattern id="' + id + 'b" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" style="fill:var(--c3)"/><circle cx="3" cy="3" r="1.3" style="fill:var(--u-panel)"/></pattern>'];
+    if (m === '무늬(패턴)') {
+      var NM = ['완료', '진행', '대기'], V = [[12, 8, 6], [15, 9, 4], [18, 7, 3], [22, 6, 2]], max = 40, band = b.w / 4, th = band * 0.5;
+      s += '<defs>' + PAT.join('') + '</defs>' + yAxis(b, max);
+      var fill = function (j) { return j === 0 ? 'var(--c1)' : 'url(#' + id + (j === 1 ? 'a' : 'b') + ')'; };
+      V.forEach(function (r, i) { var y0 = b.y + b.h, x = b.x + band * i + (band - th) / 2; r.forEach(function (v, j) { var h = v / max * b.h; s += '<rect x="' + x + '" y="' + (y0 - h + (j ? 2 : 0)) + '" width="' + th + '" height="' + Math.max(0, h - (j ? 2 : 0)) + '" style="fill:' + fill(j) + '"/>'; y0 -= h; }); s += tx(x + th / 2, b.y + b.h + 14, (i + 1) + '주', 'middle', 'tk'); });
+      NM.forEach(function (n, j) { s += '<rect x="' + (b.x + b.w + 18) + '" y="' + (b.y + 10 + j * 26) + '" width="14" height="14" rx="2" style="fill:' + fill(j) + '"/>' + tx(b.x + b.w + 38, b.y + 22 + j * 26, n, '', 'nm'); });
+    } else {
+      var L = LINES, max2 = 60, base = lineBase(b, L, max2), DASH = ['', '7 4', '2 3'];
+      s += yAxis(b, max2) + xAxis12(b) + base.svg;
+      L.forEach(function (l, j) {
+        if (m === '선 모양(점선)') s += '<line x1="' + (b.x + b.w + 14) + '" x2="' + (b.x + b.w + 34) + '" y1="' + (b.y + 16 + j * 26) + '" y2="' + (b.y + 16 + j * 26) + '" style="stroke:' + CC[j] + ';stroke-width:2;stroke-dasharray:' + (DASH[j] || 'none') + '"/>' + tx(b.x + b.w + 40, b.y + 20 + j * 26, l[0].split(' ')[0], '', 'nm');
+        else s += tx(base.X(11) + 8, base.Y(l[1][11]) + 4, l[0], '', 'nm');
+      });
+      s = s.replace(/<polyline class="ln" data-j="(\d)"/g, function (all, j) { return all + (m === '선 모양(점선)' && DASH[+j] ? ' stroke-dasharray="' + DASH[+j] + '"' : ''); });
+    }
+    var k = chartKit(st, s), svg = st.querySelector('svg');
+    k.noCursor();
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, g = gray ? seg(ms, T1, T1 + 500) : 0;
+      svg.style.filter = g ? 'grayscale(' + g + ')' : '';
+      return !gray || ms < T1 ? (m === '무늬(패턴)' ? '색 + 빗금·점 무늬' : m === '선 모양(점선)' ? '색 + 실선·긴 점선·짧은 점선' : '색 + 선 끝에 이름') : '흑백으로 바꿔도 ' + (m === '무늬(패턴)' ? '무늬로' : m === '선 모양(점선)' ? '선 모양으로' : '이름으로') + ' 구분됨';
+    } };
+  };
+
+  S['chart-summary'] = function (st, c) {
+    var top = c.where === '차트 위 한 줄', num = c.detail === '추세와 숫자', L = LINES.slice(0, 2), max = 60, MS = 3400, b = top ? { x: 34, y: 80, w: 380, h: 112 } : { x: 34, y: 10, w: 380, h: 132 }, base = lineBase(b, L, max);
+    var s = yAxis(b, max) + xAxis12(b) + base.svg + L.map(function (l, j) { return tx(base.X(11) + 8, base.Y(l[1][11]) + 4, l[0], '', 'nm'); }).join('') +
+      L.map(function (l) { return '<circle class="hl" cx="' + base.X(0) + '" cy="' + base.Y(l[1][0]) + '" r="6" style="fill:none;stroke:var(--u-ink);stroke-width:1.5;opacity:0"/><circle class="hl" cx="' + base.X(11) + '" cy="' + base.Y(l[1][11]) + '" r="6" style="fill:none;stroke:var(--u-ink);stroke-width:1.5;opacity:0"/>'; }).join('');
+    var k = chartKit(st, s), hls = k.q('.hl');
+    k.noCursor();
+    var SUM = top ? (num ? '열린 이슈 32→50건(+56%), 닫힌 이슈가 더 빨리 늘어 차이가 12→7건으로 줄었다.' : '두 이슈 모두 늘었고 둘의 차이는 줄고 있다.') : num ? '12주 동안 열린 이슈는 32건에서 50건으로 56% 늘었고, 닫힌 이슈도 20건에서 43건으로 늘어 둘의 차이는 12건에서 7건으로 줄었다.' : '열린 이슈와 닫힌 이슈가 함께 늘었고, 닫는 속도가 더 빨라 둘의 차이가 줄고 있다.';
+    var a = top ? k.px(b.x - 26, 4) : k.px(b.x - 26, b.y + b.h + 24);
+    st.insertAdjacentHTML('beforeend', '<p class="u-csum" style="left:' + a[0] + 'px;top:' + a[1] + 'px;right:14px"><b>요약</b> <span></span></p>');
+    var sp = st.querySelector('.u-csum span');
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, n = Math.round(SUM.length * seg(ms, 300, 1500));
+      sp.textContent = SUM.slice(0, n);
+      hls.forEach(function (h) { h.style.opacity = seg(ms, 1600, 1800); });
+      return ms < 1600 ? '차트 ' + (top ? '위' : '아래') + '에 보이는 글로 요약' : '요약이 가리키는 시작·끝 값 · 화면 읽기 프로그램도 이 글을 읽음';
+    } };
+  };
+
+  // 조합 화면(분석·보고서)도 같은 차트 보조 함수를 쓴다
+  UI.chart = { CC: CC, barPath: barPath, niceMax: niceMax, lttb: lttb, seqFill: seqFill, divFill: divFill };
+
   /* ───── 신청·설정 묶음 ───── */
   var FIELD = 'border:1px solid var(--u-line);border-radius:var(--u-r);background:var(--u-panel);padding:7px 10px;font-size:13.5px;min-height:34px;position:relative';
   function caretHTML() { return '<span style="display:inline-block;width:1.5px;height:1em;background:var(--u-accent);vertical-align:-2px;margin-left:1px"></span>'; }
