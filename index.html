@@ -109,6 +109,7 @@ a { color: inherit; }
 @media (prefers-reduced-motion: reduce) { .say .q i, .hero h1 em span { animation: none; } .duo .mini { transition: none; } }
 /* 이 화면의 용어 보기: 페이지 부품마다 이름표 */
 .wrap > .scr-labels { z-index: 40; }
+.wrap > #pg-labels-fix { position: fixed; z-index: 41; }
 .top .termtoggle { margin-left: 0; font-size: 13px; padding: 4px 10px; }
 .top .termtoggle input { width: 15px; height: 15px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -309,7 +310,7 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
       <button class="fbtn" id="fbtn" type="button" aria-expanded="false" aria-controls="fpanel" data-term="popover">필터<b id="fcount" hidden></b></button>
     </div>
     <div class="fpanel" id="fpanel" hidden><div class="frows" id="frows"></div></div>
-    <nav class="secnav" id="secnav" aria-label="소묶음으로 가기"></nav>
+    <nav class="secnav" id="secnav" aria-label="소묶음으로 가기" data-term="scroll-into-view"></nav>
   </div>
   <div class="statusline">
     <span class="count" aria-hidden="true" data-term="number-ticker">142개 중 <b id="cnum">142</b>개</span><span class="sr" id="count" role="status"></span>
@@ -320,7 +321,7 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
     </div>
   </div>
 
-  <div class="groups" id="grid"></div>
+  <div class="groups" id="grid" data-term="flip"></div>
   <div class="split" id="listview" hidden>
     <ol class="list" id="list"></ol>
     <div class="pane" id="pane"></div>
@@ -331,6 +332,7 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
   <footer>용어 <span id="total"></span>개 · 데이터는 <code>terms.json</code>, 조합 화면은 <code>recipes.json</code>입니다. 용어마다 움직이는 예시가 있고, 조합 화면은 9개입니다. 업무 화면 5개가 업무 화면 용어 62개를 한 번씩 쓰고, 제품 소개 랜딩이 소개·랜딩 효과를, 분석·보고서가 1차 차트 용어 32개를 모두 엮고, 데이터 스토리가 스크롤 글 한 편에 차트 2차 용어를 엮고, 설명·발표 덱이 다이어그램과 슬라이드 용어로 .pptx까지 만듭니다. 코드는 MIT, 글은 CC BY 4.0 · <a href="https://github.com/whitejo401/ui-labs">GitHub</a> · <a href="llms.txt">llms.txt</a></footer>
 
 <div class="scr-labels" id="pg-labels" hidden></div>
+<div class="scr-labels" id="pg-labels-fix" hidden></div>
 </div>
 
 <dialog id="dlg" aria-label="용어">
@@ -476,7 +478,7 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
     return String(str).split(re).map(function (part, i) { return i % 2 ? '<mark>' + esc(part) + '</mark>' : esc(part); }).join('');
   }
   function cardHTML(t) {
-    return '<div class="card" data-card="' + t.id + '">' +
+    return '<div class="card" data-card="' + t.id + '" data-term="hover-effect">' +
       (hasScene(t) ? '<div class="mini pv" data-pv="' + t.id + '" aria-hidden="true"><div class="u u-stage"></div></div>' : '') +
       '<span class="nm"><a class="stretch" href="#' + t.id + '" data-id="' + t.id + '"><b>' + hl(t.name) + '</b></a><span>' + hl(t.ko) + '</span></span>' +
       '<p>' + esc(t.one) + '</p><span class="chips">' + t.tags.use.map(function (u) { return '<span class="chip use">' + esc(u) + '</span>'; }).join('') + '<span class="chip">' + esc(t.tags.build) + '</span></span>' +
@@ -588,22 +590,39 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
     demoBuild(0);
   }
 
-  /* ───── 이 화면의 용어 보기: 페이지에 data-term을 단 부품마다 이름표 ───── */
+  /* ───── 이 화면의 용어 보기: 페이지에 data-term을 단 부품마다 이름표 ─────
+     지금 화면에 보이는 부분만 감싼다(용어마다 처음 보이는 것 하나). 도구 막대가 위에 붙어 있으면
+     막대 안 부품은 화면에 붙는 층(pg-labels-fix)에 그리고, 나머지는 막대 아래로 잘라 페이지 층에 그린다 */
+  // 이름표 자리: below 아래 바깥 왼쪽, below-r 아래 바깥 오른쪽, in-br 안쪽 오른쪽 아래, in-tr 안쪽 오른쪽 위, side 오른쪽 바깥.
+  // 없으면 위 바깥 왼쪽, 위에 자리가 없으면 안쪽 왼쪽 위
+  var PL_PLACE = { 'sticky-header': 'below', 'scroll-into-view': 'below-r', 'flip': 'in-br', 'hover-effect': 'in-tr', 'number-ticker': 'side' };
   function pageLabels() {
-    var L = $('pg-labels'), on = $('page-labels').checked;
-    L.hidden = !on; if (!on) return;
-    var a = document.querySelector('.wrap').getBoundingClientRect(), html = '', seen = {};
+    var L = $('pg-labels'), F = $('pg-labels-fix'), on = $('page-labels').checked;
+    L.hidden = F.hidden = !on; if (!on) return;
+    var a = document.querySelector('.wrap').getBoundingClientRect(), bar = $('bar'), br = bar.getBoundingClientRect();
+    var stuck = !bar.closest('[hidden]') && br.top <= parseFloat(getComputedStyle(bar).top) + 1 && scrollY > 0;
+    var out = { L: '', F: '' }, seen = {};
     document.querySelectorAll('.wrap [data-term]').forEach(function (el) {
       var id = el.getAttribute('data-term');
       if (seen[id] || !BY_ID[id] || el.closest('.mini, #screenroot, [hidden]')) return;
-      var r = el.getBoundingClientRect();
-      if (!r.width || !r.height || r.bottom < 0 || r.top > innerHeight * 3) return;
+      var fix = stuck && bar.contains(el), lim = fix || !stuck ? 0 : br.bottom + 22, r = el.getBoundingClientRect();
+      var x1 = Math.max(r.left, 0), x2 = Math.min(r.right, innerWidth), y1 = Math.max(r.top, lim), y2 = Math.min(r.bottom, innerHeight);
+      // 카드처럼 되풀이되는 부품은 윗변이 보이는 것을 고른다(막대 밑에 걸린 띠에 붙지 않게)
+      if (x2 - x1 < 8 || y2 - y1 < 8 || (id === 'hover-effect' && r.top < lim)) return;
       seen[id] = true;
-      var x = r.left - a.left - 3, y = r.top - a.top - 3;
-      html += '<div class="box" style="left:' + x + 'px;top:' + y + 'px;width:' + (r.width + 6) + 'px;height:' + (r.height + 6) + 'px"></div>' +
-        '<button type="button" data-id="' + id + '" style="left:' + Math.max(0, x) + 'px;top:' + y + 'px" title="' + esc(BY_ID[id].name) + ' 카드 열기">' + esc(BY_ID[id].name) + '</button>';
+      // 화면 좌표 → 층 좌표. 화면에 붙는 층은 그대로, 페이지 층은 .wrap 기준
+      var ox = fix ? 0 : -a.left, oy = fix ? 0 : -a.top, k = PL_PLACE[id], pos;
+      if (k === 'below') pos = 'left:' + (x1 - 3 + ox) + 'px;top:' + (y2 + 3 + oy) + 'px;transform:none';
+      else if (k === 'below-r') pos = 'left:' + (x2 + 3 + ox) + 'px;top:' + (y2 + 3 + oy) + 'px;transform:translateX(-100%)';
+      else if (k === 'in-tr') pos = 'left:' + (x2 - 4 + ox) + 'px;top:' + (y1 + 4 + oy) + 'px;transform:translateX(-100%)';
+      else if (k === 'side') pos = 'left:' + (x2 + 6 + ox) + 'px;top:' + (y1 + oy) + 'px;transform:none';
+      else if (k === 'in-br') pos = 'left:' + (x2 - 4 + ox) + 'px;top:' + (y2 - 4 + oy) + 'px;transform:translate(-100%,-100%)';
+      else if (y1 - 21 >= lim) pos = 'left:' + Math.max(0, x1 - 3 + ox) + 'px;top:' + (y1 - 3 + oy) + 'px';
+      else pos = 'left:' + (x1 + 2 + ox) + 'px;top:' + (y1 + 2 + oy) + 'px;transform:none';
+      out[fix ? 'F' : 'L'] += '<div class="box" style="left:' + (x1 - 3 + ox) + 'px;top:' + (y1 - 3 + oy) + 'px;width:' + (x2 - x1 + 6) + 'px;height:' + (y2 - y1 + 6) + 'px"></div>' +
+        '<button type="button" data-id="' + id + '" style="' + pos + '" title="' + esc(BY_ID[id].name) + ' 카드 열기">' + esc(BY_ID[id].name) + '</button>';
     });
-    L.innerHTML = html;
+    L.innerHTML = out.L; F.innerHTML = out.F;
   }
   var plRaf = 0;
   function pageLabelsSoon() { if ($('page-labels').checked && !plRaf) plRaf = requestAnimationFrame(function () { plRaf = 0; pageLabels(); }); }
@@ -638,7 +657,7 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
       var old = flipFirst();
       $('grid').innerHTML = shown.length ? groups.map(function (g, i) {
         return '<section class="group" id="sec-' + i + '"><h2>' + dot(g.head[0]) + '<b>' + esc(g.head[1]) + '</b>' + esc(g.head[0]) + ' · ' + g.items.length + '</h2>' +
-          '<div class="cards"' + (i ? '' : ' data-term="flip"') + '>' + g.items.map(cardHTML).join('') + '</div></section>';
+          '<div class="cards" data-term="card-grid">' + g.items.map(cardHTML).join('') + '</div></section>';
       }).join('') : emptyHTML();
       $('secnav').innerHTML = groups.map(function (g, i) { return '<button type="button" data-sec="' + i + '">' + esc(g.head[1]) + '<small>' + g.items.length + '</small></button>'; }).join('');
       $('secnav').hidden = groups.length < 2;
@@ -816,7 +835,7 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
     if (!document.contains(e.target) || e.target.closest('#screenroot')) return;
     var a = e.target.closest('a[data-id]');
     if (a) { e.preventDefault(); openTerm(a.getAttribute('data-id')); setHash(a.getAttribute('data-id')); return; }
-    var pl = e.target.closest('#pg-labels [data-id]');
+    var pl = e.target.closest('#pg-labels [data-id], #pg-labels-fix [data-id]');
     if (pl) { openTerm(pl.getAttribute('data-id')); setHash(pl.getAttribute('data-id')); return; }
     var f = e.target.closest('.fopt, .achip[data-f]');
     if (f) { toggle(f.getAttribute('data-f'), f.getAttribute('data-v')); return; }
