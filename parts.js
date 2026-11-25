@@ -18,7 +18,8 @@
   function mixBg(color, pct, base) { return 'color-mix(in srgb, ' + color + ' ' + Math.round(pct) + '%, ' + (base || 'var(--u-panel)') + ')'; }
   // 순간 목록 [[시각ms, 값], ...]에서 ms 때의 값
   function stepAt(list, ms) { var v = list[0][1]; for (var i = 0; i < list.length; i++) if (ms >= list[i][0]) v = list[i][1]; return v; }
-  function rel(stage, el) { var a = stage.getBoundingClientRect(), b = el.getBoundingClientRect(); return { x: b.left - a.left, y: b.top - a.top, w: b.width, h: b.height }; }
+  // 틀 안 좌표. 틀이 transform으로 줄어 있으면(카드 미리보기) 그 비율을 나눠 틀 기준 px로 돌려준다
+  function rel(stage, el) { var a = stage.getBoundingClientRect(), b = el.getBoundingClientRect(), k = stage.offsetWidth ? a.width / stage.offsetWidth : 1; if (Math.abs(k - 1) < 0.02) k = 1; return { x: (b.left - a.left) / k, y: (b.top - a.top) / k, w: b.width / k, h: b.height / k }; }
 
   // 예시 데이터 (가상의 "결제 개편" 프로젝트)
   var AV = { '민지': '#2f8f6b', '준호': '#4a6fd1', '서연': '#b4579a', '도윤': '#c27a1c' };

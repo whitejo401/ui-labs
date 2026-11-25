@@ -450,6 +450,11 @@
     var settleId = 0;
     on(main, 'scroll', function () { hideTip(); if (!st.labels) return; drawLabels(); clearTimeout(settleId); settleId = setTimeout(drawLabels, 120); }, { passive: true });
     on(window, 'resize', function () { moveSeg(); if (SC) renderScat(); drawLabels(); });
+    // 캔버스는 색을 그릴 때 한 번 읽는다. 테마가 바뀌면(머리 줄 단추, 시스템 설정) 새 색으로 다시 그린다
+    var themeMo = new MutationObserver(function () { if (SC) renderScat(); });
+    themeMo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    offs.push(function () { themeMo.disconnect(); });
+    on(window.matchMedia('(prefers-color-scheme: dark)'), 'change', function () { if (SC) renderScat(); });
     every(tickLive, 1000);
 
     load(st.p, true);
