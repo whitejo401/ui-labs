@@ -805,3 +805,28 @@
   .ds-step { min-height: 260px; }
   .ds-end { padding-inline: 18px; }
 }
+
+/* ───── 슬라이드 용어 예시와 조합 화면: 설명·발표 덱 (slides.js, screen-deck.js). 장 안의 색은 덱 테마 값(16진수)이라 화면 테마와 따로 간다 ───── */
+.u-slidebox { position: absolute; inset: 8px; color: var(--u-ink); }
+.u-slidebox svg { display: block; width: 100%; height: 100%; }
+.dk { position: relative; display: grid; grid-template-columns: 172px minmax(0, 1fr); gap: 14px; padding: 14px; background: var(--u-bg); border: 1px solid var(--u-line); border-radius: 14px; }
+.dk-side { display: grid; gap: 8px; align-content: start; max-height: 640px; overflow-y: auto; padding: 2px 6px 2px 2px; }
+.dk-side h4 { margin: 4px 0 0; font-size: 11.5px; font-weight: 600; color: var(--u-muted); }
+.dk-th { display: grid; gap: 3px; padding: 4px; border: 1.5px solid transparent; border-radius: 8px; background: none; color: var(--u-muted); cursor: pointer; text-align: left; font: inherit; font-size: 11.5px; }
+.dk-th:hover { background: var(--u-hover); }
+.dk-th[aria-current="true"] { border-color: var(--u-accent); color: var(--u-ink); }
+.dk-th svg, .dk-master svg { display: block; width: 100%; height: auto; border: 1px solid var(--u-line); border-radius: 3px; }
+.dk-master p { margin: 4px 0 0; font-size: 11.5px; line-height: 1.45; color: var(--u-muted); }
+.dk-main { display: grid; gap: 10px; align-content: start; min-width: 0; }
+.dk-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; }
+.dk-bar .num { min-width: 52px; text-align: center; color: var(--u-muted); font-variant-numeric: tabular-nums; }
+.dk-bar .st { color: var(--u-muted); font-size: 12px; }
+.dk-bar .st.bad { color: var(--u-danger); }
+.dk-stage svg { display: block; width: 100%; height: auto; border: 1px solid var(--u-line); border-radius: 6px; }
+.dk-notes { border: 1px solid var(--u-line); border-radius: 8px; background: var(--u-panel); padding: 8px 12px; font-size: 13px; line-height: 1.6; }
+.dk-notes b { display: block; font-size: 11.5px; color: var(--u-muted); font-weight: 600; }
+.dk-notes p { margin: 2px 0 0; }
+@media (max-width: 760px) {
+  .dk { grid-template-columns: minmax(0, 1fr); padding: 10px; }
+  .dk-side { order: 2; max-height: none; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+}

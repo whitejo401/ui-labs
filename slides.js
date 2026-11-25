@@ -16,6 +16,7 @@
       bg: '#ffffff', ink: '#1d1f22', muted: '#6a6e74', line: '#e4e4df', panel: '#f4f4f1',
       accent: '#2f5d8a', accentSoft: '#e5edf5',
       sets: ['#2a78d6', '#eb6834', '#1baf7a'],
+      c4: { person: '#22466b', main: '#2f5d8a', app: '#4a78a6', ext: '#6b7077' },   // 흰 글자와 대비 4.5:1 이상
       lh: 1.3,                    // 줄 간격(글자 크기의 배수). .pptx에도 같은 값을 pt로 적는다
       slack: 0.9                  // 제한 검사는 이 비율로 좁힌 폭으로 한다(맑은 고딕으로 바뀌어도 들어가게)
     }
@@ -77,7 +78,7 @@
     var lhpx = o.size * theme.lh * PX;
     return {
       k: 'text', x: o.x, y: o.y, w: o.w, h: o.h || Math.ceil(max * lhpx), text: String(o.text), size: o.size, weight: o.weight || 400,
-      color: o.color || theme.ink, align: o.align || 'left', valign: o.valign || 'top', lh: theme.lh, lines: lines,
+      color: o.color || theme.ink, align: o.align || 'left', valign: o.valign || 'top', lh: theme.lh, lines: lines, max: max,
       ph: o.ph, term: o.term, step: o.step
     };
   };
@@ -152,6 +153,279 @@
     return { prims: prims, errors: errors };
   };
 
+  /* ───── 상자·화살표·범례 공통 ─────
+     상자 꼴(look): plain 보통, mark 강조(점선 테두리), main C4 내 시스템, app C4 컨테이너, store 저장소(원통), ext 바깥 시스템, person 사람 */
+  function looks(th) {
+    var c = th.c4;
+    return {
+      plain: { fill: th.panel, stroke: th.line, ink: th.ink, sub: th.muted },
+      mark: { fill: th.accentSoft, stroke: th.accent, ink: th.ink, sub: th.muted, dash: true },
+      main: { fill: c.main, stroke: c.main, ink: '#ffffff', sub: '#ffffff' },
+      app: { fill: c.app, stroke: c.app, ink: '#ffffff', sub: '#ffffff' },
+      store: { fill: c.app, stroke: c.app, ink: '#ffffff', sub: '#ffffff' },
+      ext: { fill: c.ext, stroke: c.ext, ink: '#ffffff', sub: '#ffffff' },
+      person: { fill: c.person, stroke: c.person, ink: '#ffffff', sub: '#ffffff' }
+    };
+  }
+  // 글상자의 높이를 예측한 줄 수에 맞춘다(세로 가운데 맞춤을 손으로 할 때)
+  function fitH(p, th) { p.h = Math.ceil(Math.max(1, p.lines.length) * p.size * th.lh * PX); return p; }
+  // 자리를 잡은 뒤 상자 높이를 최대 줄 수로 늘린다. 맑은 고딕으로 바뀌어 줄이 늘어도 상자 안에 든다
+  function roomy(list, th) { list.forEach(function (p) { p.h = Math.max(p.h, Math.ceil(p.max * p.size * th.lh * PX)); }); return list; }
+  // 상자 하나: 이름(한 줄), [기술](한 줄), 설명(두 줄)을 세로 가운데에 쌓는다
+  function nodeBox(n, x, y, w, h, th, errors, slot, step, term) {
+    var lk = looks(th)[n.look || 'plain'] || looks(th).plain, prims = [], top = y, pad = 12;
+    if (n.look === 'store') {
+      prims.push({ k: 'can', x: x, y: y, w: w, h: h, fill: lk.fill, stroke: lk.stroke, sw: 1.5, step: step, term: term });
+      top = y + Math.min(w, h) / 4;
+    } else {
+      prims.push({ k: 'rect', x: x, y: y, w: w, h: h, r: n.look === 'person' ? 22 : 8, fill: lk.fill, stroke: lk.stroke, sw: lk.dash ? 2 : 1.5, dash: lk.dash, step: step, term: term });
+      if (n.look === 'person') { prims.push({ k: 'ellipse', x: x + w / 2 - 16, y: y - 26, w: 32, h: 32, fill: lk.fill, stroke: th.bg, sw: 3, step: step }); top = y + 6; }
+    }
+    var parts = [S.textBox({ x: x + pad, y: 0, w: w - 2 * pad, text: n.name, size: 16, weight: 700, color: lk.ink, align: 'center', step: step }, th, errors, slot + '.name')];
+    if (n.tech) parts.push(S.textBox({ x: x + pad, y: 0, w: w - 2 * pad, text: '[' + n.tech + ']', size: 11, color: lk.sub, align: 'center', step: step }, th, errors, slot + '.tech'));
+    if (n.one) parts.push(S.textBox({ x: x + pad, y: 0, w: w - 2 * pad, text: n.one, size: 12, color: lk.sub, align: 'center', max: 2, step: step }, th, errors, slot + '.one'));
+    // 세로 가운데는 최대 줄 수로 잡는다. 글꼴이 바뀌어 설명이 두 줄이 돼도 상자 안에 든다
+    var total = roomy(parts.map(function (p) { p.h = 0; return p; }), th).reduce(function (a, p) { return a + p.h; }, 0) + 2 * (parts.length - 1), cy = top + (y + h - top - total) / 2;
+    parts.forEach(function (p) { p.y = cy; cy += p.h + 2; prims.push(p); });
+    return prims;
+  }
+  // 화살표 글: 선 가운데에 바탕색 띠를 깔고 얹는다. above면 선 위에 놓는다
+  function linkLabel(text, mx, my, w, above, th, errors, slot, step) {
+    var p = fitH(S.textBox({ x: mx - w / 2, y: 0, w: w, text: text, size: 11, color: th.muted, align: 'center', max: 2, step: step }, th, errors, slot), th);
+    p.y = above ? my - 6 - p.h : my - p.h / 2;
+    var lw = Math.min(w, Math.max.apply(null, p.lines.map(function (l) { return S.measure(l, 11, 400, th.font); }))) + 12;
+    return [{ k: 'rect', x: mx - lw / 2, y: p.y - 2, w: lw, h: p.h + 4, fill: th.bg, step: step }, roomy([p], th)[0]];
+  }
+  // 상자 중심에서 상대 쪽으로 그은 선이 상자 테두리(+틈)와 만나는 점
+  function edge(c, o, hw, hh) {
+    var dx = o[0] - c[0], dy = o[1] - c[1];
+    var s = Math.min(dx ? hw / Math.abs(dx) : Infinity, dy ? hh / Math.abs(dy) : Infinity);
+    return [c[0] + dx * s, c[1] + dy * s];
+  }
+  // 격자 배치: 상자마다 col·row(소수 가능)를 받아 칸 가운데에 놓고, 이름으로 이은 화살표를 긋는다
+  // o: { w, h(상자 최대), gapX, gapY, slot, linkSlot, term }
+  function graph(nodes, links, box, th, errors, o) {
+    var prims = [], pos = {}, cols = 1, rows = 1;
+    nodes.forEach(function (n) { cols = Math.max(cols, Math.ceil((n.col || 0) + 1)); rows = Math.max(rows, Math.ceil((n.row || 0) + 1)); });
+    var cw = box.w / cols, ch = box.h / rows;
+    var w = Math.min(cw - (o.gapX || 90), o.w || 260), h = Math.min(ch - (o.gapY || 70), o.h || 110);
+    nodes.forEach(function (n, i) {
+      var cx = box.x + ((n.col || 0) + 0.5) * cw, cy = box.y + ((n.row || 0) + 0.5) * ch;
+      pos[n.name] = { cx: cx, cy: cy, i: i, x: cx - w / 2, y: cy - h / 2, w: w, h: h, look: n.look };
+      prims = prims.concat(nodeBox(n, cx - w / 2, cy - h / 2, w, h, th, errors, o.slot + '[' + i + ']', i, i ? undefined : o.term));
+    });
+    (links || []).forEach(function (l, i) {
+      var a = pos[l.from], b = pos[l.to], slot = (o.linkSlot || 'links') + '[' + i + ']';
+      if (!a || !b) { errors.push({ slot: slot, msg: '없는 상자 이름: ' + (a ? l.to : l.from) }); return; }
+      var step = Math.max(a.i, b.i), p1, p2, flat = Math.abs(a.cy - b.cy) < 1;
+      p1 = edge([a.cx, a.cy], [b.cx, b.cy], w / 2 + 8, h / 2 + 8);
+      p2 = edge([b.cx, b.cy], [a.cx, a.cy], w / 2 + 8, h / 2 + (b.look === 'person' ? 30 : 8));
+      prims.push({ k: 'line', x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1], stroke: th.muted, sw: 2, dash: l.dash, arrow: 'end', step: step });
+      if (l.label) prims = prims.concat(linkLabel(l.label, (p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2, flat ? Math.abs(p2[0] - p1[0]) - 4 : 170, flat, th, errors, slot + '.label', step));
+    });
+    return { prims: prims, pos: pos };
+  }
+  // 범례: 오른쪽 끝(right)에 맞춰 가로로 늘어놓는다. items [{look, name}] 또는 [{line: 'dash', name}]
+  function legend(items, right, y, th, errors, slot, step) {
+    var prims = [], lk = looks(th), x = 0, parts = [];
+    items.forEach(function (it, i) {
+      var tw = Math.min(260, S.measure(it.name, 12, 400, th.font) / th.slack + 4);
+      parts.push({ it: it, tw: tw, x: x }); x += 34 + tw + 24;
+    });
+    var w = x - 24 + 28, x0 = right - w;
+    prims.push({ k: 'rect', x: x0, y: y, w: w, h: 40, r: 6, fill: th.bg, stroke: th.line, sw: 1, step: step, term: 'legend' });
+    parts.forEach(function (q, i) {
+      var sx = x0 + 14 + q.x, it = q.it, l = lk[it.look] || lk.plain;
+      if (it.line) prims.push({ k: 'line', x1: sx, y1: y + 20, x2: sx + 28, y2: y + 20, stroke: th.muted, sw: 2, dash: it.line === 'dash', arrow: 'end', step: step });
+      else if (it.look === 'store') prims.push({ k: 'can', x: sx + 6, y: y + 8, w: 18, h: 24, fill: l.fill, stroke: l.stroke, sw: 1, step: step });
+      else prims.push({ k: 'rect', x: sx, y: y + 10, w: 28, h: 20, r: it.look === 'person' ? 10 : 4, fill: l.fill, stroke: l.stroke, sw: l.dash ? 1.5 : 1, dash: l.dash, step: step });
+      prims.push(S.textBox({ x: sx + 34, y: y + 10, w: q.tw, text: it.name, size: 12, color: th.ink, step: step }, th, errors, slot + '[' + i + ']'));
+    });
+    return prims;
+  }
+
+  // 오일러: 존재하는 관계만 그린다. 바깥 집합 하나 안에 겹치지 않는 안쪽 집합 1~2개, 떨어진 집합 하나(없어도 됨)
+  S.diagrams['euler-diagram'] = function (d, box, th) {
+    var errors = [], prims = [], inner = d.inner || [];
+    count(inner, 1, 2, 'inner', errors);
+    if (!d.outer) { errors.push({ slot: 'outer', msg: '바깥 집합이 없습니다' }); return { prims: prims, errors: errors }; }
+    var Do = Math.min(box.h, box.w * 0.6), Ro = Do / 2, Ra = Ro * 0.5, gap = 70;
+    var total = Do + (d.apart ? gap + 2 * Ra : 0), ox = box.x + (box.w - total) / 2 + Ro, oy = box.y + box.h / 2;
+    var col = th.sets;
+    prims.push({ k: 'ellipse', x: ox - Ro, y: oy - Ro, w: Do, h: Do, fill: col[0], alpha: 0.1, stroke: col[0], sw: 2.5, step: 0, term: 'euler-diagram' });
+    prims.push(S.textBox({ x: ox - Ro * 0.6, y: oy - Ro * 0.74, w: Ro * 1.2, text: d.outer.name, size: 20, weight: 700, color: col[0], align: 'center', step: 0 }, th, errors, 'outer.name'));
+    if (d.outer.one) prims.push(S.textBox({ x: ox - Ro * 0.6, y: oy - Ro * 0.74 + 36, w: Ro * 1.2, text: d.outer.one, size: 13, color: th.ink, align: 'center', step: 0 }, th, errors, 'outer.one'));
+    var Ri = Ro * 0.42, two = inner.length === 2;
+    inner.slice(0, 2).forEach(function (s, i) {
+      var cx = ox + (two ? (i ? 1 : -1) * Ri * 1.1 : 0), cy = oy + Ro * 0.25;
+      prims.push({ k: 'ellipse', x: cx - Ri, y: cy - Ri, w: 2 * Ri, h: 2 * Ri, fill: col[1], alpha: 0.16, stroke: col[1], sw: 2.5, step: 1 });
+      prims = prims.concat(circleText(s, cx, cy, Ri, col[1], th, errors, 'inner[' + i + ']', 1));
+    });
+    if (d.apart) {
+      var ax = ox + Ro + gap + Ra;
+      prims.push({ k: 'ellipse', x: ax - Ra, y: oy - Ra, w: 2 * Ra, h: 2 * Ra, fill: col[2], alpha: 0.16, stroke: col[2], sw: 2.5, step: 2 });
+      prims = prims.concat(circleText(d.apart, ax, oy, Ra, col[2], th, errors, 'apart', 2));
+    }
+    return { prims: prims, errors: errors };
+  };
+  // 원 안 가운데에 이름(한 줄)과 설명(두 줄)
+  function circleText(s, cx, cy, R, color, th, errors, slot, step) {
+    var w = R * 1.5, a = fitH(S.textBox({ x: cx - w / 2, y: 0, w: w, text: s.name, size: 16, weight: 700, color: color, align: 'center', step: step }, th, errors, slot + '.name'), th);
+    var b = s.one ? fitH(S.textBox({ x: cx - w / 2, y: 0, w: w, text: s.one, size: 12, color: th.ink, align: 'center', max: 2, step: step }, th, errors, slot + '.one'), th) : null;
+    var tot = a.h + (b ? b.h + 4 : 0);
+    a.y = cy - tot / 2; if (b) b.y = a.y + a.h + 4;
+    return roomy(b ? [a, b] : [a], th);
+  }
+
+  // 상자와 화살표: 정해진 기호 규칙이 없으니 꼴마다 뜻을 범례로 밝힌다
+  // { boxes: [{ name, one, col, row, look: plain|mark }], arrows: [{ from, to, label, dash }], legend: [{ look, name }] }
+  S.diagrams['box-and-arrow-diagram'] = function (d, box, th) {
+    var errors = [], boxes = d.boxes || [];
+    count(boxes, 2, 8, 'boxes', errors);
+    var area = d.legend ? { x: box.x, y: box.y, w: box.w, h: box.h - 52 } : box;
+    var g = graph(boxes, d.arrows, area, th, errors, { slot: 'boxes', linkSlot: 'arrows', term: 'box-and-arrow-diagram', w: 220, h: 104, gapX: 80 });
+    var prims = g.prims;
+    if (d.legend) prims = prims.concat(legend(d.legend, box.x + box.w, box.y + box.h - 40, th, errors, 'legend', boxes.length));
+    return { prims: prims, errors: errors };
+  };
+
+  // C4 1단계 System Context: 위에 사람, 가운데 내 시스템 하나, 아래에 바깥 시스템. 화살표마다 하는 일을 적는다
+  // { people: [{ name, one, uses }], system: { name, one }, externals: [{ name, one, rel }] }
+  S.diagrams['c4-system-context'] = function (d, box, th) {
+    var errors = [], people = d.people || [], ext = d.externals || [];
+    count(people, 1, 3, 'people', errors); count(ext, 1, 4, 'externals', errors);
+    if (!d.system) { errors.push({ slot: 'system', msg: '내 시스템이 없습니다' }); return { prims: [], errors: errors }; }
+    var cols = Math.max(people.length, ext.length, 1), nodes = [], links = [];
+    function row(list, r, look, tech) { list.forEach(function (n, i) { nodes.push({ name: n.name, one: n.one, tech: tech, look: look, row: r, col: (cols - list.length) / 2 + i }); }); }
+    row(people, 0, 'person', '사람');
+    nodes.push({ name: d.system.name, one: d.system.one, tech: '소프트웨어 시스템', look: 'main', row: 1, col: (cols - 1) / 2 });
+    row(ext, 2, 'ext', '바깥 시스템');
+    people.forEach(function (p) { links.push({ from: p.name, to: d.system.name, label: p.uses }); });
+    ext.forEach(function (x) { links.push({ from: d.system.name, to: x.name, label: x.rel }); });
+    var g = graph(nodes, links, { x: box.x, y: box.y + 16, w: box.w, h: box.h - 16 }, th, errors, { slot: 'nodes', term: 'c4-system-context', w: 250, h: 104, gapX: 60, gapY: 40 });
+    // 칸 이름을 입력 칸 기준으로 고친다(people[0], system, externals[1])
+    errors.forEach(function (e) {
+      e.slot = e.slot.replace(/^nodes\[(\d+)\]/, function (m, k) { k = +k; return k < people.length ? 'people[' + k + ']' : k === people.length ? 'system' : 'externals[' + (k - people.length - 1) + ']'; })
+        .replace(/^links\[(\d+)\]\.label$/, function (m, k) { k = +k; return k < people.length ? 'people[' + k + '].uses' : 'externals[' + (k - people.length) + '].rel'; });
+    });
+    return { prims: g.prims, errors: errors };
+  };
+
+  // C4 2단계 Container: 내 시스템 경계(점선) 안의 앱·저장소와 바깥 시스템. 범례는 쓰인 꼴만
+  // { system, nodes: [{ name, tech, one, look: app|store|ext|person, col, row }], links: [{ from, to, label }] }
+  var LEGEND_NAME = { app: '앱·서버', store: '데이터 저장소', ext: '바깥 시스템', person: '사람' };
+  S.diagrams['c4-container'] = function (d, box, th) {
+    var errors = [], nodes = d.nodes || [], prims = [];
+    count(nodes, 3, 8, 'nodes', errors);
+    var area = { x: box.x, y: box.y, w: box.w, h: box.h - 52 };
+    var g = graph(nodes, d.links, area, th, errors, { slot: 'nodes', term: 'c4-container', w: 250, h: 108, gapX: 110, gapY: 92 });
+    // 경계: 안쪽 상자를 모두 감싸고 아래에 시스템 이름
+    var ins = Object.keys(g.pos).map(function (k) { return g.pos[k]; }).filter(function (p) { return p.look === 'app' || p.look === 'store'; });
+    if (ins.length && d.system) {
+      var x1 = Math.min.apply(null, ins.map(function (p) { return p.x; })) - 22, y1 = Math.min.apply(null, ins.map(function (p) { return p.y; })) - 22;
+      var x2 = Math.max.apply(null, ins.map(function (p) { return p.x + p.w; })) + 22, y2 = Math.max.apply(null, ins.map(function (p) { return p.y + p.h; })) + 40;
+      prims.push({ k: 'rect', x: x1, y: y1, w: x2 - x1, h: y2 - y1, r: 6, stroke: th.muted, sw: 1.5, dash: true, step: 0 });
+      prims.push(S.textBox({ x: x1 + 14, y: y2 - 30, w: x2 - x1 - 28, text: d.system + ' [소프트웨어 시스템]', size: 12, weight: 700, color: th.muted, step: 0 }, th, errors, 'system'));
+    }
+    prims = prims.concat(g.prims);
+    var seen = [];
+    nodes.forEach(function (n) { if (LEGEND_NAME[n.look] && seen.indexOf(n.look) < 0) seen.push(n.look); });
+    if (d.legend !== false) prims = prims.concat(legend(seen.map(function (k) { return { look: k, name: LEGEND_NAME[k] }; }), box.x + box.w, box.y + box.h - 40, th, errors, 'legend', nodes.length));
+    return { prims: prims, errors: errors };
+  };
+
+  // 파이프라인: 단계 3~6개를 왼쪽에서 오른쪽으로, 끝에 결과가 쌓이는 저장소(원통). 설명은 상자 아래
+  // { steps: [{ name, one }], store: { name, one } }
+  S.diagrams['pipeline-diagram'] = function (d, box, th) {
+    var errors = [], prims = [], steps = d.steps || [];
+    count(steps, 3, 6, 'steps', errors);
+    var all = steps.concat(d.store ? [d.store] : []), n = Math.max(1, all.length), gap = 52;
+    var w = (box.w - gap * (n - 1)) / n, bh = 96, oneH = Math.ceil(13 * th.lh * PX * 3);
+    var y0 = box.y + (box.h - (bh + 14 + oneH)) / 2, mid = y0 + bh / 2;
+    all.forEach(function (s, i) {
+      var x = box.x + i * (w + gap), last = d.store && i === n - 1, slot = last ? 'store' : 'steps[' + i + ']';
+      if (last) prims.push({ k: 'can', x: x, y: y0 - 18, w: w, h: bh + 36, fill: th.accentSoft, stroke: th.accent, sw: 2, step: i });
+      else prims.push({ k: 'rect', x: x, y: y0, w: w, h: bh, r: 10, fill: th.panel, stroke: th.line, sw: 1.5, step: i, term: i ? undefined : 'pipeline-diagram' });
+      prims.push(S.textBox({ x: x + 10, y: last ? y0 + 8 : y0, w: w - 20, h: last ? bh - 8 : bh, text: s.name, size: 17, weight: 700, color: last ? th.accent : th.ink, align: 'center', valign: 'middle', max: 2, step: i }, th, errors, slot + '.name'));
+      if (s.one) prims.push(S.textBox({ x: x, y: y0 + bh + 14 + (last ? 18 : 0), w: w, text: s.one, size: 13, color: th.muted, align: 'center', max: 3, step: i }, th, errors, slot + '.one'));
+      if (i < n - 1) prims.push({ k: 'line', x1: x + w + 8, y1: mid, x2: x + w + gap - 8, y2: mid, stroke: th.muted, sw: 2.5, arrow: 'end', step: i + 1 });
+    });
+    return { prims: prims, errors: errors };
+  };
+
+  // 시퀀스: 참여자를 위에 늘어놓고 세로 점선(생명선), 메시지를 위에서 아래로 시간 순서대로. 돌려주는 답은 점선
+  // { actors: [{ name }], messages: [{ from, to, text, back }] }
+  S.diagrams['sequence-diagram'] = function (d, box, th) {
+    var errors = [], prims = [], actors = d.actors || [], msgs = d.messages || [], at = {};
+    count(actors, 2, 5, 'actors', errors); count(msgs, 2, 8, 'messages', errors);
+    var n = Math.max(1, actors.length), cw = box.w / n, aw = Math.min(cw - 24, 210), ah = 50;
+    actors.forEach(function (a, i) {
+      var cx = box.x + (i + 0.5) * cw; at[a.name] = cx;
+      prims.push({ k: 'rect', x: cx - aw / 2, y: box.y, w: aw, h: ah, r: 8, fill: th.accentSoft, stroke: th.accent, sw: 1.5, step: 0, term: i ? undefined : 'sequence-diagram' });
+      prims.push(S.textBox({ x: cx - aw / 2 + 8, y: box.y, w: aw - 16, h: ah, text: a.name, size: 15, weight: 700, align: 'center', valign: 'middle', step: 0 }, th, errors, 'actors[' + i + '].name'));
+      prims.push({ k: 'line', x1: cx, y1: box.y + ah, x2: cx, y2: box.y + box.h, stroke: th.line, sw: 2, dash: true, step: 0 });
+    });
+    var top = box.y + ah + 8, sh = (box.h - ah - 8) / Math.max(1, msgs.length);
+    msgs.forEach(function (m, i) {
+      var x1 = at[m.from], x2 = at[m.to], slot = 'messages[' + i + ']';
+      if (x1 == null || x2 == null) { errors.push({ slot: slot, msg: '없는 참여자: ' + (x1 == null ? m.from : m.to) }); return; }
+      if (x1 === x2) { errors.push({ slot: slot, msg: '보내는 쪽과 받는 쪽이 같습니다' }); return; }
+      var y = top + (i + 1) * sh - 10, dir = x2 > x1 ? 1 : -1;
+      prims.push({ k: 'line', x1: x1 + dir * 3, y1: y, x2: x2 - dir * 3, y2: y, stroke: m.back ? th.muted : th.ink, sw: 2, dash: !!m.back, arrow: 'end', step: i + 1 });
+      var w = Math.abs(x2 - x1) - 16, p = fitH(S.textBox({ x: Math.min(x1, x2) + 8, y: 0, w: w, text: m.text, size: 12, color: m.back ? th.muted : th.ink, align: 'center', step: i + 1 }, th, errors, slot + '.text'), th);
+      p.y = y - 5 - p.h; prims.push(p);
+    });
+    return { prims: prims, errors: errors };
+  };
+
+  // 타임라인: 가로축 위에 시점, 아래에 이름과 설명. now(번호)가 있으면 그 단계까지 채운 점, 뒤는 빈 점
+  // { stages: [{ when, name, one }], now }
+  S.diagrams['timeline-diagram'] = function (d, box, th) {
+    var errors = [], prims = [], st = d.stages || [];
+    count(st, 3, 6, 'stages', errors);
+    var n = Math.max(1, st.length), cw = box.w / n, ay = box.y + box.h * 0.36;
+    prims.push({ k: 'line', x1: box.x, y1: ay, x2: box.x + box.w, y2: ay, stroke: th.line, sw: 4, arrow: 'end', step: 0, term: 'timeline-diagram' });
+    st.forEach(function (s, i) {
+      var cx = box.x + (i + 0.5) * cw, done = d.now == null || i <= d.now, cur = d.now === i, r = cur ? 15 : 11;
+      prims.push({ k: 'ellipse', x: cx - r, y: ay - r, w: 2 * r, h: 2 * r, fill: done ? th.accent : th.bg, stroke: th.accent, sw: 3, step: i });
+      prims.push(S.textBox({ x: cx - cw / 2 + 10, y: ay - 32 - 14 * th.lh * PX, w: cw - 20, text: s.when, size: 14, weight: 700, color: done ? th.accent : th.muted, align: 'center', step: i }, th, errors, 'stages[' + i + '].when'));
+      prims.push(S.textBox({ x: cx - cw / 2 + 10, y: ay + 30, w: cw - 20, text: s.name, size: 18, weight: 700, color: done ? th.ink : th.muted, align: 'center', step: i }, th, errors, 'stages[' + i + '].name'));
+      if (s.one) prims.push(S.textBox({ x: cx - cw / 2 + 10, y: ay + 30 + 18 * th.lh * PX + 8, w: cw - 20, text: s.one, size: 13, color: th.muted, align: 'center', max: 3, step: i }, th, errors, 'stages[' + i + '].one'));
+      if (cur) prims.push(S.textBox({ x: cx - 60, y: ay - 32 - 14 * th.lh * PX - 26, w: 120, text: '지금', size: 11, weight: 700, color: th.accent, align: 'center', step: i }, th, errors, 'now'));
+    });
+    return { prims: prims, errors: errors };
+  };
+
+  // 순환: 단계 3~6개를 타원 위에 놓고 다음 단계로 화살표, 마지막은 처음으로. 가운데에 주기(없어도 됨)
+  // { steps: [{ name, one }], center }
+  S.diagrams['cycle-diagram'] = function (d, box, th) {
+    var errors = [], prims = [], st = d.steps || [];
+    count(st, 3, 6, 'steps', errors);
+    var n = Math.max(1, st.length), hasOne = st.some(function (s) { return s.one; });
+    var w = Math.min(230, box.w / 3.2), h = hasOne ? 84 : 56;
+    var ry = box.h / 2 - h / 2 - 6, rx = box.w / 2 - w / 2 - 6, cx = box.x + box.w / 2, cy = box.y + box.h / 2;
+    var P = st.map(function (s, i) { var a = -Math.PI / 2 + i * 2 * Math.PI / n; return [cx + rx * Math.cos(a), cy + ry * Math.sin(a)]; });
+    st.forEach(function (s, i) {
+      var p = P[i];
+      prims.push({ k: 'rect', x: p[0] - w / 2, y: p[1] - h / 2, w: w, h: h, r: h / 2, fill: i ? th.panel : th.accentSoft, stroke: i ? th.line : th.accent, sw: 1.5, step: i, term: i ? undefined : 'cycle-diagram' });
+      prims = prims.concat(nodeText(s, p[0] - w / 2 + 14, p[1] - h / 2, w - 28, h, th, errors, 'steps[' + i + ']', i));
+    });
+    st.forEach(function (s, i) {
+      var a = P[i], b = P[(i + 1) % n], p1 = edge(a, b, w / 2 + 6, h / 2 + 6), p2 = edge(b, a, w / 2 + 6, h / 2 + 6);
+      prims.push({ k: 'line', x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1], stroke: th.accent, sw: 2.5, arrow: 'end', step: i === n - 1 ? n : i + 1 });
+    });
+    if (d.center) prims.push(S.textBox({ x: cx - rx * 0.45, y: cy - 30, w: rx * 0.9, h: 60, text: d.center, size: 15, weight: 700, color: th.muted, align: 'center', valign: 'middle', max: 2, step: n }, th, errors, 'center'));
+    return { prims: prims, errors: errors };
+  };
+  // 둥근 상자 안 이름(한 줄)과 설명(두 줄)을 세로 가운데에
+  function nodeText(s, x, y, w, h, th, errors, slot, step) {
+    var a = fitH(S.textBox({ x: x, y: 0, w: w, text: s.name, size: 15, weight: 700, align: 'center', step: step }, th, errors, slot + '.name'), th);
+    var b = s.one ? fitH(S.textBox({ x: x, y: 0, w: w, text: s.one, size: 12, color: th.muted, align: 'center', max: 2, step: step }, th, errors, slot + '.one'), th) : null;
+    var tot = a.h + (b ? b.h + 2 : 0);
+    a.y = y + (h - tot) / 2; if (b) b.y = a.y + a.h + 2;
+    return roomy(b ? [a, b] : [a], th);
+  }
+
   /* ───── 레이아웃 ───── */
   var M = 64;                       // 좌우 여백
   S.layouts = {};
@@ -192,6 +466,62 @@
   }
   S.layouts.venn = diagramLayout('venn-diagram', ['sets', 'overlap']);
   S.layouts['layered-architecture'] = diagramLayout('layered-architecture-diagram', ['layers']);
+  S.layouts.euler = diagramLayout('euler-diagram', ['outer', 'inner', 'apart']);
+  S.layouts['box-and-arrow'] = diagramLayout('box-and-arrow-diagram', ['boxes', 'arrows', 'legend']);
+  S.layouts['c4-context'] = diagramLayout('c4-system-context', ['people', 'system', 'externals']);
+  S.layouts['c4-container'] = diagramLayout('c4-container', ['system', 'nodes', 'links']);
+  S.layouts.pipeline = diagramLayout('pipeline-diagram', ['steps', 'store']);
+  S.layouts.sequence = diagramLayout('sequence-diagram', ['actors', 'messages']);
+  S.layouts.timeline = diagramLayout('timeline-diagram', ['stages', 'now']);
+  S.layouts.cycle = diagramLayout('cycle-diagram', ['steps', 'center']);
+
+  // 위에 상자와 화살표 흐름(요청마다), 아래에 순환(주기마다). 칸마다 짧은 머리글
+  // { flow: { label, boxes, arrows, legend }, cycle: { label, steps, center } }
+  function shift(prims, by) { prims.forEach(function (p) { if (p.step != null) p.step += by; }); return prims; }
+  function tag(errors, pre) { errors.forEach(function (e) { e.slot = pre + '.' + e.slot; }); return errors; }
+  S.layouts['flow-and-cycle'] = {
+    slots: { title: '2줄', flow: '상자 2~8개, 머리글 1줄', cycle: '단계 3~6개, 머리글 1줄', notes: '자유' },
+    build: function (s, th, page) {
+      var errors = [], f = frame(s, th, page, errors), b = f.body, prims = f.prims, fl = s.flow || {}, cy = s.cycle || {};
+      var e1 = [], e2 = [];
+      if (fl.label) prims.push(S.textBox({ x: b.x, y: b.y, w: 600, text: fl.label, size: 14, weight: 700, color: th.muted }, th, e1, 'label'));
+      var a = S.diagrams['box-and-arrow-diagram']({ boxes: fl.boxes, arrows: fl.arrows }, { x: b.x, y: b.y + 44, w: b.w, h: 170 }, th);
+      prims = prims.concat(a.prims); e1 = e1.concat(a.errors);
+      var n = (fl.boxes || []).length;
+      if (fl.legend) prims = prims.concat(legend(fl.legend, b.x + b.w, b.y - 8, th, e1, 'legend', n));
+      prims.push({ k: 'line', x1: b.x, y1: b.y + 232, x2: b.x + b.w, y2: b.y + 232, stroke: th.line, sw: 1, dash: true });
+      if (cy.label) prims.push(S.textBox({ x: b.x, y: b.y + 246, w: 600, text: cy.label, size: 14, weight: 700, color: th.muted, step: n + 1 }, th, e2, 'label'));
+      var c = S.diagrams['cycle-diagram']({ steps: cy.steps, center: cy.center }, { x: b.x + 160, y: b.y + 262, w: b.w - 320, h: 218 }, th);
+      prims = prims.concat(shift(c.prims, n + 1)); e2 = e2.concat(c.errors);
+      return { prims: prims, errors: errors.concat(tag(e1, 'flow'), tag(e2, 'cycle')) };
+    }
+  };
+
+  // 2단 비교: 왼쪽과 오른쪽을 같은 틀로. 줄은 양쪽이 같은 높이로 나란히 선다. 아래에 한 줄(없어도 됨)
+  // { left: { head, items }, right: { head, items }, foot }
+  S.layouts['two-column'] = {
+    slots: { title: '2줄', left: '머리 1줄, 항목 1~5개(2줄씩)', right: '왼쪽과 같음', foot: '1줄', notes: '자유' },
+    build: function (s, th, page) {
+      var errors = [], f = frame(s, th, page, errors), b = f.body, prims = f.prims, gap = 48;
+      var cw = (b.w - gap) / 2, L = s.left || {}, R = s.right || {}, rows = Math.max((L.items || []).length, (R.items || []).length);
+      var rh = 72, hh = 58, top = b.y + (s.foot ? 0 : 10);
+      [['left', L, 0], ['right', R, 1]].forEach(function (c) {
+        var key = c[0], col = c[1], x = b.x + c[2] * (cw + gap);
+        count(col.items, 1, 5, key + '.items', errors);
+        prims.push({ k: 'rect', x: x, y: top, w: cw, h: hh + rows * rh + 12, r: 10, fill: th.panel, step: 0, term: c[2] ? undefined : 'two-column-comparison' });
+        prims.push({ k: 'rect', x: x, y: top, w: cw, h: 6, fill: c[2] ? th.muted : th.accent, step: 0 });
+        prims.push(S.textBox({ x: x + 24, y: top + 6, w: cw - 48, h: hh - 6, text: col.head || '', size: 19, weight: 700, color: c[2] ? th.ink : th.accent, valign: 'middle', step: 0 }, th, errors, key + '.head'));
+        (col.items || []).forEach(function (it, i) {
+          var y = top + hh + i * rh;
+          prims.push({ k: 'line', x1: x + 24, y1: y, x2: x + cw - 24, y2: y, stroke: th.line, sw: 1, step: i + 1 });
+          prims.push({ k: 'ellipse', x: x + 26, y: y + rh / 2 - 4, w: 8, h: 8, fill: c[2] ? th.muted : th.accent, step: i + 1 });
+          prims.push(S.textBox({ x: x + 48, y: y, w: cw - 72, h: rh, text: it, size: 16, valign: 'middle', max: 2, step: i + 1 }, th, errors, key + '.items[' + i + ']'));
+        });
+      });
+      if (s.foot) prims.push(S.textBox({ x: b.x, y: top + hh + rows * rh + 40, w: b.w, text: s.foot, size: 15, weight: 700, step: rows + 1 }, th, errors, 'foot'));
+      return { prims: prims, errors: errors };
+    }
+  };
 
   // 덱의 장 하나를 만든다. 오류에는 몇째 장인지 붙인다
   S.build = function (slide, i, theme) {
@@ -219,7 +549,7 @@
       if (o <= 0) return;
       var g = (o < 1 ? ' opacity="' + n2(o) + '"' : '') + (p.term ? ' data-term="' + p.term + '"' : '');
       var paint = ' fill="' + (p.fill || 'none') + '"' + (p.fill && p.alpha != null ? ' fill-opacity="' + p.alpha + '"' : '') +
-        (p.stroke ? ' stroke="' + p.stroke + '" stroke-width="' + (p.sw || 1) + '"' : '');
+        (p.stroke ? ' stroke="' + p.stroke + '" stroke-width="' + (p.sw || 1) + '"' + (p.dash ? ' stroke-dasharray="' + (p.sw || 1) * 3 + ' ' + (p.sw || 1) * 2 + '"' : '') : '');
       if (p.k === 'rect') out.push('<rect x="' + n2(p.x) + '" y="' + n2(p.y) + '" width="' + n2(p.w) + '" height="' + n2(p.h) + '"' + (p.r ? ' rx="' + p.r + '"' : '') + paint + g + '/>');
       else if (p.k === 'ellipse') out.push('<ellipse cx="' + n2(p.x + p.w / 2) + '" cy="' + n2(p.y + p.h / 2) + '" rx="' + n2(p.w / 2) + '" ry="' + n2(p.h / 2) + '"' + paint + g + '/>');
       else if (p.k === 'can') {
@@ -249,5 +579,296 @@
       }
     });
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + S.W + ' ' + S.H + '" role="img">' + out.join('') + '</svg>';
+  };
+
+  /* ───── 용어 예시 장면 ─────
+     UI.scenes[용어 id](무대, 조절판 값) → { ms, rest, at(t) }. parts.js가 UI.scenes를 새로 만들므로 그 뒤에 불러야 한다
+     장면은 덱과 같은 배치 함수로 장을 만들고 t에 따라 step 차례로 보인다 */
+  var SC = UI.scenes = UI.scenes || {};
+  var TH = S.themes.paper;
+  function clamp(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
+  function inner(svg) { return svg.slice(svg.indexOf('>') + 1, svg.lastIndexOf('</svg>')); }
+  function canvas(body) { return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img">' + body + '</svg>'; }
+  // 작은 장 하나: 1280×720 장을 (x, y)에 폭 w로 줄여 놓는다. hi면 강조 테두리
+  function mini(prims, x, y, w, o) {
+    o = o || {};
+    var h = w * 9 / 16, op = o.op == null ? 1 : o.op;
+    if (op <= 0) return '';
+    return '<g' + (op < 1 ? ' opacity="' + n2(op) + '"' : '') + '><svg x="' + x + '" y="' + y + '" width="' + w + '" height="' + n2(h) + '" viewBox="0 0 1280 720">' + inner(S.svg(prims, o.t)) + '</svg>' +
+      '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + n2(h) + '" fill="none" stroke="' + (o.hi ? TH.accent : '#b9bab3') + '" stroke-width="' + (o.hi ? 5 : 2) + '"/></g>';
+  }
+  // 바깥 캔버스의 이름표. 색은 무대 글자색(currentColor)을 따라 밝은·어두운 화면 모두에서 읽힌다
+  function label(text, x, y, o) {
+    o = o || {};
+    return '<text x="' + x + '" y="' + y + '" font-family="Noto Sans KR" font-size="' + (o.size || 32) + '" font-weight="' + (o.weight || 700) + '" fill="currentColor"' +
+      (o.op != null ? ' opacity="' + n2(o.op) + '"' : '') + (o.anchor ? ' text-anchor="' + o.anchor + '"' : '') + '>' + esc(text) + '</text>';
+  }
+  // 무대에 그린다. make(th) → f(t) → { svg, info }. 글꼴 조각이 다 불리면 다시 만든다(줄바꿈이 바뀔 수 있어서)
+  function paint(st, data, make, ms) {
+    st.innerHTML = '<div class="u-slidebox"></div>';
+    var box = st.firstChild, last = 0, f = make(TH);
+    function draw(t) { last = t; var r = f(t); box.innerHTML = r.svg; return r.info; }
+    S.ready(data, TH).then(function () { if (box.isConnected) { f = make(TH); draw(last); } });
+    return { ms: ms || 4200, rest: 0.96, at: draw };
+  }
+  // 장 하나에 테두리를 둘러 무대에 꽉 차게
+  function framed(svg) { return svg.replace(/<\/svg>$/, '<rect x="1" y="1" width="1278" height="718" fill="none" stroke="#b9bab3" stroke-width="1" vector-effect="non-scaling-stroke"/></svg>'); }
+  // op만큼 흐리게 묶는다. 0이면 그리지 않는다
+  function fadeG(op, prims, t) { return op <= 0 ? '' : '<g' + (op < 1 ? ' opacity="' + n2(op) + '"' : '') + '>' + inner(S.svg(prims, t)) + '</g>'; }
+  // 자리 표시자 안내 문구(한 줄, 회색)
+  function hint(x, y, w, h, text, size) { return { k: 'text', x: x, y: y, w: w, h: h, text: text, size: size, weight: 400, color: TH.muted, align: 'left', valign: 'middle', lh: TH.lh, lines: [text] }; }
+  function stepsOf(prims) { var n = 0; prims.forEach(function (p) { if (p.step != null) n = Math.max(n, p.step + 1); }); return n; }
+  // 다이어그램 용어: 조절판 값으로 장을 고르고(make), step 차례로 나타낸다. names는 step마다 장면 이름
+  function slideScene(make, names) {
+    return function (st, c) {
+      var slide = make(c);
+      return paint(st, slide, function (th) {
+        var prims = S.layouts[slide.layout].build(slide, th).prims, n = stepsOf(prims);
+        return function (t) {
+          var tt = clamp(t / 0.8), k = Math.min(n - 1, Math.floor(tt * (n + 0.5)));
+          return { svg: framed(S.svg(prims, tt)), info: typeof names === 'function' ? names(k, n, c) : names[Math.min(k, names.length - 1)] };
+        };
+      });
+    };
+  }
+
+  // 예시 내용: 덱(사내 문서 질의응답)과 같은 이야기를 조절판에 맞게 줄이거나 늘린다
+  var EX = {
+    venn2: { layout: 'venn', title: '모델이 아는 것과 회사만 아는 것은 거의 겹치지 않는다', sets: [{ name: '모델이 아는 것', one: '공개된 일반 지식, 언어, 추론' }, { name: '회사만 아는 것', one: '사내 규정, 제품 문서, 지난 결정' }], overlap: '공개된 회사 정보' },
+    venn3: { layout: 'venn', title: '좋은 제품은 기획·디자인·개발이 겹치는 곳에서 나온다', sets: [{ name: '기획', one: '왜 만드는지' }, { name: '디자인', one: '보이는 꼴' }, { name: '개발', one: '돌아가는 코드' }], overlap: '좋은 제품' },
+    layers: [{ name: '화면', one: '채팅 창, 답 아래에 출처 문서 표시' }, { name: 'API 관문', one: '로그인 확인과 요청 수 제한' }, { name: '오케스트레이터', one: '질문을 받아 검색을 부르고 프롬프트를 묶어 모델에 보냄' }, { name: '검색', one: '문서 색인에서 질문과 가까운 조각 상위 5개를 찾음' }, { name: '데이터', one: '문서 수집, 쪼개기, 임베딩, 색인 저장' }],
+    people: [{ name: '직원', one: '규정과 제품을 묻는 사람', uses: '질문하고 답을 받음' }, { name: '문서 담당자', one: '규정과 제품 문서를 고치는 사람', uses: '검색할 문서 범위를 정함' }],
+    externals: [{ name: '문서 저장소', one: '사내 규정과 제품 문서', rel: '바뀐 문서를 가져옴' }, { name: '언어 모델 API', one: '바깥 모델 서비스', rel: '답을 만들게 함' }, { name: '사내 계정', one: '직원 로그인', rel: '누가 묻는지 확인' }],
+    pipe: [{ name: '가져오기', one: '문서 저장소에서 바뀐 문서만 밤마다' }, { name: '중복 거르기', one: '같은 내용의 옛 판을 뺌' }, { name: '쪼개기', one: '한 가지 내용씩 조각으로 나눔' }, { name: '보강', one: '조각마다 제목, 요약, 키워드를 붙임' }, { name: '임베딩', one: '조각을 뜻이 담긴 숫자 벡터로 바꿈' }],
+    stages: [{ when: '1~2주', name: '질문 모으기', one: '자주 묻는 질문 100개와 답할 문서 범위' }, { when: '3~4주', name: '색인 만들기', one: '규정 문서를 쪼개 색인에 넣기' }, { when: '5~6주', name: '시범 열기', one: '한 팀에만 열기' }, { when: '7~8주', name: '평가', one: '근거성과 관련성 점수 재기' }, { when: '9~10주', name: '고침', one: '조각 크기와 프롬프트 고치기' }, { when: '11~12주', name: '전사 공개', one: '제품 문서를 더하고 사용 기록 살피기' }],
+    cycle: [{ name: '평가 질문 돌리기', one: '질문 100개를 매주 같은 순서로' }, { name: '점수 보기', one: '근거성과 관련성' }, { name: '원인 찾기', one: '틀린 답의 검색 결과를 읽음' }, { name: '프롬프트 고치기', one: '조각 크기와 지시문' }, { name: '내보내기', one: '고친 판을 시범 팀에 배포' }]
+  };
+  function pick(list, idx) { return idx.map(function (i) { return list[i]; }); }
+
+  SC['venn-diagram'] = slideScene(function (c) {
+    var s = JSON.parse(JSON.stringify(c.sets === '3개' ? EX.venn3 : EX.venn2));
+    if (c.labels === '이름만') s.sets.forEach(function (x) { delete x.one; });
+    return s;
+  }, function (k, n) { return k < n - 1 ? '원 ' + (k + 1) + ' · 크기와 겹친 넓이에 뜻 없음' : '겹친 곳에 공통점'; });
+
+  SC['euler-diagram'] = slideScene(function (c) {
+    var s = { layout: 'euler', title: '검색 대상은 규정과 제품 문서이고, 개인 메일은 들어가지 않는다', outer: { name: '검색 대상 문서', one: '색인에 들어가는 문서' },
+      inner: [{ name: '규정', one: '인사·보안 규정' }, { name: '제품 문서', one: '사용 설명과 정책' }] };
+    if (c.inner === '1개') s.inner = s.inner.slice(0, 1);
+    if (c.apart === '떨어진 집합 있음') s.apart = { name: '개인 메일', one: '검색하지 않음' };
+    return s;
+  }, ['바깥 집합', '안에 포함된 집합 · 서로 겹치지 않음', '떨어진 집합 · 겹침을 그리지 않음']);
+
+  SC['layered-architecture-diagram'] = slideScene(function (c) {
+    var n = parseInt(c.layers, 10), L = n === 5 ? EX.layers : n === 3 ? [EX.layers[0], { name: '서비스', one: '검색을 부르고 모델에 질문을 보냄' }, EX.layers[4]] : pick(EX.layers, [0, 2, 3, 4]);
+    L = JSON.parse(JSON.stringify(L));
+    if (c.desc === '이름만') L.forEach(function (x) { delete x.one; });
+    return { layout: 'layered-architecture', title: '시스템은 위층이 바로 아래층만 부르는 ' + n + '개 층으로 나뉜다', layers: L };
+  }, function (k) { return k ? '층 ' + (k + 1) + ' · 위층은 바로 아래층만 부름' : '맨 위층: 사람이 만나는 곳'; });
+
+  SC['box-and-arrow-diagram'] = slideScene(function (c) {
+    var two = c.layout === '두 줄', s = { layout: 'box-and-arrow', title: '요청은 검사 두 곳을 지나야 답이 된다' };
+    s.boxes = two
+      ? [{ name: '질문', col: 0, row: 0 }, { name: '입력 검사', one: '개인 정보와 금지 주제를 거름', look: 'mark', col: 1, row: 0 }, { name: '답 쓰기', one: '검색한 조각으로', col: 2, row: 0 },
+         { name: '출력 검사', one: '출처 없는 문장을 지움', look: 'mark', col: 2, row: 1 }, { name: '답', col: 1, row: 1 }, { name: '대화 기록', one: '평가에 다시 씀', col: 0, row: 1 }]
+      : [{ name: '질문', col: 0, row: 0 }, { name: '입력 검사', one: '개인 정보와 금지 주제를 거름', look: 'mark', col: 1, row: 0 }, { name: '답 쓰기', one: '검색한 조각으로', col: 2, row: 0 },
+         { name: '출력 검사', one: '출처 없는 문장을 지움', look: 'mark', col: 3, row: 0 }, { name: '답', col: 4, row: 0 }];
+    s.arrows = [{ from: '질문', to: '입력 검사' }, { from: '입력 검사', to: '답 쓰기' }, { from: '답 쓰기', to: '출력 검사' }, { from: '출력 검사', to: '답' }];
+    if (two) s.arrows.push({ from: '답', to: '대화 기록', label: '저장' }, { from: '입력 검사', to: '답', label: '걸리면 안내 문구', dash: true });
+    if (c.legend === '범례 있음') s.legend = [{ look: 'mark', name: '검사' }, { look: 'plain', name: '처리 단계' }].concat(two ? [{ line: 'dash', name: '걸렸을 때' }] : []);
+    return s;
+  }, function (k, n, c) { return k < n - 1 || c.legend !== '범례 있음' ? '상자 ' + (k + 1) + ' · 꼴과 선마다 뜻을 정함' : '범례: 꼴과 선의 뜻'; });
+
+  SC['c4-system-context'] = slideScene(function (c) {
+    return { layout: 'c4-context', title: '시스템은 직원의 질문을 받아 사내 문서와 바깥 언어 모델 사이를 잇는다',
+      people: EX.people.slice(0, c.people === '1명' ? 1 : 2), system: { name: '사내 질의응답', one: '문서를 찾아 근거와 함께 답함' },
+      externals: c.externals === '2개' ? EX.externals.slice(0, 2) : EX.externals };
+  }, function (k, n, c) { var p = c.people === '1명' ? 1 : 2; return k < p ? '사람' : k === p ? '내 시스템 하나 · 안쪽은 안 그림' : '바깥 시스템 · 화살표마다 하는 일'; });
+
+  SC['c4-container'] = slideScene(function (c) {
+    var four = c.size !== '컨테이너 3개';
+    var nodes = [{ name: '채팅 화면', tech: '웹 앱', one: '질문을 받고 답과 출처를 보임', look: 'app', col: 0, row: 0 }, { name: '오케스트레이터', tech: 'API 서버', one: '검색과 모델 호출을 차례로 부름', look: 'app', col: 1, row: 0 },
+      { name: '언어 모델 API', tech: '바깥 서비스', one: '프롬프트를 받아 답을 씀', look: 'ext', col: 2, row: 0 }, { name: '검색 색인', tech: '벡터 DB', one: '문서 조각과 벡터', look: 'store', col: four ? 0 : 1, row: 1 }];
+    var links = [{ from: '채팅 화면', to: '오케스트레이터', label: '질문' }, { from: '오케스트레이터', to: '언어 모델 API', label: '프롬프트' }, { from: '오케스트레이터', to: '검색 색인', label: '비슷한 조각 찾기' }];
+    if (four) {
+      nodes.push({ name: '수집 작업', tech: '예약 작업', one: '바뀐 문서를 쪼개고 임베딩', look: 'app', col: 1, row: 1 }, { name: '문서 저장소', tech: '바깥 시스템', one: '사내 규정과 제품 문서', look: 'ext', col: 2, row: 1 });
+      links.push({ from: '수집 작업', to: '검색 색인', label: '조각 저장' }, { from: '수집 작업', to: '문서 저장소', label: '바뀐 문서 읽기' });
+    }
+    return { layout: 'c4-container', title: '질문은 오케스트레이터 하나가 처리하고, 색인은 ' + (four ? '수집 작업이 따로 만든다' : '미리 만들어 둔다'), system: '사내 질의응답', nodes: nodes, links: links, legend: c.legend !== '범례 없음' };
+  }, function (k, n, c) { return k < n - 1 ? '컨테이너 ' + (k + 1) + ' · 이름, [기술], 하는 일' : '점선 경계 = 내 시스템' + (c.legend !== '범례 없음' ? ' · 범례' : ''); });
+
+  SC['pipeline-diagram'] = slideScene(function (c) {
+    var n = parseInt(c.steps, 10), st = n === 5 ? EX.pipe : n === 3 ? pick(EX.pipe, [0, 2, 4]) : pick(EX.pipe, [0, 2, 3, 4]);
+    var s = { layout: 'pipeline', title: '문서는 ' + n + '단계를 거쳐 ' + (c.store === '끝에 저장소' ? '검색 색인에 들어간다' : '검색할 수 있는 조각이 된다'), steps: st };
+    if (c.store === '끝에 저장소') s.store = { name: '검색 색인', one: '조각과 벡터를 함께 저장' };
+    return s;
+  }, function (k, n, c) { return k === n - 1 && c.store === '끝에 저장소' ? '끝에 결과가 쌓이는 저장소' : '단계 ' + (k + 1) + ' · 왼쪽에서 오른쪽으로'; });
+
+  SC['sequence-diagram'] = slideScene(function (c) {
+    var five = c.actors === '5개', s = { layout: 'sequence', title: '질문 하나는 검색 한 번과 모델 호출 한 번을 거쳐 돌아온다' };
+    s.actors = five ? [{ name: '직원' }, { name: '채팅 화면' }, { name: '오케스트레이터' }, { name: '검색 색인' }, { name: '언어 모델' }] : [{ name: '채팅 화면' }, { name: '오케스트레이터' }, { name: '언어 모델' }];
+    s.messages = five
+      ? [{ from: '직원', to: '채팅 화면', text: '질문 입력' }, { from: '채팅 화면', to: '오케스트레이터', text: '질문과 직원 정보' }, { from: '오케스트레이터', to: '검색 색인', text: '비슷한 조각 찾기' },
+         { from: '검색 색인', to: '오케스트레이터', text: '조각 상위 5개', back: true }, { from: '오케스트레이터', to: '언어 모델', text: '질문과 조각을 묶어 보냄' }, { from: '언어 모델', to: '오케스트레이터', text: '답 초안', back: true },
+         { from: '오케스트레이터', to: '채팅 화면', text: '답과 출처 목록', back: true }, { from: '채팅 화면', to: '직원', text: '답 아래에 출처 표시', back: true }]
+      : [{ from: '채팅 화면', to: '오케스트레이터', text: '질문' }, { from: '오케스트레이터', to: '언어 모델', text: '질문과 검색한 조각' }, { from: '언어 모델', to: '오케스트레이터', text: '답 초안', back: true }, { from: '오케스트레이터', to: '채팅 화면', text: '답과 출처', back: true }];
+    if (c.reply === '답 화살표 생략') s.messages = s.messages.filter(function (m) { return !m.back; });
+    return s;
+  }, function (k) { return k ? '메시지 ' + k + ' · 위에서 아래로 시간 순서' : '참여자와 생명선'; });
+
+  SC['timeline-diagram'] = slideScene(function (c) {
+    var six = c.stages === '6단계';
+    var st = six ? EX.stages : [EX.stages[0], { when: '3~6주', name: '시범 열기', one: '규정 문서만으로 한 팀에 열기' }, { when: '7~10주', name: '평가와 고침', one: '근거성과 관련성 점수가 기준을 넘을 때까지' }, EX.stages[5]];
+    var s = { layout: 'timeline', title: '12주 안에 한 팀 시범에서 전사 공개까지 간다', stages: st };
+    if (c.now === '지금 표시') s.now = 1;
+    return s;
+  }, function (k, n, c) { return c.now === '지금 표시' && k === 1 ? '지금 단계: 앞은 채운 점, 뒤는 빈 점' : '시점 ' + (k + 1) + ' · 위에 언제, 아래에 무엇'; });
+
+  SC['cycle-diagram'] = slideScene(function (c) {
+    var n = parseInt(c.steps, 10), st = n === 5 ? EX.cycle : n === 3 ? pick(EX.cycle, [0, 2, 3]) : EX.cycle.slice(0, 4);
+    var s = { layout: 'cycle', title: '답의 질은 매주 평가하고 고치는 고리로 올린다', steps: st };
+    if (c.center === '가운데 글') s.center = '매주 평가 고리';
+    return s;
+  }, function (k, n) { return k < n - 1 ? '단계 ' + (k + 1) + ' → 다음 단계' : '마지막 단계에서 처음으로 · 끝이 없음'; });
+
+  SC['two-column-comparison'] = slideScene(function (c) {
+    var n = c.rows === '4줄' ? 4 : 3, s;
+    if (c.pair === '지금 · 바꾼 뒤') s = { layout: 'two-column', title: '질의응답을 들이면 규정 질문의 답을 하루가 아니라 몇 초 만에 받는다',
+      left: { head: '지금', items: ['담당자에게 메신저로 물어봄', '답을 받기까지 평균 하루', '담당자마다 답이 조금씩 다름', '어느 문서가 근거인지 남지 않음'] },
+      right: { head: '바꾼 뒤', items: ['채팅 창에 물으면 바로 답', '답을 받기까지 10초 안팎', '같은 문서를 근거로 같은 답', '답 아래에 근거 문서 링크'] } };
+    else s = { layout: 'two-column', title: '규정에 적힌 것은 답하지만, 판단이 필요한 질문은 아직 사람에게 넘긴다',
+      left: { head: '할 수 있는 것', items: ['규정과 제품 문서에 있는 내용 답하기', '답마다 근거 문서 보여 주기', '문서에 없으면 모른다고 답하기', '여러 문서를 모아 요약하기'] },
+      right: { head: '아직 못 하는 것', items: ['문서끼리 다를 때 어느 쪽이 맞는지 판단하기', '표와 그림 안의 내용 읽기', '직원 권한에 따라 다른 답 주기', '옛 판과 새 판 문서 가리기'] } };
+    s.left.items = s.left.items.slice(0, n); s.right.items = s.right.items.slice(0, n);
+    return s;
+  }, function (k) { return k ? ['첫째', '둘째', '셋째', '넷째', '다섯째'][k - 1] + ' 줄 · 양쪽이 같은 높이로' : '같은 틀의 두 단'; });
+
+  /* 슬라이드 틀 용어: 장 여러 개를 한 캔버스에 놓는다 */
+  // 자리 표시자(점선 상자)만 있는 장. kind: master, title, content, two
+  function placeholders(kind, band, page) {
+    var P = [{ k: 'rect', x: 0, y: 0, w: 1280, h: 720, fill: TH.bg }, { k: 'rect', x: 0, y: 0, w: 1280, h: 18, fill: band }];
+    function ph(x, y, w, h, txt, size) {
+      P.push({ k: 'rect', x: x, y: y, w: w, h: h, stroke: TH.muted, sw: 3, dash: true });
+      P.push(hint(x + 24, y, w - 48, h, txt, size));
+    }
+    if (kind === 'title') { ph(104, 220, 980, 150, '제목', 44); ph(104, 400, 900, 90, '부제', 26); }
+    else ph(64, 36, 1152, 100, kind === 'master' ? '마스터 제목 스타일' : '제목', 32);
+    if (kind === 'master' || kind === 'content') ph(64, 170, 1152, 470, kind === 'master' ? '마스터 텍스트 스타일' : '본문', 26);
+    if (kind === 'two') { ph(64, 170, 552, 470, '왼쪽', 26); ph(664, 170, 552, 470, '오른쪽', 26); }
+    if (page) P.push({ k: 'text', x: 1100, y: 664, w: 116, h: 36, text: '‹#›', size: 18, weight: 700, color: TH.muted, align: 'right', valign: 'middle', lh: TH.lh, lines: ['‹#›'] });
+    return P;
+  }
+  var KINDS = [['title', '제목 장'], ['content', '내용 장'], ['two', '2단 비교']];
+
+  SC['slide-master'] = function (st, c) {
+    var NEW = '#b4579a', color = c.change === '띠 색';
+    return paint(st, {}, function () {
+      return function (t) {
+        var mOn = t >= 0.55, out = label('슬라이드 마스터', 40, 172, { op: clamp(t / 0.1) });
+        out += mini(placeholders('master', color && mOn ? NEW : TH.accent, !color && mOn), 40, 196, 560, { op: clamp(t / 0.12), hi: t >= 0.5 && t < 0.66 });
+        KINDS.forEach(function (k, i) {
+          var y = 40 + i * 232, op = clamp((t - 0.18 - i * 0.09) / 0.1), on = t >= 0.66 + i * 0.07;
+          out += '<line x1="600" y1="353" x2="720" y2="' + (y + 98) + '" stroke="currentColor" stroke-opacity="' + n2(0.35 * op) + '" stroke-width="3"/>';
+          out += label('레이아웃: ' + k[1], 740, y - 6, { size: 26, op: op });
+          out += mini(placeholders(k[0], color && on ? NEW : TH.accent, !color && on), 740, y + 6, 330, { op: op });
+        });
+        var info = t < 0.18 ? '마스터: 모든 장이 물려받는 바탕, 색, 글꼴, 고정 요소' : t < 0.5 ? '레이아웃이 마스터를 물려받음' : t < 0.66 ? '마스터 한 곳만 고침(' + (color ? '띠 색' : '쪽 번호') + ')' : '모든 레이아웃이 함께 바뀜';
+        return { svg: canvas(out), info: info };
+      };
+    }, 5200);
+  };
+
+  var DECKS = {
+    title: { layout: 'title', title: '사내 문서 질의응답은 어떻게 만들어지나', sub: '회사 문서를 검색해 근거와 함께 답하는 AI 시스템의 구성', by: '플랫폼팀 · 2026년 11월' },
+    content: { layout: 'layered-architecture', title: '시스템은 위층이 바로 아래층만 부르는 4개 층으로 나뉜다', layers: pick(EX.layers, [0, 2, 3, 4]) },
+    two: { layout: 'two-column', title: '규정에 적힌 것은 답하지만, 판단이 필요한 질문은 아직 사람에게 넘긴다',
+      left: { head: '할 수 있는 것', items: ['규정과 제품 문서에 있는 내용 답하기', '답마다 근거 문서 보여 주기', '문서에 없으면 모른다고 답하기'] },
+      right: { head: '아직 못 하는 것', items: ['문서끼리 다를 때 어느 쪽이 맞는지 판단하기', '표와 그림 안의 내용 읽기', '직원 권한에 따라 다른 답 주기'] } }
+  };
+  SC['slide-layout'] = function (st, c) {
+    var ki = c.layout === '제목 장' ? 0 : c.layout === '2단 비교' ? 2 : 1, slide = DECKS[KINDS[ki][0]];
+    return paint(st, slide, function (th) {
+      var prims = S.layouts[slide.layout].build(slide, th).prims;
+      return function (t) {
+        var out = '', pickT = t >= 0.3, op2 = clamp((t - 0.42) / 0.1);
+        KINDS.forEach(function (k, i) {
+          var x = 50 + i * 425, op = clamp((t - i * 0.07) / 0.1);
+          out += label(k[1], x, 40, { size: 28, op: op * (pickT && i !== ki ? 0.45 : 1) });
+          out += mini(placeholders(k[0], TH.accent, false), x, 56, 330, { op: op * (pickT && i !== ki ? 0.45 : 1), hi: pickT && i === ki });
+        });
+        var cx = 50 + ki * 425 + 165;
+        out += '<line x1="' + cx + '" y1="250" x2="640" y2="318" stroke="' + TH.accent + '" stroke-width="4" opacity="' + n2(op2) + '"/>';
+        out += mini(prims, 340, 330, 600, { op: op2, t: clamp((t - 0.45) / 0.4) });
+        var info = t < 0.3 ? '레이아웃: 자리 표시자를 미리 놓은 틀 ' + KINDS.length + '개' : t < 0.42 ? '"' + KINDS[ki][1] + '" 레이아웃을 고름' : '내용을 넣으면 자리대로 놓임';
+        return { svg: canvas(out), info: info };
+      };
+    }, 4600);
+  };
+
+  SC['placeholder'] = function (st, c) {
+    var slide = JSON.parse(JSON.stringify(DECKS.content));
+    if (c.fill === '짧은 제목') slide.title = '시스템은 4개 층으로 나뉜다';
+    return paint(st, slide, function (th) {
+      var prims = S.layouts[slide.layout].build(slide, th).prims, title = prims.filter(function (p) { return p.ph; })[0];
+      var rest = prims.filter(function (p) { return p !== title && p.step == null; }), body = prims.filter(function (p) { return p.step != null; });
+      var box = { x: title.x - 12, y: title.y - 8, w: title.w + 24, h: title.h + 16 };
+      return function (t) {
+        var fill = clamp((t - 0.25) / 0.12), dash = 1 - clamp((t - 0.5) / 0.1), bop = clamp((t - 0.6) / 0.1);
+        var out = inner(S.svg(rest)) +
+          fadeG(dash, [{ k: 'rect', x: box.x, y: box.y, w: box.w, h: box.h, stroke: fill > 0 ? TH.accent : TH.muted, sw: 3, dash: true }]) +
+          fadeG(1 - fill, [hint(box.x + 20, box.y, box.w - 40, box.h, '제목을 입력하려면 클릭', 26)]) + fadeG(fill, [title]) +
+          fadeG(1 - bop, [{ k: 'rect', x: 64, y: 176, w: 1152, h: 480, stroke: TH.muted, sw: 3, dash: true }, hint(88, 176, 1100, 480, '내용을 넣으려면 클릭', 22)]) +
+          fadeG(bop, body, clamp((t - 0.6) / 0.3));
+        var info = t < 0.25 ? '레이아웃의 빈 자리(점선)와 안내 문구' : t < 0.5 ? '글을 넣으면 자리의 위치·크기·글꼴을 따름' + (title.lines.length > 1 ? ' · 두 줄도 자리 안에서' : '') : t < 0.6 ? '점선은 편집할 때만 보임' : '본문 자리에 다이어그램';
+        return { svg: framed(canvas(out)), info: info };
+      };
+    }, 4600);
+  };
+
+  SC['action-title'] = function (st, c) {
+    var venn = c.body === '벤', slide = venn ? EX.venn2 : DECKS.content, topic = venn ? '모델과 회사 지식' : '시스템 구조';
+    var other = JSON.parse(JSON.stringify(slide)); other.title = topic;
+    return paint(st, slide, function (th) {
+      var A = S.layouts[slide.layout].build(slide, th).prims, B = S.layouts[other.layout].build(other, th).prims;
+      var tA = A.filter(function (p) { return p.ph; })[0], tB = B.filter(function (p) { return p.ph; })[0];
+      var rest = A.filter(function (p) { return p !== tA; });
+      return function (t) {
+        var strike = clamp((t - 0.3) / 0.1), gone = clamp((t - 0.45) / 0.1), come = clamp((t - 0.55) / 0.12);
+        var out = inner(S.svg(rest));
+        if (gone < 1) {
+          var w = S.measure(topic, tB.size, tB.weight, th.font), y = tB.y + tB.size * PX * th.lh / 2;
+          out += '<g opacity="' + n2(1 - gone) + '">' + inner(S.svg([tB])) + '<line x1="' + tB.x + '" y1="' + n2(y) + '" x2="' + n2(tB.x + w * strike) + '" y2="' + n2(y) + '" stroke="#c4321f" stroke-width="4"/></g>';
+          if (strike > 0) out += '<text x="' + n2(tB.x + w + 24) + '" y="' + n2(y) + '" dominant-baseline="central" font-family="Noto Sans KR" font-size="22" fill="#c4321f" opacity="' + n2(strike) + '">무엇에 대한 장인지만 말함</text>';
+        }
+        out += fadeG(come, [tA]);
+        var info = t < 0.3 ? '주제어 제목: "' + topic + '"' : t < 0.55 ? '주제어는 이 장에서 기억할 말을 주지 않음' : 'Action Title: 이 장의 주장을 한 문장으로' + (tA.lines.length > 1 ? ' · 두 줄까지' : '');
+        return { svg: framed(canvas(out)), info: info };
+      };
+    }, 4600);
+  };
+
+  SC['speaker-notes'] = function (st, c) {
+    var slide = EX.venn2, notes = '모델은 학습 때 본 공개 자료만 압니다. 직원이 묻는 것은 대부분 오른쪽에 있어서, 질문할 때마다 회사 문서를 찾아 붙여 줘야 합니다. 원 크기는 양을 뜻하지 않습니다.';
+    var presenter = c.view === '발표자 보기';
+    return paint(st, { s: slide, n: notes }, function (th) {
+      var prims = S.layouts[slide.layout].build(slide, th).prims, next = S.layouts[DECKS.content.layout].build(DECKS.content, th).prims, e = [];
+      var nb = presenter ? S.textBox({ x: 820, y: 380, w: 420, text: notes, size: 15, color: '#f1f1ee', max: 8 }, th, e, 'notes')
+        : S.textBox({ x: 214, y: 572, w: 852, text: notes, size: 14, color: th.ink, max: 4 }, th, e, 'notes');
+      return function (t) {
+        var k = Math.floor(clamp((t - 0.3) / 0.5) * nb.lines.length + 0.999), shown = Object.assign({}, nb, { lines: nb.lines.slice(0, k) }), out;
+        if (presenter) {
+          out = '<rect width="1280" height="720" fill="#25272b"/>' + '<text x="30" y="56" font-family="Noto Sans KR" font-size="30" font-weight="700" fill="#f1f1ee">0:03:12</text>' +
+            mini(prims, 30, 90, 760) + '<text x="820" y="76" font-family="Noto Sans KR" font-size="22" fill="#b9bab3">다음 슬라이드</text>' + mini(next, 820, 90, 420) +
+            '<text x="820" y="350" font-family="Noto Sans KR" font-size="22" fill="#b9bab3">노트</text>' + inner(S.svg([shown])) +
+            '<text x="30" y="600" font-family="Noto Sans KR" font-size="22" fill="#b9bab3">청중 화면에는 왼쪽 장만 보임</text>';
+        } else {
+          out = '<rect width="1280" height="720" fill="#e9e8e3"/>' + mini(prims, 190, 24, 900) +
+            '<rect x="190" y="556" width="900" height="146" fill="#ffffff" stroke="#b9bab3" stroke-width="2"/>' + inner(S.svg([shown]));
+          if (!k) out += '<text x="214" y="600" font-family="Noto Sans KR" font-size="22" fill="#9a9c98">노트를 입력하려면 클릭</text>';
+        }
+        var info = t < 0.3 ? (presenter ? '발표자 보기: 현재 장, 다음 장, 노트, 시간' : '장 아래 노트 창') : '말할 내용을 노트에 · 청중에게는 안 보임';
+        return { svg: canvas(out), info: info };
+      };
+    }, 4600);
   };
 })();

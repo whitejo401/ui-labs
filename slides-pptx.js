@@ -33,7 +33,7 @@
   function paint(p) {
     return {
       fill: p.fill ? { color: hex(p.fill), transparency: p.alpha != null ? Math.round((1 - p.alpha) * 100) : 0 } : { type: 'none' },
-      line: p.stroke ? { color: hex(p.stroke), width: (p.sw || 1) * 0.75 } : { type: 'none' }
+      line: p.stroke ? { color: hex(p.stroke), width: (p.sw || 1) * 0.75, dashType: p.dash ? 'dash' : 'solid' } : { type: 'none' }
     };
   }
   function add(pptx, slide, p, theme) {
