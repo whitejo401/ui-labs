@@ -214,14 +214,62 @@
       pos[n.name] = { cx: cx, cy: cy, i: i, x: cx - w / 2, y: cy - h / 2, w: w, h: h, look: n.look };
       prims = prims.concat(nodeBox(n, cx - w / 2, cy - h / 2, w, h, th, errors, o.slot + '[' + i + ']', i, i ? undefined : o.term));
     });
+    // 화살표는 직각으로만 꺾는다. 같은 줄이면 가로 직선, 줄이 겹치지 않으면 세로-가로-세로, 아니면 가로-세로-가로
+    var L = [], side = {};
     (links || []).forEach(function (l, i) {
       var a = pos[l.from], b = pos[l.to], slot = (o.linkSlot || 'links') + '[' + i + ']';
       if (!a || !b) { errors.push({ slot: slot, msg: '없는 상자 이름: ' + (a ? l.to : l.from) }); return; }
-      var step = Math.max(a.i, b.i), p1, p2, flat = Math.abs(a.cy - b.cy) < 1;
-      p1 = edge([a.cx, a.cy], [b.cx, b.cy], w / 2 + 8, h / 2 + 8);
-      p2 = edge([b.cx, b.cy], [a.cx, a.cy], w / 2 + 8, h / 2 + (b.look === 'person' ? 30 : 8));
-      prims.push({ k: 'line', x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1], stroke: th.muted, sw: 2, dash: l.dash, arrow: 'end', step: step });
-      if (l.label) prims = prims.concat(linkLabel(l.label, (p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2, flat ? Math.abs(p2[0] - p1[0]) - 4 : 170, flat, th, errors, slot + '.label', step));
+      var v = Math.abs(a.cy - b.cy) >= 1 && (a.y + h <= b.y || b.y + h <= a.y);
+      var q = { l: l, a: a, b: b, slot: slot, v: v, flat: Math.abs(a.cy - b.cy) < 1 };
+      q.sa = v ? (b.cy > a.cy ? 'b' : 't') : (b.cx > a.cx ? 'r' : 'l');
+      q.sb = { b: 't', t: 'b', r: 'l', l: 'r' }[q.sa];
+      [[a, q.sa, b], [b, q.sb, a]].forEach(function (e) { var k = e[0].i + e[1]; (side[k] = side[k] || []).push({ q: q, other: e[2], me: e[0] === a }); });
+      L.push(q);
+    });
+    // 한 변에 닿는 선이 여럿이면 닿는 점을 변 길이의 k/(N+1)에 나눠 둔다(상대 상자 순서대로, 선끼리 겹치지 않게)
+    Object.keys(side).forEach(function (k) {
+      var list = side[k], s = k.slice(-1), tb = s === 't' || s === 'b';
+      list.sort(function (m, n) { return tb ? m.other.cx - n.other.cx : m.other.cy - n.other.cy; });
+      list.forEach(function (e, j) {
+        var n = e.me ? e.q.a : e.q.b, t = list.length > 1 ? (j + 1) / (list.length + 1) : 0.5;
+        e.q[e.me ? 'ta' : 'tb'] = tb ? n.x + n.w * t : n.y + n.h * t;
+        e.q[e.me ? 'na' : 'nb'] = list.length;
+      });
+    });
+    L.forEach(function (q) {
+      var a = q.a, b = q.b, l = q.l, step = Math.max(a.i, b.i), pts, mid;
+      if (q.flat) {
+        var p1 = edge([a.cx, a.cy], [b.cx, b.cy], w / 2 + 8, h / 2 + 8), p2 = edge([b.cx, b.cy], [a.cx, a.cy], w / 2 + 8, h / 2 + 8);
+        prims.push({ k: 'line', x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1], stroke: th.muted, sw: 2, dash: l.dash, arrow: 'end', step: step });
+        if (l.label) prims = prims.concat(linkLabel(l.label, (p1[0] + p2[0]) / 2, p1[1], Math.abs(p2[0] - p1[0]) - 4, true, th, errors, q.slot + '.label', step));
+        return;
+      }
+      var ta = q.ta, tb = q.tb;
+      // 곧게 닿을 수 있으면 꺾지 않는다: 한쪽 끝이 상대 변 위에 있거나, 두 상자가 겹치는 폭 안에서 긋는다
+      function straight(lo, hi) {
+        var s = Math.max(lo[0], hi[0]) + 16, e = Math.min(lo[1], hi[1]) - 16;
+        if (q.nb === 1 && ta >= hi[0] + 16 && ta <= hi[1] - 16) tb = ta; else if (q.na === 1 && tb >= lo[0] + 16 && tb <= lo[1] - 16) ta = tb;
+        else if (s <= e) ta = tb = Math.min(e, Math.max(s, q.nb > 1 ? tb : ta));
+      }
+      if (q.v) {
+        straight([a.x, a.x + w], [b.x, b.x + w]);
+        var gap = function (n, s) { return s === 't' && n.look === 'person' ? 30 : 8; };
+        var y1 = q.sa === 'b' ? a.y + h + gap(a, 'b') : a.y - gap(a, 't'), y2 = q.sb === 't' ? b.y - gap(b, 't') : b.y + h + gap(b, 'b'), my = (y1 + y2) / 2;
+        pts = Math.abs(ta - tb) < 1 ? [[ta, y1], [ta, y2]] : [[ta, y1], [ta, my], [tb, my], [tb, y2]];
+      } else {
+        straight([a.y, a.y + h], [b.y, b.y + h]);
+        var x1 = q.sa === 'r' ? a.x + w + 8 : a.x - 8, x2 = q.sb === 'l' ? b.x - 8 : b.x + w + 8, mx = (x1 + x2) / 2;
+        pts = Math.abs(ta - tb) < 1 ? [[x1, ta], [x2, ta]] : [[x1, ta], [mx, ta], [mx, tb], [x2, tb]];
+      }
+      // 꺾이는 곳은 앞 선을 굵기 절반만큼 늘려 바깥 모서리 홈을 메운다. 화살촉은 마지막 선에만
+      for (var j = 0; j < pts.length - 1; j++) {
+        var s0 = pts[j], s1 = pts[j + 1], last = j === pts.length - 2, ex = last ? 0 : 1;
+        var ux = Math.sign(s1[0] - s0[0]), uy = Math.sign(s1[1] - s0[1]);
+        prims.push({ k: 'line', x1: s0[0], y1: s0[1], x2: s1[0] + ux * ex, y2: s1[1] + uy * ex, stroke: th.muted, sw: 2, dash: l.dash, arrow: last ? 'end' : undefined, step: step });
+      }
+      // 글은 가운데 선분 위에 바탕색 띠를 깔고 얹는다
+      mid = pts.length === 2 ? [pts[0], pts[1]] : [pts[1], pts[2]];
+      if (l.label) prims = prims.concat(linkLabel(l.label, (mid[0][0] + mid[1][0]) / 2, (mid[0][1] + mid[1][1]) / 2, 170, false, th, errors, q.slot + '.label', step));
     });
     return { prims: prims, pos: pos };
   }
