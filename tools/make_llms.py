@@ -31,7 +31,7 @@ def prompt(t):
     return t['prompt']['when'] + ' ' + t['prompt']['what'] + verb + fill_how(t)
 
 
-out = ['# UI 용어집 (ui-labs)', '',
+out = ['# UI 도감 (ui-labs)', '',
        '> 바이브코딩 때 사람과 AI가 화면을 같은 이름으로 부르게 하는 UI·모션 용어 ' + str(len(terms)) + '개(업무 화면 부품과 소개·랜딩 효과). 용어마다 한 줄 설명, 헷갈리는 짝, 틀리기 쉬운 말, 그대로 쓸 수 있는 요청 문장이 있다.', '',
        '사람이 "사이드 팝업"이라고 말할 때 Drawer인지 Modal Dialog인지 정해 두려고 만든 목록이다. 화면을 만들어 달라는 요청을 받으면 아래 영어 이름을 그대로 쓰고, 헷갈리는 짝과 구별해서 만든다.', '',
        '## 데이터', '',
@@ -49,5 +49,5 @@ for t in terms:
 out += ['', '## 조합 화면', '']
 for r in recipes:
     out.append('- **' + r['name'] + '** (용어 ' + str(len(r['terms'])) + '개: ' + ', '.join(by_id[i]['name'] for i in r['terms']) + ')' + (': ' + r['prompt'] if r.get('prompt') else ''))
-out += ['', '## 라이선스', '', '코드는 MIT, 글(용어 설명과 요청 문장, terms.json·recipes.json의 내용)은 CC BY 4.0. 출처: UI 용어집 (github.com/whitejo401/ui-labs)', '']
+out += ['', '## 라이선스', '', '코드는 MIT, 글(용어 설명과 요청 문장, terms.json·recipes.json의 내용)은 CC BY 4.0. 출처: UI 도감 (github.com/whitejo401/ui-labs)', '']
 print('\n'.join(out))

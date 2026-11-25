@@ -734,3 +734,74 @@
 .an.calm .an-grow, .an.calm .an-draw { animation: none; }
 .an.calm .an-hb .row, .an.calm .an-hb .bar { transition: none; }
 @media (max-width: 760px) { .an .db-row { grid-template-columns: minmax(0, 1fr); } }
+
+/* ───── 조합 화면: 데이터 스토리 (작업함 연간 리포트, 가상 데이터). 글은 틀 안에서 스크롤되고 차트 하나가 옆에 고정된다 ───── */
+.scr.ds { display: block; height: 660px; }
+.ds-main { position: absolute; inset: 0; overflow-x: hidden; overflow-y: auto; }
+.ds-top { position: sticky; top: 0; z-index: 4; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; padding: 10px 20px; background: var(--u-bg); border-bottom: 1px solid var(--u-line); font-size: 13px; }
+.ds-top span { color: var(--u-muted); }
+.ds-calm { margin-left: auto; display: inline-flex; gap: 6px; align-items: center; color: var(--u-muted); font-size: 12px; cursor: pointer; }
+.ds-prog { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--u-accent); transform-origin: 0 50%; transform: scaleX(0); }
+.ds-intro { min-height: 500px; display: grid; align-content: center; padding: 40px 24px; max-width: 640px; }
+.ds-intro h1 { font-size: 30px; line-height: 1.25; margin: 8px 0 14px; text-wrap: balance; }
+.ds-intro p, .ds-end p { color: var(--u-muted); margin: 0 0 10px; line-height: 1.65; }
+.ds-eye { font: 600 12px var(--u-mono); color: var(--u-accent); letter-spacing: 0.04em; }
+.ds-note { font-size: 12px; border-left: 3px solid var(--u-line); padding-left: 8px; }
+.ds-hint { font: 500 12px var(--u-mono); }
+.ds-rv { opacity: 0; transform: translateY(14px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
+.ds-rv.in { opacity: 1; transform: none; }
+.ds-story { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 28px; padding: 0 24px; align-items: start; }
+.ds-steps { padding-bottom: 120px; }
+.ds-step { min-height: 420px; display: grid; align-content: center; gap: 6px; opacity: 0.35; transition: opacity 0.3s; }
+.ds-step.on { opacity: 1; }
+.ds-step b { font: 600 12px var(--u-mono); color: var(--u-accent); }
+.ds-step h3 { margin: 0; font-size: 20px; line-height: 1.3; text-wrap: balance; }
+.ds-step p { margin: 0; color: var(--u-muted); line-height: 1.6; }
+.ds-fig { position: sticky; top: 64px; margin: 0; border: 1px solid var(--u-line); border-radius: 14px; background: var(--u-panel); padding: 12px 14px; }
+.ds-sum { margin: 0 0 6px; font-size: 13px; line-height: 1.45; min-height: 2.9em; }
+.ds-sum b { color: var(--u-accent); font-weight: 600; }
+.ds-fig svg { display: block; width: 100%; height: auto; overflow: visible; }
+.ds-fig svg text { font: 11px var(--u-font); fill: var(--u-muted); }
+.ds-fig svg .vl { font-size: 12px; font-weight: 600; fill: var(--u-ink); }
+.ds-fig svg .ds-ink { font-size: 11.5px; font-weight: 600; fill: var(--u-ink); }
+.ds-fig svg .ds-ok { font-weight: 600; fill: var(--u-ink); }
+.ds-fig svg .ds-halo { paint-order: stroke; stroke: var(--u-panel); stroke-width: 3px; stroke-linejoin: round; }
+.ds-fig svg .big { font-size: 40px; font-weight: 700; fill: var(--u-ink); letter-spacing: -0.02em; }
+.ds-fig svg .ds-mo { font-size: 34px; font-weight: 700; fill: var(--u-muted); opacity: 0.3; }
+.ds-ctrl { display: flex; gap: 10px; align-items: center; margin-top: 8px; font-size: 12.5px; }
+.ds-ctrl input[type="range"] { flex: 1; min-width: 0; accent-color: var(--u-accent); }
+.ds-btn { border: 1px solid var(--u-line); background: var(--u-panel); color: var(--u-ink); border-radius: 999px; padding: 3px 12px; font: inherit; cursor: pointer; }
+.ds-btn[aria-pressed="true"] { border-color: var(--u-accent); color: var(--u-accent); }
+.ds-tw { overflow-x: auto; min-height: 200px; }
+.ds-end { padding: 40px 24px 80px; max-width: 640px; }
+.ds-end h2 { margin: 0 0 10px; font-size: 22px; }
+/* 층 바꾸기: 앞 층이 사라진 뒤 새 층의 부품이 차례로 들어온다(Enter / Update / Exit) */
+.ds-ly { transition: opacity 0.35s ease; }
+.ds-ly.off { opacity: 0; pointer-events: none; }
+.ds-draw { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 0.9s ease-in-out; transition-delay: var(--d, 0ms); }
+.ds-ly:not(.off) .ds-draw { stroke-dashoffset: 0; }
+.ds-line .ds-base { transition: stroke-dashoffset 0.9s ease-in-out, opacity 0.3s; }
+.ds-hl { opacity: 0; transition: opacity 0.3s; }
+.ds-line.focus .ds-base { opacity: 0.25; }
+.ds-line.focus .ds-hl { opacity: 1; }
+.ds-an { opacity: 0; transform: translateY(6px); transition: opacity 0.3s ease-out, transform 0.3s ease-out; transition-delay: var(--d, 0ms); }
+.ds-line.focus .ds-an { opacity: 1; transform: none; }
+.ds-bm { transform-box: fill-box; transform-origin: 0 50%; transform: scaleX(0); transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.ds-ly:not(.off) .ds-bm { transform: none; }
+.ds-pn, .ds-tc, .ds-wb { opacity: 0; transform-box: fill-box; transform-origin: 50% 50%; transform: scale(0.92); transition: opacity 0.35s ease-out, transform 0.35s ease-out; transition-delay: var(--d, 0ms); }
+.ds-wb { transform: translateY(-10px); }
+.ds-ly:not(.off) .ds-pn, .ds-ly:not(.off) .ds-tc, .ds-ly:not(.off) .ds-wb { opacity: 1; transform: none; }
+.ds-hb { transform-box: fill-box; transform-origin: 0 50%; transform: scaleX(0); transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); transition-delay: var(--d, 0ms); }
+.ds-ly:not(.off) .ds-hb { transform: none; }
+.ds-bb { transition: transform 0.55s ease-in-out; }
+.ds.calm .ds-main *, .ds.calm .ds-bb { transition: none !important; }
+.ds.calm .ds-rv { opacity: 1; transform: none; }
+@media (max-width: 760px) {
+  .ds-intro { padding: 32px 18px; }
+  .ds-intro h1 { font-size: 24px; }
+  .ds-story { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0 12px; }
+  .ds-fig { order: -1; top: 46px; z-index: 2; padding: 8px 10px; }
+  .ds-sum { min-height: 0; font-size: 12px; }
+  .ds-step { min-height: 260px; }
+  .ds-end { padding-inline: 18px; }
+}

@@ -179,5 +179,37 @@
       "skeleton"
     ],
     "prompt": "이슈 관리 도구 \"작업함\"의 분석 화면을 만들어줘. 맨 위에 Range Selector(Segmented Control로 7일·30일·90일, 옆에 고른 기간을 날짜로)를 두고 바꾸면 화면의 모든 차트가 함께 바뀌게, 바뀌는 동안 차트 자리에 Skeleton, 오른쪽에 Reduced Motion 스위치. 첫 줄은 KPI Card 3개(숫자는 Number Ticker, 아래 Sparkline)와 스프린트 완료율 Gauge / Progress Ring(목표 80% 눈금). 이슈 추이는 Line Chart(열린·닫힌 2개, 선 끝에 이름, Axis는 0부터, 옅은 점선 Gridlines, 닫힘 목표 Reference Line)에 마우스를 올리면 Crosshair와 같은 날 값을 모두 보이는 Chart Tooltip, 처음 그릴 때 Line Draw, 아래 미니맵을 끌어 Brush & Zoom(\"전체 보기\"로 되돌리기), 차트 위에 보이는 Chart Summary 한 줄. 상태별 구성은 Stacked Bar Chart(Legend 칩을 눌러 Legend Toggle, 마지막 하나는 못 끄게, 진행·검토는 무늬로 Non-color Encoding, 칸 안에 Data Label, 처음에 Bar Grow-in)와 \"표로 보기\" Data Table View. 쌓인 작업량은 누적 Area Chart. 담당자별 처리는 가로 Bar Chart로 팀 막대를 누르면 Drilldown으로 담당자별, 위에 Breadcrumb로 돌아가기, 기간이 바뀌면 이름으로 짝지은 Chart Morph로 막대가 새 순위로 미끄러지게. 처리 단계는 Funnel Chart(단계 사이 빠진 수), 우선순위는 Donut Chart(5조각 이하, 기타는 회색), 처리 일수는 Histogram(평균선), 요일·시간대 등록은 Heatmap, 하루 처리량은 Calendar Heatmap(0은 회색, 4단계). 댓글 수와 처리 일수 3,000점은 Scatter Plot을 Renderer Choice에 따라 Canvas로, 1년 치 응답 시간은 Downsampling(LTTB 300점, 장애 순간이 남게). 지금 들어오는 이슈는 Live Stream(최근 40개, 1초마다, 멈춤 단추, 탭이 숨으면 멈춤), 분기별 처리 순위는 Bar Chart Race(재생 단추와 분기 막대, 끝나면 멈춤)."
+  },
+  {
+    "id": "data-story",
+    "name": "데이터 스토리",
+    "ready": true,
+    "terms": [
+      "sticky-scrollytelling",
+      "step-transition",
+      "scroll-progress",
+      "scroll-reveal",
+      "reduced-motion",
+      "chart-summary",
+      "bullet-chart",
+      "number-ticker",
+      "line-chart",
+      "line-draw",
+      "axis",
+      "focus-dimming",
+      "annotation-reveal",
+      "reference-line",
+      "small-multiples",
+      "enter-update-exit",
+      "treemap",
+      "chart-type-morph",
+      "waterfall-chart",
+      "bubble-chart",
+      "motion-chart",
+      "bar-chart",
+      "non-color-encoding",
+      "data-table-view"
+    ],
+    "prompt": "이슈 관리 도구 \"작업함\" 팀의 한 해를 돌아보는 데이터 이야기 페이지를 만들어줘. 숫자는 예시용 가상 데이터라고 화면에 밝혀줘. 맨 위 머리글에 글을 얼마나 읽었는지 보이는 Scroll Progress와 Reduced Motion 스위치, 첫 화면 제목과 소개는 Scroll Reveal로. 본문은 Sticky Scrollytelling: 왼쪽에 단계 글 8개, 오른쪽에 차트 하나를 고정하고, 글 단계가 틀 가운데를 지나면 IntersectionObserver로 감지해 Step Transition으로 차트를 그 단계 모습으로 바꾸고, 차트 위에는 단계마다 바뀌는 Chart Summary 한 줄. 단계는 1 한 해 합계 Bullet Chart(목표 1,400건 눈금, 나쁨·보통·좋음 구간, 합계 숫자는 Number Ticker), 2 달마다 닫은 이슈 Line Chart(Axis는 0부터, Line Draw로 그려짐), 3 9~10월만 남기고 나머지를 흐리는 Focus Dimming과 Annotation Reveal로 띠·지시선·설명을 차례로, 월 목표 Reference Line, 4 팀 6개 Small Multiples(모든 칸 같은 축, 앞 차트가 먼저 사라지고 칸이 차례로 들어오는 Enter / Update / Exit), 5 팀별 몫 Treemap(작은 차트에서 트리맵은 모양을 이을 수 없으니 Chart Type Morph 대신 교차 페이드), 6 열린 이슈 증감 Waterfall Chart, 7 팀별 닫은 건수·처리 일수·인원 Bubble Chart를 재생 단추와 달 슬라이더로 움직이는 Motion Chart(자동 재생 안 함, 재생 중에는 멈춤 단추), 8 팀별 합계 가로 Bar Chart에 팀 목표 눈금, 목표를 넘은 팀은 색 말고도 \"▲ 넘음\" 글자로 Non-color Encoding, \"표로 보기\" Data Table View. 동작 줄이기면 모든 전환을 바로 바꾸고 재생 단추를 숨겨줘."
   }
 ]

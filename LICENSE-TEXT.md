@@ -8,4 +8,4 @@
 
 가져다 쓸 때는 출처를 이렇게 적어 주세요.
 
-> UI 용어집 (https://github.com/whitejo401/ui-labs), CC BY 4.0
+> UI 도감 (https://github.com/whitejo401/ui-labs), CC BY 4.0

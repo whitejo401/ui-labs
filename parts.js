@@ -2005,6 +2005,8 @@
   /* ───── 표현 › 차트 › 차트 종류 ───── */
   // 차트 색: 범주 4색은 dataviz 기준 팔레트 앞 4색(밝음·어두움 따로 검사, parts.css의 --c1~--c4). 밝은 화면의 3·4번은 바탕 대비가 3:1 아래라 범례나 값 라벨을 꼭 붙인다
   var CC = ['var(--c1)', 'var(--c2)', 'var(--c3)', 'var(--c4)'], VW = 480, VH = 230;
+  // 눈금 4칸이 정수로 떨어지는 최댓값(12.5·37.5 같은 눈금을 피한다)
+  function tickMax(m) { var st = m / 4, p = Math.pow(10, Math.floor(Math.log10(st))), c = [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]; for (var i = 0; i < c.length; i++) { var v = Math.round(c[i] * p * 1e6) / 1e6; if (v >= st && (v < 1 || v % 1 === 0)) return v * 4; } return 40 * p; }
   function niceMax(m) { var s = Math.pow(10, Math.floor(Math.log10(m))); return [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].filter(function (k) { return k * s >= m; })[0] * s; }
   function tx(x, y, s, a, cls) { return '<text x="' + x + '" y="' + y + '"' + (a ? ' text-anchor="' + a + '"' : '') + (cls ? ' class="' + cls + '"' : '') + '>' + s + '</text>'; }
   function ln(x1, y1, x2, y2, st) { return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" style="' + st + '"/>'; }
@@ -2071,28 +2073,30 @@
   };
 
   S['stacked-bar-chart'] = function (st, c) {
-    var pct = c.mode === '100% 비율', ns = c.series === '2개' ? 2 : 4, NAMES = ['완료', '진행', '검토', '대기'], WEEK = ['1주', '2주', '3주', '4주'], MS = 3400;
+    var pct = c.mode === '100% 비율', ns = c.series === '2개' ? 2 : 4, NAMES = ['완료', '진행', '검토', '대기'], WEEK = ['1주', '2주', '3주', '4주'], fo = c.focus === '범례로 계열 강조', MS = fo ? 4700 : 3400, F0 = 3550, F1 = 4450;
     var V = [[12, 8, 4, 6], [15, 9, 5, 4], [18, 7, 6, 3], [22, 6, 4, 2]].map(function (r) { r = r.slice(0, ns); var sum = r.reduce(function (a, v) { return a + v; }, 0); return r.map(function (v) { return pct ? v / sum * 100 : v; }); });
-    var max = pct ? 100 : niceMax(Math.max.apply(null, V.map(function (r) { return r.reduce(function (a, v) { return a + v; }, 0); }))), b = { x: 40, y: 34, w: 425, h: 162 }, band = b.w / 4, th = band * 0.5, s = yAxis(b, max, pct ? '%' : '');
-    for (var j = 0; j < ns; j++) s += '<rect x="' + (b.x + j * 64) + '" y="4" width="10" height="10" rx="2" style="fill:' + CC[j] + '"/>' + tx(b.x + 14 + j * 64, 13, NAMES[j], '', 'tk');
+    var max = pct ? 100 : tickMax(Math.max.apply(null, V.map(function (r) { return r.reduce(function (a, v) { return a + v; }, 0); }))), b = { x: 40, y: 34, w: 425, h: 162 }, band = b.w / 4, th = band * 0.5, s = yAxis(b, max, pct ? '%' : '');
+    for (var j = 0; j < ns; j++) s += '<g class="lg"><rect x="' + (b.x + j * 64) + '" y="4" width="10" height="10" rx="2" style="fill:' + CC[j] + '"/>' + tx(b.x + 14 + j * 64, 13, NAMES[j], '', 'tk') + '</g>';
     V.forEach(function (r, i) { s += tx(b.x + band * i + band / 2, b.y + b.h + 16, WEEK[i], 'middle', 'tk'); r.forEach(function (v, j) { s += '<rect class="sg" style="fill:' + CC[j] + '"/><text class="in" text-anchor="middle" style="fill:' + (j < 2 ? '#ffffff' : '#1d1f22') + '"></text>'; }); });
-    var k = chartKit(st, s), sg = k.q('.sg'), ins = k.q('.in'), HI = [2, 1], hv = null;
+    var k = chartKit(st, s), sg = k.q('.sg'), ins = k.q('.in'), lgs = k.q('.lg'), HI = [2, 1], hv = null;
     return { ms: MS, rest: 0.4, at: function (t) {
-      var ms = t * MS, hov = ms > 2200 && ms < 3100;
+      // 범례 강조: 범례의 '진행'을 가리키면 그 계열 칸만 남기고 나머지를 흐린다(Focus Dimming)
+      var ms = t * MS, hov = ms > 2200 && ms < 3100, fon = fo && ms > F0 && ms < F1;
+      lgs.forEach(function (g, j) { g.style.opacity = fon && j !== 1 ? 0.35 : 1; });
       V.forEach(function (r, i) {
         var y0 = b.y + b.h, x = b.x + band * i + (band - th) / 2;
         r.forEach(function (v, j) {
           var h = v / max * b.h, p = ease.out(seg(ms, 150 + j * 260 + i * 60, 480 + j * 260 + i * 60)), hh = Math.max(0, h * p - (j ? 2 : 0)), el = sg[i * ns + j], tl = ins[i * ns + j];
           el.setAttribute('x', x); el.setAttribute('width', th); el.setAttribute('y', y0 - (j ? 2 : 0) - hh); el.setAttribute('height', hh);
-          el.style.opacity = hov && !(i === HI[0] && j === HI[1]) ? 0.4 : 1;
+          el.style.opacity = hov && !(i === HI[0] && j === HI[1]) ? 0.4 : fon && j !== 1 ? 0.22 : 1; tl.style.opacity = fon && j !== 1 ? 0.3 : 1;
           tl.setAttribute('x', x + th / 2); tl.setAttribute('y', y0 - h / 2 + 4); tl.textContent = h >= 15 && p >= 1 ? (pct ? Math.round(v) + '%' : v) : '';
           if (i === HI[0] && j === HI[1]) hv = [x + th / 2, y0 - h / 2];
           y0 -= h;
         });
       });
-      var p = glide(ms, 1700, 2200, [VW - 10, VH - 4], [hv[0] + 6, hv[1] + 6]), raw = [[12, 8, 4, 6], [15, 9, 5, 4], [18, 7, 6, 3], [22, 6, 4, 2]][HI[0]];
+      var p = ms < 3150 || !fo ? glide(ms, 1700, 2200, [VW - 10, VH - 4], [hv[0] + 6, hv[1] + 6]) : ms < F1 ? glide(ms, 3150, F0, [hv[0] + 6, hv[1] + 6], [b.x + 64 + 24, 12]) : glide(ms, F1, F1 + 250, [b.x + 64 + 24, 12], [VW - 10, VH - 4]), raw = [[12, 8, 4, 6], [15, 9, 5, 4], [18, 7, 6, 3], [22, 6, 4, 2]][HI[0]];
       k.cur(p[0], p[1], false); k.tip(hov, hv[0], hv[1] - 12, sw(1) + '<b>' + WEEK[HI[0]] + ' · ' + NAMES[1] + '</b> ' + raw[1] + '건' + (pct ? ' (' + Math.round(V[HI[0]][1]) + '%)' : ''));
-      return ms < 1500 ? '계열이 아래부터 쌓임' : hov ? '가운데 칸 하나를 가리킴 · 값은 툴팁으로' : (pct ? '주마다 합을 100%로' : '쌓인 높이가 그 주의 합') + ' · 계열 ' + ns + '개';
+      return ms < 1500 ? '계열이 아래부터 쌓임' : hov ? '가운데 칸 하나를 가리킴 · 값은 툴팁으로' : fon ? '범례 "진행"을 가리킴 · 그 계열만 남음' : (pct ? '주마다 합을 100%로' : '쌓인 높이가 그 주의 합') + ' · 계열 ' + ns + '개';
     } };
   };
 
@@ -2126,12 +2130,14 @@
   };
 
   S['area-chart'] = function (st, c) {
-    var stack = c.kind === '누적', op = (+c.opacity_pct) / 100, MS = 3400, HI = 8;
+    var stack = c.kind === '누적', op = (+c.opacity_pct) / 100, grad = c.fill === '그라데이션', gid = 'uag' + (++CLIP_N), MS = 3400, HI = 8;
     var L = stack ? [['진행', [10, 12, 11, 14, 13, 15, 14, 16, 15, 17, 16, 18]], ['검토', [6, 7, 9, 8, 10, 9, 11, 10, 12, 11, 13, 12]], ['대기', [8, 9, 7, 10, 9, 11, 10, 9, 11, 10, 12, 11]]] : LINES.slice(0, 1);
     var cum = WK.map(function () { return 0; }), layers = L.map(function (l) { var lo = cum.slice(); cum = cum.map(function (v, i) { return v + l[1][i]; }); return { name: l[0], lo: lo, hi: cum.slice(), v: l[1] }; });
-    var max = niceMax(Math.max.apply(null, cum) * 1.08), b = { x: 34, y: 12, w: 372, h: 182 }, X = function (i) { return b.x + b.w * i / 11; }, Y = function (v) { return b.y + b.h - v / max * b.h; };
+    var max = tickMax(Math.max.apply(null, cum) * 1.08), b = { x: 34, y: 12, w: 372, h: 182 }, X = function (i) { return b.x + b.w * i / 11; }, Y = function (v) { return b.y + b.h - v / max * b.h; };
     var s = yAxis(b, max) + xAxis12(b) + '<line class="xh" style="stroke:var(--u-muted);stroke-width:1;opacity:0"/>';
-    layers.forEach(function (l, j) { s += '<polygon class="ar" style="fill:' + CC[j] + ';opacity:' + op + '"/><polyline class="tp" style="fill:none;stroke:' + CC[j] + ';stroke-width:2;stroke-linejoin:round"/>' + tx(X(11) + 8, 0, l.name, '', 'nm'); });
+    // 그라데이션: 위는 채움 %, 바닥으로 갈수록 0에 가깝게
+    if (grad) s += '<defs>' + layers.map(function (l, j) { return '<linearGradient id="' + gid + j + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:' + CC[j] + ';stop-opacity:' + Math.min(0.9, op * 1.6) + '"/><stop offset="1" style="stop-color:' + CC[j] + ';stop-opacity:.03"/></linearGradient>'; }).join('') + '</defs>';
+    layers.forEach(function (l, j) { s += '<polygon class="ar" style="' + (grad ? 'fill:url(#' + gid + j + ')' : 'fill:' + CC[j] + ';opacity:' + op) + '"/><polyline class="tp" style="fill:none;stroke:' + CC[j] + ';stroke-width:2;stroke-linejoin:round"/>' + tx(X(11) + 8, 0, l.name, '', 'nm'); });
     var k = chartKit(st, s), ars = k.q('.ar'), tps = k.q('.tp'), nms = k.q('.nm'), xh = k.q('.xh')[0];
     return { ms: MS, rest: 0.4, at: function (t) {
       var ms = t * MS, p = ease.out(seg(ms, 150, 1050)), on = ms > 2000 && ms < 3000;
@@ -2144,7 +2150,7 @@
       xh.setAttribute('x1', X(HI)); xh.setAttribute('x2', X(HI)); xh.setAttribute('y1', b.y); xh.setAttribute('y2', b.y + b.h); xh.style.opacity = on ? 0.5 : 0;
       k.cur(q[0], q[1], false);
       k.tip(on, X(HI), Y(cum[HI]) - 26, '<b>' + WK[HI] + '</b>' + layers.map(function (l, j) { return sw(j) + l.name + ' ' + l.v[HI]; }).join(' ') + (stack ? ' · 합 ' + cum[HI] : ''));
-      return ms < 1100 ? '면이 바닥(0)에서 차오름' : on ? WK[HI] + (stack ? ' · 층마다 값, 맨 위가 합 ' + cum[HI] : ' · ' + L[0][1][HI] + '건') : (stack ? '누적 면 · 맨 아래 층만 바닥이 곧다' : '한 계열 면 · 채움 ' + c.opacity_pct + '%');
+      return ms < 1100 ? '면이 바닥(0)에서 차오름' : on ? WK[HI] + (stack ? ' · 층마다 값, 맨 위가 합 ' + cum[HI] : ' · ' + L[0][1][HI] + '건') : (stack ? '누적 면 · 맨 아래 층만 바닥이 곧다' : '한 계열 면 · 채움 ' + c.opacity_pct + '%') + (grad ? ' · 아래로 옅어짐' : '');
     } };
   };
 
@@ -2330,6 +2336,407 @@
     } };
   };
 
+  /* ───── 표현 › 차트 › 차트 종류 (2차) ───── */
+  S['waterfall-chart'] = function (st, c) {
+    var link = c.connector === '연결선', sign = c.sign === '+/− 부호', MS = 3600, HI = 3;
+    var D = [['지난주', 40, 1], ['새 이슈', 18], ['재오픈', 4], ['완료', -22], ['중복', -5], ['이번 주', 35, 1]];
+    var lv = 0, G = D.map(function (d) { var a = d[2] ? 0 : lv, z = d[2] ? d[1] : lv + d[1]; lv = z; return { lo: Math.min(a, z), hi: Math.max(a, z), from: a, to: z, v: d[1], tot: !!d[2] }; });
+    var max = niceMax(62), b = { x: 40, y: 18, w: 425, h: 176 }, band = b.w / D.length, th = band * 0.6, Y = function (v) { return b.y + b.h - v / max * b.h; }, s = yAxis(b, max);
+    D.forEach(function (d, i) {
+      var g = G[i], col = g.tot ? 'var(--u-muted)' : g.v > 0 ? 'var(--div-neg)' : 'var(--div-pos)';
+      s += '<path class="wb" style="fill:' + col + '"/><text class="vl" text-anchor="middle"></text>' + tx(b.x + band * i + band / 2, b.y + b.h + 16, d[0], 'middle', 'tk');
+      if (i < D.length - 1) s += '<line class="wl" x1="' + (b.x + band * i + (band + th) / 2) + '" x2="' + (b.x + band * (i + 1) + (band - th) / 2) + '" y1="' + Y(g.to) + '" y2="' + Y(g.to) + '" style="stroke:var(--u-muted);stroke-width:1;stroke-dasharray:3 2;opacity:0"/>';
+    });
+    s += '<rect x="' + (b.x + 250) + '" y="2" width="10" height="10" rx="2" style="fill:var(--div-neg)"/>' + tx(b.x + 264, 11, '늘어남', '', 'tk') + '<rect x="' + (b.x + 320) + '" y="2" width="10" height="10" rx="2" style="fill:var(--div-pos)"/>' + tx(b.x + 334, 11, '줄어듦', '', 'tk') + tx(b.x - 6, 10, '열린 이슈', 'start', 'tk');
+    var k = chartKit(st, s), wbs = k.q('.wb'), vls = k.q('.vl'), wls = k.q('.wl');
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, on = ms > 2500 && ms < 3400;
+      G.forEach(function (g, i) {
+        var p = ease.out(seg(ms, 150 + i * 280, 450 + i * 280)), x = b.x + band * i + (band - th) / 2, cur = lerp(g.from, g.to, p), y1 = Y(Math.max(g.from, cur)), y2 = Y(Math.min(g.from, cur));
+        wbs[i].setAttribute('d', 'M' + x + ' ' + y2 + 'V' + y1 + 'H' + (x + th) + 'V' + y2 + 'Z'); wbs[i].style.opacity = on && i !== HI ? 0.4 : 1;
+        vls[i].setAttribute('x', x + th / 2); vls[i].setAttribute('y', Y(g.hi) - 6); vls[i].style.opacity = seg(ms, 400 + i * 280, 550 + i * 280);
+        vls[i].textContent = g.tot ? g.v : (sign ? (g.v > 0 ? '+' : '−') : '') + Math.abs(g.v);
+        if (wls[i]) wls[i].style.opacity = link ? seg(ms, 450 + i * 280, 560 + i * 280) * 0.8 : 0;
+      });
+      var g = G[HI], hx = b.x + band * HI + band / 2, q = glide(ms, 2000, 2500, [VW - 8, VH - 4], [hx + 4, Y((g.lo + g.hi) / 2) + 4]);
+      k.cur(q[0], q[1], false); k.tip(on, hx, Y(g.hi) - 18, '<b>' + D[HI][0] + '</b> ' + g.v + '건 · ' + g.from + ' → ' + g.to);
+      return ms < 1900 ? '전 막대 끝에서 다음 막대가 이어짐' : on ? '줄어든 칸 하나 · 앞뒤 값까지 툴팁' : '시작 40 → 끝 35 · ' + (link ? '연결선' : '연결선 없음') + ' · ' + (sign ? '+/− 부호' : '값만');
+    } };
+  };
+
+  S['bullet-chart'] = function (st, c) {
+    var R = [['완료율', 72, 80, '%', 100], ['기한 지킴', 88, 90, '%', 100], ['만족도', 4.1, 4.5, '점', 5]].slice(0, c.rows === '1개' ? 1 : 3), band = c.ranges === '3구간', MS = 3200;
+    var x0 = 100, W = 270, rowH = R.length === 1 ? 120 : 66, y0 = R.length === 1 ? 70 : 20, bh = 24, s = '';
+    R.forEach(function (r, i) {
+      var y = y0 + i * rowH;
+      s += tx(x0 - 10, y + bh / 2 + 4, r[0], 'end', 'vl');
+      if (band) [[1, 10], [0.8, 18], [0.6, 28]].forEach(function (z) { s += '<rect class="rg" x="' + x0 + '" y="' + y + '" width="' + W * z[0] + '" height="' + bh + '" style="fill:color-mix(in oklab, var(--u-muted) ' + z[1] + '%, transparent)"/>'; });
+      else s += '<rect class="rg" x="' + x0 + '" y="' + y + '" width="' + W + '" height="' + bh + '" style="fill:none;stroke:var(--u-line)"/>';
+      s += '<path class="bm" style="fill:var(--c1)"/><line class="tg" x1="' + (x0 + r[2] / r[4] * W) + '" x2="' + (x0 + r[2] / r[4] * W) + '" y1="' + (y + 3) + '" y2="' + (y + bh - 3) + '" style="stroke:var(--u-ink);stroke-width:2.5"/><text class="fv" x="' + (x0 + W + 10) + '" y="' + (y + bh / 2 + 4) + '"></text>';
+      [0, 0.5, 1].forEach(function (f) { s += tx(x0 + W * f, y + bh + 14, fmt(r[4] * f, false, r[4] < 10 ? 1 : 0).replace('.0', ''), 'middle', 'tk'); });
+    });
+    var k = chartKit(st, s), bms = k.q('.bm'), tgs = k.q('.tg'), fvs = k.q('.fv'), rgs = k.q('.rg');
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, on = ms > 2200 && ms < 3000;
+      rgs.forEach(function (e) { e.style.opacity = seg(ms, 50, 350); });
+      R.forEach(function (r, i) {
+        var p = ease.out(seg(ms, 300 + i * 150, 1100 + i * 150)), y = y0 + i * rowH, w = r[1] / r[4] * W * p;
+        bms[i].setAttribute('d', barPath(x0, y + bh / 3, w, bh / 3, true)); bms[i].style.opacity = on && i ? 0.4 : 1;
+        tgs[i].style.opacity = seg(ms, 1000 + i * 150, 1150 + i * 150);
+        fvs[i].textContent = (r[4] < 10 ? (r[1] * p).toFixed(1) : Math.round(r[1] * p)) + r[3] + ' / 목표 ' + r[2];
+      });
+      var r = R[0], bx = x0 + r[1] / r[4] * W, q = glide(ms, 1700, 2200, [VW - 8, VH - 4], [bx - 10, y0 + bh / 2 + 4]), gap = Math.round((r[2] - r[1]) * 10) / 10;
+      k.cur(q[0], q[1], false); k.tip(on, bx - 10, y0 - 4, '<b>' + r[0] + '</b> ' + r[1] + r[3] + ' · 목표까지 ' + gap + (r[3] === '%' ? '%p' : r[3]));
+      return ms < 1300 ? '값 막대가 자라고 목표 눈금이 섬' : on ? '목표까지 남은 거리' : '지표 ' + R.length + '개 · ' + (band ? '나쁨·보통·좋음 3구간' : '구간 없음');
+    } };
+  };
+
+  S['lollipop-chart'] = function (st, c) {
+    var D = [['로그인', 22], ['검색', 19], ['결제', 28], ['채팅', 5], ['알림', 15], ['설정', 12], ['업로드', 7], ['프로필', 9]], avgB = c.base === '평균 기준', MS = 3200;
+    if (c.sort === '큰 순서') D = D.slice().sort(function (a, b) { return b[1] - a[1]; });
+    var avg = D.reduce(function (a, d) { return a + d[1]; }, 0) / D.length, b = { x: 70, y: 8, w: 380, h: 190 }, rh = b.h / D.length, X = function (v) { return b.x + v / 30 * b.w; }, s = '';
+    [0, 10, 20, 30].forEach(function (v, i) { s += ln(X(v), b.y, X(v), b.y + b.h, i ? GRID : BASE) + tx(X(v), b.y + b.h + 16, v, 'middle', 'tk'); });
+    if (avgB) s += ln(X(avg), b.y - 2, X(avg), b.y + b.h, 'stroke:var(--u-ink);stroke-width:1.5') + tx(X(avg) + 4, b.y + b.h + 30, '평균 ' + avg.toFixed(1), 'start', 'tk');
+    s += tx(b.x + b.w, b.y + b.h + 30, '기능별 열린 이슈 →', 'end', 'tk');
+    D.forEach(function (d, i) { var y = b.y + rh * i + rh / 2; s += tx(b.x - 8, y + 4, d[0], 'end', 'tk') + '<line class="lp" y1="' + y + '" y2="' + y + '" style="stroke:var(--c1);stroke-width:2"/><circle class="ld" cy="' + y + '" style="fill:var(--c1);stroke:var(--u-panel);stroke-width:2"/><text class="vl" y="' + (y + 4) + '"></text>'; });
+    var k = chartKit(st, s), lps = k.q('.lp'), lds = k.q('.ld'), vls = k.q('.vl'), top = D.reduce(function (m, d, i) { return d[1] > D[m][1] ? i : m; }, 0);
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, on = ms > 2100 && ms < 2950;
+      D.forEach(function (d, i) {
+        var p = ease.out(seg(ms, 150 + i * 80, 650 + i * 80)), x1 = X(avgB ? avg : 0), x2 = lerp(x1, X(d[1]), p), up = d[1] >= avg || !avgB;
+        lps[i].setAttribute('x1', x1); lps[i].setAttribute('x2', x2); lds[i].setAttribute('cx', x2); lds[i].setAttribute('r', 5.5 * ease.out(seg(ms, 550 + i * 80, 750 + i * 80)));
+        lps[i].style.opacity = lds[i].style.opacity = on && i !== top ? 0.4 : 1;
+        vls[i].textContent = d[1]; vls[i].setAttribute('x', x2 + (up ? 10 : -10)); vls[i].setAttribute('text-anchor', up ? 'start' : 'end'); vls[i].style.opacity = seg(ms, 700 + i * 80, 850 + i * 80);
+      });
+      var y = b.y + rh * top + rh / 2, q = glide(ms, 1600, 2100, [VW - 8, VH - 4], [X(D[top][1]) + 4, y + 4]);
+      k.cur(q[0], q[1], false); k.tip(on, X(D[top][1]), y - 10, '<b>' + D[top][0] + '</b> ' + D[top][1] + '건' + (avgB ? ' · 평균보다 +' + (D[top][1] - avg).toFixed(1) : ''));
+      return ms < 1200 ? '막대 대신 가는 선과 끝 점' : on ? '가장 큰 항목 하나' : (avgB ? '평균에서 위아래로 뻗음' : '0에서 뻗음') + ' · ' + c.sort;
+    } };
+  };
+
+  S['dumbbell-chart'] = function (st, c) {
+    var D = [['앱', 6.2, 3.8], ['웹', 5.1, 4.6], ['결제', 7.4, 4.1], ['정산', 4.0, 4.4], ['검색', 5.8, 5.0]], gapOnly = c.label === '차이만', MS = 3400;
+    if (c.sort === '차이 큰 순서') D = D.slice().sort(function (a, b) { return Math.abs(b[2] - b[1]) - Math.abs(a[2] - a[1]); });
+    var b = { x: 60, y: 30, w: 390, h: 164 }, rh = b.h / D.length, X = function (v) { return b.x + v / 8 * b.w; }, s = '', HI = D.map(function (d) { return d[0]; }).indexOf('결제');
+    [0, 2, 4, 6, 8].forEach(function (v, i) { s += ln(X(v), b.y, X(v), b.y + b.h, i ? GRID : BASE) + tx(X(v), b.y + b.h + 16, v + (v === 8 ? '일' : ''), 'middle', 'tk'); });
+    s += '<circle cx="' + (b.x + 4) + '" cy="10" r="5" style="fill:var(--u-muted)"/>' + tx(b.x + 14, 14, '지난 분기', '', 'tk') + '<circle cx="' + (b.x + 84) + '" cy="10" r="5" style="fill:var(--c1)"/>' + tx(b.x + 94, 14, '이번 분기', '', 'tk') + tx(b.x + b.w, 14, '평균 처리 일수', 'end', 'tk');
+    D.forEach(function (d, i) { var y = b.y + rh * i + rh / 2; s += tx(b.x - 8, y + 4, d[0], 'end', 'tk') + '<line class="db" y1="' + y + '" y2="' + y + '" style="stroke:var(--u-muted);stroke-width:2;opacity:.5"/><circle class="d0" cx="' + X(d[1]) + '" cy="' + y + '" r="6" style="fill:var(--u-muted);stroke:var(--u-panel);stroke-width:2"/><circle class="d1" cy="' + y + '" r="6" style="fill:var(--c1);stroke:var(--u-panel);stroke-width:2"/><text class="in" y="' + (y + 4) + '"></text><text class="in" y="' + (y + 4) + '"></text>'; });
+    var k = chartKit(st, s), dbs = k.q('.db'), d0 = k.q('.d0'), d1 = k.q('.d1'), ins = k.q('.in');
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, on = ms > 2400 && ms < 3250;
+      D.forEach(function (d, i) {
+        var p = ease.inOut(seg(ms, 700 + i * 120, 1300 + i * 120)), x = lerp(X(d[1]), X(d[2]), p), dn = d[2] < d[1], dim = on && i !== HI ? 0.35 : 1;
+        d0[i].style.opacity = seg(ms, 100 + i * 80, 300 + i * 80) * dim; d1[i].setAttribute('cx', x); d1[i].style.opacity = seg(ms, 650 + i * 120, 750 + i * 120) * dim;
+        dbs[i].setAttribute('x1', X(d[1])); dbs[i].setAttribute('x2', x); dbs[i].style.opacity = 0.5 * dim;
+        var a = ins[i * 2], z = ins[i * 2 + 1], lo = Math.min(X(d[1]), X(d[2])), hi = Math.max(X(d[1]), X(d[2])), f = seg(ms, 1300 + i * 120, 1450 + i * 120) * dim;
+        if (gapOnly) { a.textContent = (dn ? '−' : '+') + Math.abs(d[2] - d[1]).toFixed(1); a.setAttribute('x', hi + 12); a.setAttribute('text-anchor', 'start'); z.textContent = ''; }
+        else { a.textContent = (dn ? d[2] : d[1]).toFixed(1); a.setAttribute('x', lo - 11); a.setAttribute('text-anchor', 'end'); z.textContent = (dn ? d[1] : d[2]).toFixed(1); z.setAttribute('x', hi + 11); z.setAttribute('text-anchor', 'start'); }
+        a.style.opacity = z.style.opacity = f; a.style.fill = z.style.fill = 'var(--u-ink)';
+      });
+      var d = D[HI], y = b.y + rh * HI + rh / 2, mx = (X(d[1]) + X(d[2])) / 2, q = glide(ms, 1900, 2400, [VW - 8, VH - 4], [mx + 4, y + 4]);
+      k.cur(q[0], q[1], false); k.tip(on, mx, y - 10, '<b>' + d[0] + '</b> ' + d[1] + '일 → ' + d[2] + '일 (−' + (d[1] - d[2]).toFixed(1) + '일)');
+      return ms < 1900 ? '지난 분기 점에서 이번 분기 점으로 늘어남' : on ? '가장 많이 줄어든 팀' : '두 시점 차이 · ' + c.sort + ' · ' + (gapOnly ? '차이만' : '양 끝 값');
+    } };
+  };
+
+  S['slope-chart'] = function (st, c) {
+    var D = [['앱', 42, 58], ['웹', 51, 47], ['결제', 38, 52], ['정산', 30, 33], ['검색', 47, 40], ['운영', 25, 29]], focus = c.focus === '크게 오른 것만 강조', both = c.labels === '양쪽 이름·값', MS = 3400, HI = 2;
+    var L = 160, Rx = 320, Y = function (v) { return 26 + (62 - v) / 40 * 176; }, s = tx(L, 14, '1분기', 'middle', 'tk') + tx(Rx, 14, '4분기', 'middle', 'tk') + ln(L, 22, L, 206, BASE) + ln(Rx, 22, Rx, 206, BASE);
+    D.forEach(function (d) { var big = d[2] - d[1] >= 10; s += '<line class="sl" pathLength="1" x1="' + L + '" y1="' + Y(d[1]) + '" x2="' + Rx + '" y2="' + Y(d[2]) + '" style="stroke:' + (big || !focus ? 'var(--c1)' : 'var(--c-other)') + ';stroke-width:' + (big && focus ? 2.5 : 2) + ';stroke-dasharray:1"/><circle class="s0" cx="' + L + '" cy="' + Y(d[1]) + '" r="4.5" style="fill:var(--c1);stroke:var(--u-panel);stroke-width:2"/><circle class="s1" cx="' + Rx + '" cy="' + Y(d[2]) + '" r="4.5" style="fill:var(--c1);stroke:var(--u-panel);stroke-width:2"/>' + (both ? tx(L - 10, Y(d[1]) + 4, d[0] + ' ' + d[1], 'end', 'la') : '') + tx(Rx + 10, Y(d[2]) + 4, d[2] + ' ' + d[0] + (d[2] > d[1] ? ' ▲' : ' ▼'), '', 'la'); });
+    s += tx(VW - 6, 222, '팀별 처리 건수', 'end', 'tk');
+    var k = chartKit(st, s), sls = k.q('.sl'), s0 = k.q('.s0'), s1 = k.q('.s1'), las = k.q('.la');
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, on = ms > 2400 && ms < 3250, fo = focus ? seg(ms, 1600, 1900) : 0;
+      D.forEach(function (d, i) {
+        var big = d[2] - d[1] >= 10, dim = on && i !== HI ? 0.3 : !big ? 1 - fo * 0.55 : 1;
+        sls[i].style.strokeDashoffset = 1 - ease.inOut(seg(ms, 500 + i * 60, 1300 + i * 60)); sls[i].style.opacity = dim;
+        s0[i].style.opacity = seg(ms, 100 + i * 50, 300 + i * 50) * dim; s1[i].style.opacity = seg(ms, 1250 + i * 60, 1400 + i * 60) * dim; s1[i].style.fill = s0[i].style.fill = big || !focus ? 'var(--c1)' : 'var(--c-other)';
+      });
+      las.forEach(function (e, j) { var i = both ? j >> 1 : j, big = D[i][2] - D[i][1] >= 10; e.style.opacity = seg(ms, both && !(j & 1) ? 200 : 1350, both && !(j & 1) ? 400 : 1550) * (on && i !== HI ? 0.3 : !big ? 1 - fo * 0.4 : 1); e.style.fill = 'var(--u-ink)'; });
+      var d = D[HI], mx = (L + Rx) / 2, my = (Y(d[1]) + Y(d[2])) / 2, q = glide(ms, 1900, 2400, [VW - 8, VH - 4], [mx + 4, my + 4]);
+      k.cur(q[0], q[1], false); k.tip(on, mx, my - 10, '<b>' + d[0] + '</b> ' + d[1] + ' → ' + d[2] + ' (+' + (d[2] - d[1]) + ')');
+      return ms < 1500 ? '왼쪽 시점에서 오른쪽 시점으로 선이 그어짐' : on ? '기울기 = 바뀐 크기' : focus ? '크게 오른 2개만 진하게' : '모든 선이 같은 색';
+    } };
+  };
+
+  S['bubble-chart'] = function (st, c) {
+    var D = [['앱', 96, 3.8, 12], ['운영', 85, 7.2, 10], ['웹', 70, 4.6, 8], ['결제', 40, 4.1, 6], ['검색', 58, 5.0, 5], ['정산', 28, 6.4, 3], ['인프라', 18, 2.5, 2]], area = c.size === '넓이 비례', all = c.labels === '모두 이름', MS = 3400, HI = 1, RM = 26;
+    var b = { x: 40, y: 12, w: 420, h: 178 }, X = function (v) { return b.x + v / 120 * b.w; }, Y = function (v) { return b.y + b.h - v / 12 * b.h; }, R = function (z) { return area ? RM * Math.sqrt(z / 12) : RM * z / 12; }, s = yAxis(b, 12, '일');
+    [0, 30, 60, 90, 120].forEach(function (v) { s += tx(X(v), b.y + b.h + 16, v, 'middle', 'tk'); });
+    s += tx(b.x + b.w, b.y + b.h + 30, '처리 건수 →', 'end', 'tk') + tx(b.x, b.y + b.h + 30, '원 크기 = 팀 인원(' + (area ? '넓이' : '지름') + ')', 'start', 'tk');
+    D.forEach(function (d) { s += '<circle class="bb" cx="' + X(d[1]) + '" cy="' + Y(d[2]) + '" style="fill:var(--c1);fill-opacity:.5;stroke:var(--u-panel);stroke-width:1.5"/>' + (all || d[3] >= 8 ? tx(X(d[1]), Y(d[2]) + 4, d[0], 'middle', 'la') : ''); });
+    var k = chartKit(st, s), bbs = k.q('.bb'), las = k.q('.la');
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, on = ms > 2300 && ms < 3200;
+      D.forEach(function (d, i) { bbs[i].setAttribute('r', R(d[3]) * ease.out(seg(ms, 100 + i * 120, 600 + i * 120))); bbs[i].style.opacity = on && i !== HI ? 0.4 : 1; });
+      las.forEach(function (e) { e.style.opacity = seg(ms, 1000, 1250); e.style.fill = 'var(--u-ink)'; });
+      var d = D[HI], q = glide(ms, 1800, 2300, [VW - 8, VH - 4], [X(d[1]) + 6, Y(d[2]) + 6]);
+      k.cur(q[0], q[1], false); k.tip(on, X(d[1]), Y(d[2]) - R(d[3]) - 6, '<b>' + d[0] + '</b> ' + d[1] + '건 · ' + d[2] + '일 · ' + d[3] + '명');
+      return ms < 1100 ? '원이 차례로 커짐' : on ? '세 값(건수·일수·인원)을 한 점에' : area ? '넓이가 인원에 비례' : '지름 비례 · 큰 값이 실제보다 훨씬 커 보임';
+    } };
+  };
+
+  S['waffle-chart'] = function (st, c) {
+    var three = c.series === '3개(구성)', col = c.fill === '세로 줄 순서', MS = 3400, HI = 1;
+    var P = three ? [['완료', 58], ['진행', 24], ['대기', 18]] : [['완료', 58], ['남음', 42]], cs = 17, gap = 2, x0 = 70, y0 = 20, s = '', owner = [];
+    P.forEach(function (p, j) { for (var n = 0; n < p[1]; n++) owner.push(j); });
+    for (var i = 0; i < 100; i++) { var r = col ? i % 10 : Math.floor(i / 10), q = col ? Math.floor(i / 10) : i % 10; s += '<rect class="wc" x="' + (x0 + q * (cs + gap)) + '" y="' + (y0 + (9 - r) * (cs + gap)) + '" width="' + cs + '" height="' + cs + '" rx="3"/>'; }
+    P.forEach(function (p, j) { var y = y0 + 30 + j * 34, fill = !three && j ? 'var(--u-line)' : CC[j]; s += '<rect class="lg" x="290" y="' + (y - 11) + '" width="14" height="14" rx="3" style="fill:' + fill + '"/>' + tx(312, y, p[0], '', 'vl') + tx(312 + 46, y, p[1] + '칸 = ' + p[1] + '%', '', 'tk'); });
+    s += tx(290, y0 + 4, '이슈 100건 중', '', 'tk') + tx(290, y0 + 170, '한 칸 = 이슈 1건', '', 'tk');
+    var k = chartKit(st, s), wcs = k.q('.wc');
+    wcs.forEach(function (e, i) { e.style.fill = !three && owner[i] ? 'var(--u-line)' : CC[owner[i]]; });
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, on = three && ms > 2200 && ms < 3100;
+      wcs.forEach(function (e, i) { e.style.opacity = seg(ms, 100 + i * 12, 220 + i * 12) * (on && owner[i] !== HI ? 0.25 : 1); });
+      var q = glide(ms, 1700, 2200, [VW - 8, VH - 4], [300, y0 + 30 + HI * 34 - 2]);
+      if (three) k.cur(q[0], q[1], false); else k.cur(VW - 8, VH - 4, false);
+      k.tip(on, 330, y0 + 30 + HI * 34 - 18, '<b>' + P[HI][0] + '</b> ' + P[HI][1] + '칸 = ' + P[HI][1] + '%');
+      return ms < 1350 ? '칸이 ' + (col ? '세로 줄' : '가로 줄') + ' 순서로 채워짐' : on ? '범례를 가리키면 그 칸만 남음' : three ? '100칸 = 100% · 3개 구성' : '100칸 중 58칸 완료';
+    } };
+  };
+
+  // 트리맵 배치. 비율 맞춤(squarify): 큰 값부터 한 줄에 넣다가 칸이 길쭉해지면 새 줄. slice는 한 방향으로만 자른다
+  function treeLayout(vals, r, slice, vert) {
+    var tot = vals.reduce(function (a, v) { return a + v; }, 0), out = [], x = r.x, y = r.y, w = r.w, h = r.h, row = [], i = 0, k = r.w * r.h / tot;
+    if (slice) { var o = 0; vals.forEach(function (v) { var f = v / tot; out.push(vert ? { x: r.x, y: r.y + o * r.h, w: r.w, h: f * r.h } : { x: r.x + o * r.w, y: r.y, w: f * r.w, h: r.h }); o += f; }); return out; }
+    function worst(rw, side) { var s = 0, mx = 0, mn = Infinity; rw.forEach(function (a) { s += a; mx = Math.max(mx, a); mn = Math.min(mn, a); }); return Math.max(side * side * mx / (s * s), s * s / (side * side * mn)); }
+    function place(rw) {
+      var s = rw.reduce(function (a, b) { return a + b; }, 0);
+      if (w >= h) { var cw = s / h, yy = y; rw.forEach(function (a) { out.push({ x: x, y: yy, w: cw, h: a / cw }); yy += a / cw; }); x += cw; w -= cw; }
+      else { var rh = s / w, xx = x; rw.forEach(function (a) { out.push({ x: xx, y: y, w: a / rh, h: rh }); xx += a / rh; }); y += rh; h -= rh; }
+    }
+    while (i < vals.length) { var a = vals[i] * k, side = Math.min(w, h); if (!row.length || worst(row.concat([a]), side) <= worst(row, side)) { row.push(a); i++; } else { place(row); row = []; } }
+    if (row.length) place(row);
+    return out;
+  }
+  // 점을 지나는 부드러운 곡선(Catmull-Rom → 베지어). lead는 'M' 또는 'L'
+  function smoothPath(P, lead, smooth) {
+    var f = function (p) { return p[0].toFixed(1) + ' ' + p[1].toFixed(1); }, d = lead + f(P[0]);
+    for (var i = 0; i < P.length - 1; i++) {
+      if (!smooth) { d += 'L' + f(P[i + 1]); continue; }
+      var a = P[i - 1] || P[i], b = P[i], c = P[i + 1], e = P[i + 2] || c;
+      d += 'C' + f([b[0] + (c[0] - a[0]) / 6, b[1] + (c[1] - a[1]) / 6]) + ' ' + f([c[0] - (e[0] - b[0]) / 6, c[1] - (e[1] - b[1]) / 6]) + ' ' + f(c);
+    }
+    return d;
+  }
+  var HALO = 'paint-order:stroke;stroke:var(--u-panel);stroke-width:3;stroke-linejoin:round';
+
+  S['treemap'] = function (st, c) {
+    var D = [['앱', [16, 10, 8]], ['운영', [14, 6, 6]], ['웹', [8, 7, 5]], ['검색', [6, 5, 3]], ['결제', [5, 3, 2]], ['정산', [3, 2, 1]], ['인프라', [2, 1, 1]]], TY = ['버그', '기능', '개선'];
+    var two = c.depth === '팀 › 유형', slice = c.layout === '한 방향으로 자르기', MS = 3400, b = { x: 4, y: 4, w: 472, h: 200 }, tot = 114, cells = [], s = '';
+    var sums = D.map(function (d) { return d[1].reduce(function (a, v) { return a + v; }, 0); }), R = treeLayout(sums, b, slice, false);
+    function mix(col) { return 'color-mix(in oklab, ' + col + ' 45%, var(--u-panel))'; }
+    D.forEach(function (d, i) {
+      var r = R[i];
+      if (!two) { cells.push({ r: r, team: i, v: sums[i], fill: mix(CC[0]), name: d[0] }); return; }
+      var hd = r.w >= 44 && r.h >= 44 ? 16 : 0;
+      s += '<rect x="' + (r.x + 0.5) + '" y="' + (r.y + 0.5) + '" width="' + (r.w - 1) + '" height="' + (r.h - 1) + '" rx="4" class="tf" style="fill:var(--u-line);opacity:.6"/>' + (hd ? tx(r.x + 6, r.y + 12, d[0] + ' ' + sums[i], '', 'vl tfl') : '');
+      treeLayout(d[1], { x: r.x + 2, y: r.y + 2 + hd, w: r.w - 4, h: r.h - 4 - hd }, slice, true).forEach(function (q, j) { cells.push({ r: q, team: i, ty: j, v: d[1][j], fill: mix(CC[j]), name: TY[j] }); });
+    });
+    cells.forEach(function (e) {
+      var r = e.r, big = r.w >= 40 && r.h >= (two ? 18 : 30);
+      s += '<rect class="tc" rx="3" style="fill:' + e.fill + ';stroke:var(--u-panel);stroke-width:2"/>';
+      if (big) s += two ? tx(r.x + 5, r.y + 13, e.name + ' ' + e.v, '', 'in tcl') : tx(r.x + 7, r.y + 17, e.name, '', 'vl tcl') + (r.h >= 40 ? tx(r.x + 7, r.y + 32, e.v + '건', '', 'tcl') : '');
+    });
+    if (two) TY.forEach(function (n, j) { s += '<rect x="' + (6 + j * 52) + '" y="212" width="10" height="10" rx="2" style="fill:' + mix(CC[j]) + '"/>' + tx(20 + j * 52, 221, n, '', 'tk'); });
+    s += tx(VW - 6, 221, '칸 넓이 = 열린 이슈 수 (모두 ' + tot + '건)', 'end', 'tk');
+    var k = chartKit(st, s), tcs = k.q('.tc'), tcl = k.q('.tcl'), tfs = k.q('.tf'), tfl = k.q('.tfl'), HI = two ? cells.map(function (e) { return e.team === 1 && e.ty === 0; }).indexOf(true) : 1;
+    tcl.forEach(function (e) { e.style.fill = 'var(--u-ink)'; });
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, on = ms > 2400 && ms < 3250, e = cells[HI], r = e.r;
+      cells.forEach(function (e, i) {
+        var p = ease.out(seg(ms, 100 + i * 55, 500 + i * 55)), q = e.r, w = Math.max(0, (q.w - 2) * p), h = Math.max(0, (q.h - 2) * p);
+        tcs[i].setAttribute('x', q.x + q.w / 2 - w / 2); tcs[i].setAttribute('y', q.y + q.h / 2 - h / 2); tcs[i].setAttribute('width', w); tcs[i].setAttribute('height', h);
+        tcs[i].style.opacity = on && i !== HI ? 0.35 : 1;
+      });
+      tcl.forEach(function (e) { e.style.opacity = seg(ms, 1500, 1800) * (on ? 0.5 : 1); });
+      tfs.forEach(function (e) { e.style.opacity = 0.6 * seg(ms, 0, 250); }); tfl.forEach(function (e) { e.style.opacity = seg(ms, 1500, 1800); });
+      var q = glide(ms, 2000, 2400, [VW - 8, VH - 4], [r.x + r.w / 2, r.y + r.h / 2 + 6]);
+      k.cur(q[0], q[1], false);
+      k.tip(on, r.x + r.w / 2, r.y + r.h / 2 - 6, two ? '<b>' + D[e.team][0] + ' › ' + e.name + '</b> ' + e.v + '건 · ' + D[e.team][0] + '의 ' + Math.round(e.v / sums[e.team] * 100) + '%' : '<b>' + e.name + '</b> ' + e.v + '건 · 전체의 ' + Math.round(e.v / tot * 100) + '%');
+      return ms < 1700 ? '넓이가 값인 칸이 차례로 생김' : on ? '칸 하나 · 몫까지 툴팁' : slice ? '한 방향으로만 잘라 가는 칸이 생김 · 넓이 비교가 어려움' : two ? '팀 칸 안에 유형 칸 · 2단계' : '정사각형에 가까운 칸 · 1단계';
+    } };
+  };
+
+  S['sankey-diagram'] = function (st, c) {
+    var three = c.stages === '3단계', gray = c.color === '회색 + 가리킨 흐름만', MS = 3600, HT = 2;
+    var COL = [[['고객 문의', 40], ['내부 발견', 30], ['모니터링', 20]], [['앱', 34], ['웹', 26], ['운영', 30]], [['해결', 68], ['보류', 15], ['중복', 7]]], HD = ['접수 경로', '담당 팀', '결과'];
+    var LK = [[0, 0, 0, 18], [0, 0, 1, 14], [0, 0, 2, 8], [0, 1, 0, 12], [0, 1, 1, 10], [0, 1, 2, 8], [0, 2, 0, 4], [0, 2, 1, 2], [0, 2, 2, 14],
+      [1, 0, 0, 26], [1, 0, 1, 5], [1, 0, 2, 3], [1, 1, 0, 18], [1, 1, 1, 6], [1, 1, 2, 2], [1, 2, 0, 24], [1, 2, 1, 4], [1, 2, 2, 2]];
+    if (!three) { COL = COL.slice(0, 2); LK = LK.filter(function (l) { return !l[0]; }); }
+    var XS = three ? [96, 235, 374] : [150, 330], NW = 10, top = 24, gap = 12, kk = (186 - gap * 2) / 90, s = '', N = [];
+    COL.forEach(function (col, ci) {
+      var y = top; N.push(col.map(function (n) { var o = { x: XS[ci], y: y, h: n[1] * kk, so: 0, ti: 0 }; y += o.h + gap; return o; }));
+      s += tx(XS[ci] + NW / 2, 13, HD[ci], 'middle', 'tk');
+    });
+    var G = LK.map(function (l) {
+      var a = N[l[0]][l[1]], z = N[l[0] + 1][l[2]], w = l[3] * kk, g = { x0: a.x + NW, x1: z.x, sy: a.y + a.so, ty: z.y + z.ti, w: w, team: l[0] ? l[1] : l[2], st: l[0] };
+      a.so += w; z.ti += w; return g;
+    });
+    G.forEach(function (g) { s += '<path class="sk" style="fill:' + (gray ? 'var(--u-muted)' : CC[g.team]) + '"/>'; });
+    COL.forEach(function (col, ci) {
+      col.forEach(function (n, i) {
+        var o = N[ci][i], last = ci === COL.length - 1;
+        s += '<rect class="sn" x="' + o.x + '" y="' + o.y + '" width="' + NW + '" height="' + o.h + '" rx="2" style="fill:' + (ci === 1 && !gray ? CC[i] : 'var(--u-muted)') + '"/>';
+        s += tx(ci ? o.x + NW + 6 : o.x - 6, o.y + o.h / 2 + 4, '<tspan class="snm">' + n[0] + '</tspan> ' + n[1], ci ? 'start' : 'end', 'skl');
+      });
+    });
+    var k = chartKit(st, s), sks = k.q('.sk'), sns = k.q('.sn'), skl = k.q('.skl'), hn = N[1][HT];
+    skl.forEach(function (e) { e.style.cssText = HALO; }); k.q('.snm').forEach(function (e) { e.style.fill = 'var(--u-ink)'; e.style.fontWeight = 600; });
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, on = ms > 2500 && ms < 3400;
+      sns.forEach(function (e, i) { e.style.opacity = seg(ms, 50 + i * 40, 350 + i * 40); });
+      skl.forEach(function (e) { e.style.opacity = seg(ms, 300, 600); });
+      G.forEach(function (g, i) {
+        var p = ease.inOut(seg(ms, 450 + g.st * 650 + (i % 9) * 40, 1100 + g.st * 650 + (i % 9) * 40)), x1 = lerp(g.x0, g.x1, p), ty = lerp(g.sy, g.ty, p), xm = (g.x0 + x1) / 2, mine = g.team === HT;
+        sks[i].setAttribute('d', p <= 0 ? 'M0 0' : 'M' + g.x0 + ' ' + g.sy + 'C' + xm + ' ' + g.sy + ' ' + xm + ' ' + ty + ' ' + x1 + ' ' + ty + 'V' + (ty + g.w) + 'C' + xm + ' ' + (ty + g.w) + ' ' + xm + ' ' + (g.sy + g.w) + ' ' + g.x0 + ' ' + (g.sy + g.w) + 'Z');
+        sks[i].style.opacity = on ? (mine ? 0.6 : 0.1) : 0.35;
+        sks[i].style.fill = gray ? (on && mine ? 'var(--c1)' : 'var(--u-muted)') : CC[g.team];
+      });
+      var q = glide(ms, 2100, 2500, [VW - 8, VH - 4], [hn.x + NW / 2 + 2, hn.y + hn.h / 2 + 4]);
+      k.cur(q[0], q[1], false); k.tip(on, hn.x + NW / 2, hn.y - 4, '<b>운영</b> 들어옴 30 · 모니터링에서 14' + (three ? ' · 해결 24' : ''));
+      return ms < 1900 ? '띠 너비 = 흐름 양' : on ? '팀을 가리키면 그 흐름만 남음' : (three ? '3단계' : '2단계') + ' · ' + (gray ? '회색 흐름' : '팀 색 흐름');
+    } };
+  };
+
+  S['radar-chart'] = function (st, c) {
+    var AX = ['속도', '품질', '응답', '문서', '테스트', '배포'], SR = [['앱 팀', [4, 3, 5, 2, 3, 4]], ['웹 팀', [3, 4, 3, 4, 4, 2]]].slice(0, c.series === '1개' ? 1 : 2), fill = c.fill === '옅게 채움', MS = 3400, cx = 240, cy = 120, R = 86, s = '';
+    var P = function (i, v) { var a = -Math.PI / 2 + i * Math.PI / 3; return [cx + Math.cos(a) * R * v / 5, cy + Math.sin(a) * R * v / 5]; }, pts = function (v) { return v.map(function (x, i) { return P(i, x).map(function (n) { return n.toFixed(1); }).join(','); }).join(' '); };
+    for (var v = 1; v <= 5; v++) s += '<polygon points="' + pts([v, v, v, v, v, v]) + '" style="fill:none;' + (v < 5 ? GRID : BASE) + '"/>' + (v % 2 ? '' : tx(cx + 4, P(0, v)[1] + 11, v, 'start', 'tk'));
+    AX.forEach(function (n, i) { var e = P(i, 5), l = P(i, 5.85), co = Math.cos(-Math.PI / 2 + i * Math.PI / 3); s += ln(cx, cy, e[0], e[1], GRID) + tx(l[0], l[1] + 4, n, Math.abs(co) < 0.1 ? 'middle' : co > 0 ? 'start' : 'end', 'vl'); });
+    SR.forEach(function (r, j) { s += '<polygon class="rp" style="fill:' + CC[j] + ';fill-opacity:' + (fill ? 0.18 : 0) + ';stroke:' + CC[j] + ';stroke-width:2;stroke-linejoin:round"/>' + r[1].map(function () { return '<circle class="rd" r="3.5" style="fill:' + CC[j] + ';stroke:var(--u-panel);stroke-width:1.5"/>'; }).join('') + '<rect x="8" y="' + (6 + j * 18) + '" width="10" height="10" rx="2" style="fill:' + CC[j] + '"/>' + tx(22, 15 + j * 18, r[0], '', 'tk'); });
+    s += tx(VW - 6, 221, '팀 역량 점수(0~5)', 'end', 'tk');
+    var k = chartKit(st, s), rps = k.q('.rp'), rds = k.q('.rd'), hp = P(2, SR[0][1][2]);
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, on = ms > 2400 && ms < 3250;
+      SR.forEach(function (r, j) {
+        var p = ease.out(seg(ms, 200 + j * 450, 1000 + j * 450)), dim = on && j ? 0.3 : 1;
+        rps[j].setAttribute('points', pts(r[1].map(function (x) { return x * p; }))); rps[j].style.opacity = (p > 0 ? 1 : 0) * dim;
+        r[1].forEach(function (x, i) { var d = rds[j * 6 + i], q = P(i, x * p); d.setAttribute('cx', q[0]); d.setAttribute('cy', q[1]); d.style.opacity = seg(ms, 800 + j * 450, 1000 + j * 450) * dim; });
+      });
+      var q = glide(ms, 2000, 2400, [VW - 8, VH - 4], [hp[0] + 4, hp[1] + 4]);
+      k.cur(q[0], q[1], false); k.tip(on, hp[0], hp[1] - 8, '<b>앱 팀 · 응답</b> 5점' + (SR.length > 1 ? ' · 웹 팀 3점' : ''));
+      return ms < 1500 ? '중심에서 다각형이 펼쳐짐' : on ? '꼭짓점 하나 · 같은 축의 다른 팀 값까지' : '계열 ' + SR.length + '개 · ' + (fill ? '옅게 채움' : '선만');
+    } };
+  };
+
+  S['boxplot'] = function (st, c) {
+    var dots = c.points === '점 함께', iqr = c.whisker === '1.5×IQR', MS = 3400, HI = 2;
+    var D = [['앱', 4, 1.2, [10.5]], ['웹', 3, 0.8, [7.2]], ['결제', 6, 1.8, []], ['정산', 2.5, 0.6, [6, 6.8]]].map(function (g, gi) {
+      var v = []; for (var i = 0; i < 24; i++) v.push(Math.max(0.3, Math.round((g[1] + g[2] * 2 * (prand(i, gi * 9) + prand(i, gi * 9 + 3) + prand(i, gi * 9 + 5) - 1.5)) * 10) / 10));
+      v = v.concat(g[3]).sort(function (a, b) { return a - b; });
+      var q = function (p) { var x = (v.length - 1) * p, lo = Math.floor(x); return v[lo] + (v[Math.min(lo + 1, v.length - 1)] - v[lo]) * (x - lo); }, q1 = q(0.25), q3 = q(0.75), f = 1.5 * (q3 - q1);
+      var inn = iqr ? v.filter(function (x) { return x >= q1 - f && x <= q3 + f; }) : v;
+      return { name: g[0], v: v, q1: q1, md: q(0.5), q3: q3, lo: inn[0], hi: inn[inn.length - 1], out: iqr ? v.filter(function (x) { return inn.indexOf(x) < 0; }) : [] };
+    });
+    var b = { x: 40, y: 18, w: 420, h: 176 }, band = b.w / 4, bw = 36, Y = function (v) { return b.y + b.h - v / 12 * b.h; }, s = yAxis(b, 12, '일');
+    s += tx(VW - 6, 10, '상자 = 가운데 절반 · 굵은 선 = 중앙값', 'end', 'tk') + tx(b.x - 6, 10, '처리 일수', 'start', 'tk');
+    D.forEach(function (g, gi) {
+      var cx = b.x + band * gi + band / 2;
+      s += tx(cx, b.y + b.h + 16, g.name, 'middle', 'tk');
+      if (dots) g.v.forEach(function (x, i) { s += '<circle class="bp" data-g="' + gi + '" cx="' + (cx + (prand(i, gi + 40) - 0.5) * 46).toFixed(1) + '" cy="' + Y(x).toFixed(1) + '" r="2.5" style="fill:var(--u-muted)"/>'; });
+      s += '<line class="bwk" style="stroke:var(--c1);stroke-width:1.5"/><line class="bwk" style="stroke:var(--c1);stroke-width:1.5"/><rect class="bx" x="' + (cx - bw / 2) + '" width="' + bw + '" rx="3" style="fill:color-mix(in oklab, var(--c1) 22%, var(--u-panel));stroke:var(--c1);stroke-width:2"/>' +
+        '<line class="bm" x1="' + (cx - bw / 2) + '" x2="' + (cx + bw / 2) + '" y1="' + Y(g.md) + '" y2="' + Y(g.md) + '" style="stroke:var(--u-ink);stroke-width:2.5"/>' +
+        g.out.map(function (x) { return '<circle class="bo" data-g="' + gi + '" cx="' + cx + '" cy="' + Y(x) + '" r="3.5" style="fill:var(--u-panel);stroke:var(--c1);stroke-width:1.5"/>'; }).join('');
+    });
+    var k = chartKit(st, s), bps = k.q('.bp'), bxs = k.q('.bx'), bms = k.q('.bm'), bwk = k.q('.bwk'), bos = k.q('.bo'), H = D[HI], hx = b.x + band * HI + band / 2;
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, on = ms > 2400 && ms < 3250;
+      bps.forEach(function (e, i) { e.style.opacity = seg(ms, 50 + i * 8, 250 + i * 8) * (on && +e.dataset.g !== HI ? 0.15 : 0.55); });
+      D.forEach(function (g, gi) {
+        var t0 = (dots ? 900 : 200) + gi * 120, p = ease.out(seg(ms, t0, t0 + 450)), w = ease.out(seg(ms, t0 + 350, t0 + 700)), cx = b.x + band * gi + band / 2, dim = on && gi !== HI ? 0.3 : 1;
+        var y3 = lerp(Y(g.md), Y(g.q3), p), y1 = lerp(Y(g.md), Y(g.q1), p);
+        bxs[gi].setAttribute('y', y3); bxs[gi].setAttribute('height', Math.max(0, y1 - y3)); bxs[gi].style.opacity = (p > 0 ? 1 : 0) * dim;
+        bms[gi].style.opacity = seg(ms, t0, t0 + 100) * dim;
+        [[Y(g.q3), Y(g.hi)], [Y(g.q1), Y(g.lo)]].forEach(function (z, j) { var e = bwk[gi * 2 + j]; e.setAttribute('x1', cx); e.setAttribute('x2', cx); e.setAttribute('y1', z[0]); e.setAttribute('y2', lerp(z[0], z[1], w)); e.style.opacity = (w > 0 ? 1 : 0) * dim; });
+      });
+      bos.forEach(function (e) { var gi = +e.dataset.g; e.style.opacity = seg(ms, (dots ? 1600 : 900) + gi * 120, (dots ? 1750 : 1050) + gi * 120) * (on && gi !== HI ? 0.3 : 1); });
+      var q = glide(ms, 2000, 2400, [VW - 8, VH - 4], [hx + 6, Y(H.md) + 6]);
+      k.cur(q[0], q[1], false); k.tip(on, hx, Y(H.q3) - 8, '<b>' + H.name + '</b> 중앙값 ' + H.md.toFixed(1) + '일 · 가운데 절반 ' + H.q1.toFixed(1) + '~' + H.q3.toFixed(1) + '일');
+      return ms < (dots ? 900 : 300) ? '처리 일수 점이 찍힘' : ms < 2000 ? '중앙값에서 상자(가운데 절반)가 펼쳐짐' : on ? '상자 하나 · 중앙값과 사분위 툴팁' : iqr ? '수염 = 1.5×IQR · 밖은 이상치 점' : '수염 = 최소~최대 · 이상치가 수염에 묻힘';
+    } };
+  };
+
+  S['streamgraph'] = function (st, c) {
+    var L = [['버그', [8, 10, 14, 18, 16, 12, 10, 9, 11, 15, 13, 10]], ['기능', [4, 5, 6, 8, 10, 13, 15, 14, 12, 10, 9, 8]], ['문의', [10, 9, 8, 9, 11, 10, 12, 15, 18, 16, 14, 12]], ['개선', [3, 4, 4, 5, 6, 6, 7, 8, 8, 9, 10, 11]]];
+    var mid = c.offset === '가운데 기준', sm = c.curve === '부드럽게', MS = 3400, HI = 8, b = mid ? { x: 20, y: 14, w: 380, h: 180 } : { x: 34, y: 14, w: 366, h: 180 };
+    var sum = WK.map(function (w, i) { return L.reduce(function (a, l) { return a + l[1][i]; }, 0); }), max = mid ? 55 : niceMax(55), X = function (i) { return b.x + b.w * i / 11; };
+    var Y = function (v) { return mid ? b.y + b.h / 2 - v / max * b.h : b.y + b.h - v / max * b.h; };
+    var s = (mid ? ln(b.x, b.y + b.h / 2, b.x + b.w, b.y + b.h / 2, GRID) + ln(b.x, b.y + b.h, b.x + b.w, b.y + b.h, BASE) : yAxis(b, max)) + xAxis12(b) + '<line class="xh" style="stroke:var(--u-ink);stroke-width:1;opacity:0"/>';
+    L.forEach(function (l, j) { s += '<path class="sg" style="fill:' + CC[j] + ';stroke:var(--u-panel);stroke-width:1.5;stroke-linejoin:round"/>' + tx(X(11) + 8, 0, l[0], '', 'nm'); });
+    s += tx(b.x, 8, '주제별 새 이슈', 'start', 'tk');
+    var k = chartKit(st, s), sgs = k.q('.sg'), nms = k.q('.nm'), xh = k.q('.xh')[0];
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, p = ease.out(seg(ms, 150, 1100)), on = ms > 2100 && ms < 3150, cum = WK.map(function (w, i) { return mid ? -sum[i] / 2 : 0; });
+      L.forEach(function (l, j) {
+        var lo = cum.slice(); cum = cum.map(function (v, i) { return v + l[1][i]; });
+        var top = cum.map(function (v, i) { return [X(i), Y(v * p)]; }), bot = lo.map(function (v, i) { return [X(i), Y(v * p)]; }).reverse();
+        sgs[j].setAttribute('d', smoothPath(top, 'M', sm) + smoothPath(bot, 'L', sm) + 'Z');
+        nms[j].setAttribute('y', Y((lo[11] + cum[11]) / 2 * p) + 4); nms[j].style.opacity = seg(ms, 1100, 1350);
+      });
+      var q = glide(ms, 1700, 2100, [VW - 8, VH - 4], [X(HI), b.y + 20]);
+      xh.setAttribute('x1', X(HI)); xh.setAttribute('x2', X(HI)); xh.setAttribute('y1', b.y); xh.setAttribute('y2', b.y + b.h); xh.style.opacity = on ? 0.6 : 0;
+      k.cur(q[0], q[1], false); k.tip(on, X(HI), b.y + 6, '<b>' + WK[HI] + '</b> ' + L.map(function (l, j) { return sw(j) + l[0] + ' ' + l[1][HI]; }).join(' '));
+      return ms < 1200 ? (mid ? '가운데 선에서 위아래로 흐름이 퍼짐' : '바닥에서 층이 쌓여 오름') : on ? '세로선 한 주 · 주제별 값 툴팁' : (mid ? '가운데 기준 · 전체 흐름과 구성 변화' : '바닥 기준 = 누적 면 차트 · 합계를 읽기 쉬움') + ' · ' + c.curve;
+    } };
+  };
+
+  S['gantt-chart'] = function (st, c) {
+    var T = [['설계', 0, 2, 100], ['디자인', 1, 4, 100], ['서버 개발', 2, 7, 60], ['앱 개발', 4, 9, 40], ['테스트', 7, 10, 0], ['배포', 10, 12, 0]], DP = [[0, 2], [1, 3], [2, 4], [4, 5]];
+    var deps = c.deps === '의존 화살표', prog = c.progress === '진행률', MS = 3600, HI = 2, NOW = 5.5, b = { x: 88, y: 26, w: 372, h: 168 }, rh = b.h / T.length, bh = 14, s = '';
+    var X = function (w) { return b.x + b.w * w / 12; }, RY = function (i) { return b.y + rh * i + rh / 2; };
+    for (var w = 0; w <= 12; w++) { s += ln(X(w), b.y, X(w), b.y + b.h, w ? GRID : BASE); if (w < 12) s += tx(X(w + 0.5), 16, (w + 1) + (w ? '' : '주'), 'middle', 'tk'); }
+    if (deps) DP.forEach(function (d) { var a = T[d[0]], z = T[d[1]], x0 = X(a[2]) - 10, y0 = RY(d[0]) + bh / 2, x1 = X(z[1]), y1 = RY(d[1]); s += '<path class="gd" d="M' + x0 + ' ' + y0 + 'V' + y1 + 'H' + (x1 - 1) + '" style="fill:none;stroke:var(--u-muted);stroke-width:1.5"/><path class="gd" d="M' + (x1 - 6) + ' ' + (y1 - 3.5) + 'L' + x1 + ' ' + y1 + 'L' + (x1 - 6) + ' ' + (y1 + 3.5) + 'Z" style="fill:var(--u-muted)"/>'; });
+    T.forEach(function (r, i) {
+      s += tx(8, RY(i) + 4, r[0], 'start', 'vl') + '<rect class="gb" y="' + (RY(i) - bh / 2) + '" height="' + bh + '" rx="4" style="fill:' + (prog ? 'color-mix(in oklab, var(--c1) 28%, var(--u-panel))' : 'var(--c1)') + '"/>';
+      if (prog) s += '<rect class="gp" y="' + (RY(i) - bh / 2) + '" height="' + bh + '" rx="4" style="fill:var(--c1)"/>' + tx(X(r[2]) + 6, RY(i) + 4, r[3] + '%', 'start', 'gpl tk');
+    });
+    s += '<line class="gn" x1="' + X(NOW) + '" x2="' + X(NOW) + '" y1="' + (b.y - 4) + '" y2="' + (b.y + b.h) + '" style="stroke:var(--u-ink);stroke-width:1.5;stroke-dasharray:4 3"/>' + tx(X(NOW), b.y + b.h + 16, '오늘', 'middle', 'gnl vl');
+    var k = chartKit(st, s), gbs = k.q('.gb'), gps = k.q('.gp'), gpl = k.q('.gpl'), gds = k.q('.gd'), gn = k.q('.gn, .gnl'), H = T[HI];
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, on = ms > 2500 && ms < 3400;
+      T.forEach(function (r, i) {
+        var p = ease.out(seg(ms, 100 + i * 170, 600 + i * 170)), w = (X(r[2]) - X(r[1])) * p, dim = on && i !== HI ? 0.35 : 1;
+        gbs[i].setAttribute('x', X(r[1])); gbs[i].setAttribute('width', w); gbs[i].style.opacity = (p > 0 ? 1 : 0) * dim;
+        if (prog) { var f = ease.out(seg(ms, 1300 + i * 60, 1700 + i * 60)); gps[i].setAttribute('x', X(r[1])); gps[i].setAttribute('width', w * r[3] / 100 * f); gpl[i].style.opacity = seg(ms, 1600, 1800) * dim; gps[i].style.opacity = dim; }
+      });
+      gds.forEach(function (e) { e.style.opacity = seg(ms, 1500, 1800) * (on ? 0.35 : 1); });
+      gn.forEach(function (e) { e.style.opacity = seg(ms, 1800, 2000); });
+      var cx = (X(H[1]) + X(H[2])) / 2, q = glide(ms, 2100, 2500, [VW - 8, VH - 4], [cx + 4, RY(HI) + 4]);
+      k.cur(q[0], q[1], false); k.tip(on, cx, RY(HI) - 10, '<b>' + H[0] + '</b> ' + (H[1] + 1) + '주~' + H[2] + '주 · ' + (H[2] - H[1]) + '주' + (prog ? ' · ' + H[3] + '%' : ''));
+      return ms < 1500 ? '작업 막대가 시작 주에서 끝 주로 뻗음' : on ? '막대 하나 · 기간' + (prog ? '과 진행률' : '') + ' 툴팁' : (deps ? '앞 작업이 끝나면 시작하는 화살표' : '의존 표시 없음') + ' · ' + (prog ? '진행률 · 오늘 선' : '기간만 · 오늘 선');
+    } };
+  };
+
+  /* ───── 표현 › 차트 › 차트 배치 ───── */
+  S['small-multiples'] = function (st, c) {
+    var T = [['앱', [30, 33, 36, 35, 39, 42, 41, 44, 46, 45, 48, 50]], ['운영', [26, 25, 24, 22, 23, 21, 20, 19, 18, 18, 16, 15]], ['웹', [20, 21, 20, 22, 21, 23, 22, 24, 23, 24, 25, 25]], ['검색', [12, 13, 15, 14, 16, 17, 16, 18, 19, 18, 20, 20]], ['결제', [8, 9, 8, 10, 11, 10, 12, 11, 13, 12, 14, 14]], ['정산', [5, 5, 6, 5, 6, 5, 6, 6, 5, 6, 6, 6]]];
+    var same = c.scale === '같은 축', nc = c.cols === '2열' ? 2 : 3, nr = 6 / nc, gw = 8, gh = 8, pw = (VW - 8 - gw * (nc - 1)) / nc, ph = (VH - 4 - gh * (nr - 1)) / nr, MS = 3600, s = '', box = [];
+    T.forEach(function (tm, i) {
+      var cx = 4 + (i % nc) * (pw + gw), cy = 2 + Math.floor(i / nc) * (ph + gh), max = same ? 60 : niceMax(Math.max.apply(null, tm[1])), lo = same ? 0 : Math.max(0, Math.floor(Math.min.apply(null, tm[1]) * 0.8)), p = { x: cx + 26, y: cy + 22, w: pw - 34, h: ph - 30, max: max, lo: lo };
+      box.push(p);
+      var Xf = function (k) { return p.x + p.w * k / 11; }, Yf = function (v) { return p.y + p.h - (v - lo) / (max - lo) * p.h; };
+      s += '<rect x="' + cx + '" y="' + cy + '" width="' + pw + '" height="' + ph + '" rx="6" style="fill:none;stroke:var(--u-line)"/>' + tx(cx + 8, cy + 15, tm[0], '', 'vl') + '<text class="sv tk" x="' + (cx + pw - 8) + '" y="' + (cy + 15) + '" text-anchor="end"></text>';
+      s += ln(p.x, p.y + p.h, p.x + p.w, p.y + p.h, BASE) + ln(p.x, p.y, p.x + p.w, p.y, GRID) + tx(p.x - 4, p.y + 4, (same && i ? '' : max), 'end', 'tk') + tx(p.x - 4, p.y + p.h + 4, (same && i ? '' : lo), 'end', 'tk');
+      s += '<polyline class="sm" pathLength="1" points="' + tm[1].map(function (v, k) { return Xf(k).toFixed(1) + ',' + Yf(v).toFixed(1); }).join(' ') + '" style="fill:none;stroke:var(--c1);stroke-width:2;stroke-linejoin:round;stroke-dasharray:1"/><line class="sx" style="stroke:var(--u-muted);stroke-width:1;opacity:0"/><circle class="sd" r="3.5" style="fill:var(--c1);stroke:var(--u-panel);stroke-width:1.5;opacity:0"/>';
+      p.X = Xf; p.Y = Yf;
+    });
+    var k = chartKit(st, s), sms = k.q('.sm'), sxs = k.q('.sx'), sds = k.q('.sd'), svs = k.q('.sv');
+    return { ms: MS, rest: 0.35, at: function (t) {
+      var ms = t * MS, on = ms > 1900 && ms < 3300, f = lerp(3, 9, ease.inOut(seg(ms, 2100, 3100))), wi = Math.round(f), p0 = box[0];
+      T.forEach(function (tm, i) {
+        var p = box[i]; sms[i].style.strokeDashoffset = 1 - ease.inOut(seg(ms, 150, 1250));
+        sxs[i].setAttribute('x1', p.X(wi)); sxs[i].setAttribute('x2', p.X(wi)); sxs[i].setAttribute('y1', p.y); sxs[i].setAttribute('y2', p.y + p.h); sxs[i].style.opacity = on ? 0.5 : 0;
+        sds[i].setAttribute('cx', p.X(wi)); sds[i].setAttribute('cy', p.Y(tm[1][wi])); sds[i].style.opacity = on ? 1 : 0;
+        svs[i].textContent = on ? WK[wi] + ' ' + tm[1][wi] : '12주 ' + tm[1][11]; svs[i].style.opacity = seg(ms, 1100, 1300);
+      });
+      var q = glide(ms, 1500, 1900, [VW - 8, VH - 4], [p0.X(3), p0.y + p0.h / 2]);
+      if (ms >= 1900) q = [p0.X(f), p0.y + p0.h / 2];
+      k.cur(q[0], q[1], false);
+      return ms < 1300 ? '같은 틀의 작은 차트 6개가 함께 그려짐' : on ? '한 칸을 가리키면 모든 칸이 같은 주를 보임' : same ? '모든 칸 같은 축(0~60) · 크기 비교가 됨' : '칸마다 다른 축 · 작은 팀도 크게 변한 듯 보임';
+    } };
+  };
+
   /* ───── 표현 › 차트 › 차트 부품 ───── */
   // 선 차트 바탕(12주 데이터): 부품 예시들이 같이 쓴다. n = 선 수
   function lineBase(b, L, max) {
@@ -2483,7 +2890,7 @@
 
   S['legend-toggle'] = function (st, c) {
     var iso = c.mode === '눌러서 그것만 보기', fit = c.rescale === '축 다시 맞춤', L = LINES, b = { x: 34, y: 36, w: 420, h: 158 }, MS = 3800, T1 = 1250, T2 = 2650;
-    var tg = iso ? 1 : 0, aff = function (j) { return iso ? j !== tg : j === tg; }, rest = L.filter(function (l, j) { return !aff(j); }), m2 = fit ? niceMax(Math.max.apply(null, rest.map(function (l) { return Math.max.apply(null, l[1]); })) * 1.1) : 60;
+    var tg = iso ? 1 : 0, aff = function (j) { return iso ? j !== tg : j === tg; }, rest = L.filter(function (l, j) { return !aff(j); }), m2 = fit ? tickMax(Math.max.apply(null, rest.map(function (l) { return Math.max.apply(null, l[1]); })) * 1.1) : 60;
     var s = liveAxis(b) + xAxis12(b) + L.map(function (l, j) { return '<polyline class="ln" style="fill:none;stroke:' + CC[j] + ';stroke-width:2;stroke-linejoin:round"/>'; }).join('');
     L.forEach(function (l, j) { var x = b.x + j * 104; s += '<g class="chip"><rect x="' + (x - 6) + '" y="2" width="96" height="22" rx="11" style="fill:var(--u-panel);stroke:var(--u-line)"/><rect class="sq" x="' + x + '" y="8" width="10" height="10" rx="2" style="stroke:' + CC[j] + ';stroke-width:1.5"/>' + tx(x + 16, 17, l[0], '', 'nm') + '</g>'; });
     var k = chartKit(st, s), lns = k.q('.ln'), sqs = k.q('.sq'), nms = k.q('.nm'), cx = b.x + tg * 104 + 40;
@@ -2538,7 +2945,7 @@
   S['drilldown'] = function (st, c) {
     var crumb = c.back === '이동 경로(Breadcrumb)', anim = c.motion === '막대가 펼쳐짐', MS = 4200, T1 = 1300, T2 = 3000, DUR = anim ? 550 : 1;
     var TEAMS = [['결제팀', 42], ['정산팀', 31], ['앱팀', 27], ['운영팀', 18]], MEM = [['민지', 15], ['준호', 12], ['서연', 9], ['도윤', 6]];
-    var b = { x: 40, y: 40, w: 420, h: 150 }, band = b.w / 4, th = band * 0.5, s = liveAxis(b);
+    var b = { x: 40, y: 50, w: 420, h: 140 }, band = b.w / 4, th = band * 0.5, s = liveAxis(b);
     TEAMS.forEach(function () { s += '<path class="tb" style="fill:var(--c1)"/><text class="tl tk" text-anchor="middle"></text>'; });
     MEM.forEach(function () { s += '<path class="mb" style="fill:var(--c1)"/><text class="ml tk" text-anchor="middle"></text>'; });
     s += crumb ? '<g class="cr">' + tx(b.x - 30, 18, '전체 팀', '', 'crt') + tx(b.x + 20, 18, '› 결제팀', '', 'crd') + '</g>'
@@ -2575,7 +2982,7 @@
     var rel3 = c.presets === '오늘·이번 주·이번 달', custom = c.custom === '단추 + 날짜 직접 고르기', MS = 4400, T1 = 1300, T2 = 2500, T3 = 3300, NP = 40;
     var OPT = rel3 ? ['오늘', '이번 주', '이번 달'] : ['7일', '30일', '90일'], TITLE = rel3 ? ['오늘 (11월 25일, 시간별)', '이번 주 (11월 23일–29일)', '이번 달 (11월 1일–30일)'] : ['최근 7일 (11월 19일–25일)', '최근 30일 (10월 27일–11월 25일)', '최근 90일 (8월 28일–11월 25일)'];
     var series = function (k) { var r = []; for (var i = 0; i < NP; i++) r.push(18 + 10 * Math.sin(i / (3 + k * 2) + k) + prand(i, 20 + k) * (8 - k * 2) + k * 4); return r; };
-    var SER = [series(0), series(1), series(2), series(3)], b = { x: 34, y: 62, w: 420, h: 130 }, max = 50, segW = 62;
+    var SER = [series(0), series(1), series(2), series(3)], b = { x: 34, y: 62, w: 420, h: 130 }, max = 48, segW = 62;
     var s = yAxis(b, max) + '<rect x="' + b.x + '" y="2" width="' + (segW * 3 + 4) + '" height="26" rx="7" style="fill:var(--u-hover);stroke:var(--u-line)"/><rect class="ind" y="4" width="' + segW + '" height="22" rx="5" style="fill:var(--u-panel);stroke:var(--u-line)"/>';
     OPT.forEach(function (o, i) { s += tx(b.x + 2 + segW * i + segW / 2, 19, o, 'middle', 'seg'); });
     if (custom) s += '<g class="cb"><rect x="' + (b.x + segW * 3 + 12) + '" y="2" width="84" height="26" rx="7" style="fill:var(--u-panel);stroke:var(--u-line)"/>' + tx(b.x + segW * 3 + 54, 19, '직접 고르기…', 'middle', 'nm') + '</g>';
@@ -2640,16 +3047,19 @@
   };
 
   S['chart-morph'] = function (st, c) {
-    var byKey = c.match === '이름(key)으로 짝', dur = +c.duration_ms, T1 = 1300, MS = T1 + dur + 1900;
-    var A = [['민지', 24], ['준호', 17], ['서연', 31], ['도윤', 12], ['하은', 20]], B = [['민지', 19], ['준호', 28], ['서연', 22], ['도윤', 30], ['하은', 9]];
-    var sortD = function (d) { return d.slice().sort(function (x, y) { return y[1] - x[1]; }); }, SA = sortD(A), SB = sortD(B), max = 40, b = { x: 56, y: 30, w: 380, h: 172 }, band = b.h / 5, th = band * 0.6;
-    var s = tx(b.x - 50, 14, '', '', 'per nm') + ln(b.x, b.y, b.x, b.y + b.h, BASE);
+    var byKey = c.match === '이름(key)으로 짝', withAx = c.axis === '함께 이어서', dur = +c.duration_ms, T1 = 1300, MS = T1 + dur + 1900;
+    var A = [['민지', 24], ['준호', 17], ['서연', 31], ['도윤', 12], ['하은', 20]], B = [['민지', 19], ['준호', 28], ['서연', 22], ['도윤', 52], ['하은', 9]];
+    var sortD = function (d) { return d.slice().sort(function (x, y) { return y[1] - x[1]; }); }, SA = sortD(A), SB = sortD(B), b = { x: 56, y: 30, w: 380, h: 166 }, band = b.h / 5, th = band * 0.6;
+    // Axis Rescale: 최댓값이 바뀌면(40 → 60) 눈금도 막대와 같이 움직인다. 눈금 값은 그대로, 자리만 옮긴다
+    var M0 = tickMax(31 * 1.1), M1 = tickMax(52 * 1.1), s = tx(b.x - 50, 14, '', '', 'per nm');
+    for (var v = 0; v <= M1; v += 10) s += '<line class="gx" y1="' + b.y + '" y2="' + (b.y + b.h) + '" style="' + (v ? GRID : BASE) + '"/><text class="gt tk" text-anchor="middle" y="' + (b.y + b.h + 15) + '">' + v + '</text>';
     SA.forEach(function () { s += '<path class="bar" style="fill:var(--c1)"/><text class="nmL tk" text-anchor="end"></text><text class="vl"></text>'; });
-    var k = chartKit(st, s), bars = k.q('.bar'), nms = k.q('.nmL'), vls = k.q('.vl'), per = k.q('.per')[0];
+    var k = chartKit(st, s), bars = k.q('.bar'), nms = k.q('.nmL'), vls = k.q('.vl'), per = k.q('.per')[0], gx = k.q('.gx'), gt = k.q('.gt');
     k.noCursor();
     return { ms: MS, rest: 0.3, at: function (t) {
-      var ms = t * MS, p = ease.inOut(seg(ms, T1, T1 + dur));
+      var ms = t * MS, p = ease.inOut(seg(ms, T1, T1 + dur)), max = withAx ? lerp(M0, M1, p) : ms >= T1 ? M1 : M0;
       per.textContent = p < 0.5 ? '지난주 처리 건수' : '이번 주 처리 건수';
+      gx.forEach(function (g, i) { var x = b.x + i * 10 / max * b.w, o = clamp((max - i * 10) / 4 + 1); g.setAttribute('x1', x); g.setAttribute('x2', x); g.style.opacity = o; gt[i].setAttribute('x', x); gt[i].style.opacity = o; });
       // 짝: 이름이면 같은 사람끼리(자리도 옮김), 순서면 n번째 막대끼리(이름이 중간에 바뀜)
       SA.forEach(function (d, i) {
         var from = { r: i, v: d[1], n: d[0] }, to;
@@ -2659,7 +3069,8 @@
         nms[i].setAttribute('x', b.x - 8); nms[i].setAttribute('y', y + th / 2 + 4); nms[i].textContent = p < 0.5 ? from.n : to.n;
         vls[i].setAttribute('x', b.x + w + 6); vls[i].setAttribute('y', y + th / 2 + 4); vls[i].textContent = Math.round(v);
       });
-      return ms < T1 ? '지난주(큰 순서)' : p < 1 ? (byKey ? '같은 사람 막대가 새 순위 자리로 이동' : '같은 자리 막대끼리 길이만 바뀌고 이름이 중간에 바뀜') + ' · ' + dur + 'ms' : byKey ? '이번 주 · 누가 어디로 갔는지 보임' : '이번 주 · 누가 올랐는지 따라가기 어려움';
+      var ax = withAx ? '축도 함께 ' + M0 + '→' + M1 : '축이 먼저 ' + M1 + '로 튐';
+      return ms < T1 ? '지난주(큰 순서) · 축 0~' + M0 : p < 1 ? (byKey ? '같은 사람이 새 순위 자리로' : '같은 자리끼리 길이만, 이름이 바뀜') + ' · ' + ax : byKey ? '이번 주 · 누가 어디로 갔는지 보임' : '이번 주 · 누가 올랐는지 따라가기 어려움';
     } };
   };
 
@@ -2713,6 +3124,201 @@
       if (pz) pzLabel(pz, f >= NP - 1);
       var lead = ITEMS[rank[0]];
       return f >= NP - 1 ? '끝 · 마지막 순위에서 멈춤' + (auto ? '(5초 넘게 움직여 멈춤 단추를 둠)' : '') : PER[Math.round(f)] + ' · 1위 ' + lead + ' · 순위가 바뀌면 막대가 자리를 바꿈';
+    } };
+  };
+
+  /* ───── 움직임 › 차트 모션 (2차) ───── */
+  // 차트 위 전환 칩(필터·종류 단추). on이면 고른 모양
+  function chipSvg(x, w, label) { return '<rect class="chip" x="' + x + '" y="3" width="' + w + '" height="20" rx="10"/>' + tx(x + w / 2, 17, label, 'middle', 'chipt'); }
+  function chipOn(k, i) { k.q('.chip').forEach(function (e, j) { e.style.cssText = j === i ? 'fill:color-mix(in oklab, var(--c1) 18%, var(--u-panel));stroke:var(--c1);stroke-width:1.5' : 'fill:var(--u-panel);stroke:var(--u-line);stroke-width:1'; }); k.q('.chipt').forEach(function (e, j) { e.style.fill = j === i ? 'var(--u-ink)' : 'var(--u-muted)'; e.style.fontWeight = j === i ? 600 : 400; }); }
+
+  S['enter-update-exit'] = function (st, c) {
+    var seq = c.order === '차례로', fade = c.exit === '줄며 사라짐', T = 1400, MS = 4600, max = 40;
+    var A = [['민지', 24], ['준호', 17], ['서연', 31], ['도윤', 12], ['하은', 20]], B = [['민지', 18], ['서연', 26], ['하은', 22], ['지호', 15], ['유나', 9]];
+    var IT = [], find = function (L, n) { for (var i = 0; i < L.length; i++) if (L[i][0] === n) return i; return -1; };
+    A.concat(B).forEach(function (d) { if (IT.some(function (x) { return x.n === d[0]; })) return; var a = find(A, d[0]), z = find(B, d[0]); IT.push({ n: d[0], a: a, z: z, va: a < 0 ? 0 : A[a][1], vb: z < 0 ? 0 : B[z][1] }); });
+    var PH = seq ? { x: [T, T + 350], u: [T + 350, T + 950], e: [T + 950, T + 1350] } : { x: [T, T + 700], u: [T, T + 700], e: [T, T + 700] };
+    var b = { x: 40, y: 32, w: 420, h: 160 }, band = b.w / 5, th = band * 0.56, P = function (i) { return b.x + band * i + (band - th) / 2; }, Y = function (v) { return b.y + b.h - v / max * b.h; };
+    var s = yAxis(b, max) + tx(b.x - 6, 17, '담당자별 처리 건수', 'start', 'tk') + chipSvg(340, 60, '이번 주') + chipSvg(404, 60, '지난주');
+    IT.forEach(function () { s += '<path class="eb" style="fill:var(--c1)"/><text class="vl" text-anchor="middle"></text><text class="en tk" text-anchor="middle"></text>'; });
+    var k = chartKit(st, s), ebs = k.q('.eb'), vls = k.q('.vl'), ens = k.q('.en');
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, px = ease.inOut(seg(ms, PH.x[0], PH.x[1])), pu = ease.inOut(seg(ms, PH.u[0], PH.u[1])), pe = ease.out(seg(ms, PH.e[0], PH.e[1]));
+      chipOn(k, ms < T ? 0 : 1);
+      IT.forEach(function (d, i) {
+        var g = ease.out(seg(ms, 100 + i * 60, 600 + i * 60)), x, v, op = 1;
+        if (d.z < 0) { x = P(d.a); v = d.va * g * (fade ? 1 - px : ms >= PH.x[0] ? 0 : 1); op = fade ? 1 - px * 0.6 : 1; }
+        else if (d.a < 0) { x = P(d.z); v = d.vb * pe; op = pe > 0 ? 1 : 0; }
+        else { x = lerp(P(d.a), P(d.z), pu); v = lerp(d.va, d.vb, pu) * g; }
+        var h = v / max * b.h, on = v > 0.3 ? op : 0;
+        ebs[i].setAttribute('d', barPath(x, Y(v), th, h)); ebs[i].style.opacity = on;
+        vls[i].setAttribute('x', x + th / 2); vls[i].setAttribute('y', Y(v) - 6); vls[i].textContent = Math.round(v); vls[i].style.opacity = on * seg(ms, 500, 700);
+        ens[i].setAttribute('x', x + th / 2); ens[i].setAttribute('y', b.y + b.h + 16); ens[i].textContent = d.n; ens[i].style.opacity = d.a < 0 ? pe : d.z < 0 ? (fade ? 1 - px : ms >= PH.x[0] ? 0 : 1) : 1;
+      });
+      var q = glide(ms, 600, 1100, [VW - 8, VH - 4], [434, 14]);
+      k.cur(q[0], q[1], ms > 1150 && ms < 1300);
+      if (ms < T) return '이번 주 막대 · 지난주를 누르면 담당자가 바뀜';
+      if (ms < PH.e[1]) return seq ? (ms < PH.u[0] ? '① 나감: 준호·도윤 ' + (fade ? '줄어 사라짐' : '바로 사라짐') : ms < PH.e[0] ? '② 옮김: 남은 막대가 새 자리·값으로' : '③ 들어옴: 지호·유나가 자람') : '셋이 한꺼번에 · 나가는 막대와 들어오는 막대가 겹침';
+      return '지난주 · 이름(key)으로 짝지어 나감 → 옮김 → 들어옴';
+    } };
+  };
+
+  S['chart-type-morph'] = function (st, c) {
+    var morph = c.how === '모양을 이어서', dur = +c.duration_ms, T1 = 1300, T2 = T1 + dur + 1100, MS = T2 + dur + 800, NS = 14, PAD = 0.018;
+    var D = [['완료', 20], ['진행', 12], ['대기', 9], ['검토', 7]], tot = 48, max = 24, b = { x: 40, y: 32, w: 300, h: 164 }, band = b.w / 4, th = band * 0.56, cx = b.x + b.w / 2, cy = b.y + b.h / 2 + 2, R = 80, r = 50;
+    var Y = function (v) { return b.y + b.h - v / max * b.h; }, cum = 0;
+    var G = D.map(function (d, i) { var a0 = -Math.PI / 2 + cum / tot * 2 * Math.PI + PAD; cum += d[1]; return { x0: b.x + band * i + (band - th) / 2, v: d[1], a0: a0, a1: -Math.PI / 2 + cum / tot * 2 * Math.PI - PAD }; });
+    // 막대의 윗변·밑변과 도넛 조각의 바깥·안쪽 호를 같은 수의 점으로 나눠 점끼리 잇는다
+    function shape(g, p) {
+      var o = [], n = [];
+      for (var j = 0; j <= NS; j++) {
+        var f = j / NS, a = g.a0 + (g.a1 - g.a0) * f, bx = g.x0 + th * f;
+        o.push([lerp(bx, cx + R * Math.cos(a), p), lerp(Y(g.v), cy + R * Math.sin(a), p)]); n.push([lerp(bx, cx + r * Math.cos(a), p), lerp(b.y + b.h, cy + r * Math.sin(a), p)]);
+      }
+      return 'M' + o.concat(n.reverse()).map(function (q) { return q[0].toFixed(1) + ' ' + q[1].toFixed(1); }).join('L') + 'Z';
+    }
+    var s = '<g class="ax">' + yAxis(b, max) + '</g>' + tx(b.x - 6, 17, '상태별 이슈', 'start', 'tk') + chipSvg(358, 52, '막대') + chipSvg(414, 52, '도넛');
+    D.forEach(function (d, i) { s += '<path class="mA" style="fill:' + CC[i] + ';stroke:var(--u-panel);stroke-width:2;stroke-linejoin:round"/><path class="mB" style="fill:' + CC[i] + ';stroke:var(--u-panel);stroke-width:2;stroke-linejoin:round"/>' + tx(G[i].x0 + th / 2, b.y + b.h + 16, d[0], 'middle', 'bl tk') + tx(G[i].x0 + th / 2, Y(d[1]) - 6, d[1], 'middle', 'bl vl') + '<rect x="372" y="' + (64 + i * 24) + '" width="10" height="10" rx="2" style="fill:' + CC[i] + '"/>' + tx(388, 73 + i * 24, d[0] + ' ' + d[1], '', 'tk'); });
+    s += tx(cx, cy + 4, tot + '건', 'middle', 'dl vl') + tx(cx, cy + 20, '전체', 'middle', 'dl tk');
+    var k = chartKit(st, s), mA = k.q('.mA'), mB = k.q('.mB'), bl = k.q('.bl'), dl = k.q('.dl'), ax = k.q('.ax')[0];
+    return { ms: MS, rest: 0.35, at: function (t) {
+      var ms = t * MS, q = ease.inOut(seg(ms, T1, T1 + dur)) - ease.inOut(seg(ms, T2, T2 + dur)), g0 = ease.out(seg(ms, 100, 650));
+      chipOn(k, (ms < T1 || ms >= T2) ? 0 : 1);
+      G.forEach(function (g, i) {
+        var gv = { x0: g.x0, v: g.v * g0, a0: g.a0, a1: g.a1 };
+        if (morph) { mA[i].setAttribute('d', shape(gv, q)); mA[i].style.opacity = 1; mB[i].style.opacity = 0; }
+        else { mA[i].setAttribute('d', shape(gv, 0)); mA[i].style.opacity = 1 - q; mB[i].setAttribute('d', shape(g, 1)); mB[i].style.opacity = q; }
+      });
+      var lb = 1 - clamp(q * 2), ld = clamp(q * 2 - 1);
+      bl.forEach(function (e) { e.style.opacity = lb * seg(ms, 500, 750); }); dl.forEach(function (e) { e.style.opacity = ld; }); ax.style.opacity = lb;
+      var c1 = glide(ms, T1 - 600, T1 - 150, [VW - 8, VH - 4], [440, 14]), c2 = glide(ms, T2 - 600, T2 - 150, [440, 14], [384, 14]), cu = ms < T1 + 200 ? c1 : c2;
+      k.cur(cu[0], cu[1], (ms > T1 - 140 && ms < T1) || (ms > T2 - 140 && ms < T2));
+      var how = morph ? '같은 막대가 도넛 조각으로 휘어짐' : '막대가 사라지며 도넛이 겹쳐 나타남(교차 페이드)';
+      return ms < T1 ? '막대 · 도넛을 누르면 종류가 바뀜' : ms < T1 + dur ? how + ' · ' + dur + 'ms' : ms < T2 ? '도넛 · 색과 범례는 그대로' : ms < T2 + dur ? '다시 막대로 · ' + (morph ? '조각이 펴짐' : '교차 페이드') : '막대 ↔ 도넛 · 같은 항목이 같은 색으로 이어짐';
+    } };
+  };
+
+  S['motion-chart'] = function (st, c) {
+    var trail = c.trail === '지나온 자취', step = c.step === '한 달씩 끊어', MS = 5600, P0 = 1100, PM = 600, P1 = P0 + PM * 5, S0 = 4500, S1 = 5100, M = ['1월', '2월', '3월', '4월', '5월', '6월'];
+    var D = [['앱', [[44, 5.2, 8], [52, 5.0, 8], [60, 4.7, 9], [72, 4.4, 10], [80, 4.0, 10], [96, 3.8, 12]]], ['운영', [[70, 5.2, 10], [74, 5.8, 10], [78, 6.4, 10], [82, 7.0, 10], [84, 7.4, 10], [85, 7.2, 10]]], ['웹', [[50, 7.0, 7], [55, 6.8, 7], [60, 6.6, 8], [64, 6.5, 8], [68, 6.4, 8], [70, 6.4, 8]]], ['결제', [[20, 8.0, 4], [24, 7.0, 4], [30, 6.0, 5], [34, 5.2, 5], [38, 4.6, 6], [40, 4.1, 6]]], ['정산', [[30, 3.0, 3], [29, 3.2, 3], [28, 3.4, 3], [28, 3.5, 3], [28, 3.4, 3], [28, 3.4, 3]]]];
+    var b = { x: 40, y: 12, w: 410, h: 158 }, X = function (v) { return b.x + v / 120 * b.w; }, Y = function (v) { return b.y + b.h - v / 12 * b.h; }, R = function (z) { return 20 * Math.sqrt(z / 12); };
+    var TX = function (f) { return 80 + f / 5 * 360; }, s = yAxis(b, 12, '일') + tx(b.x + 12, b.y + b.h - 10, '', 'start', 'big mo');
+    [0, 30, 60, 90, 120].forEach(function (v) { s += tx(X(v), b.y + b.h + 14, v + (v === 120 ? '건' : ''), 'middle', 'tk'); });
+    s += tx(b.x + b.w, b.y + 10, '가로 처리 건수 · 세로 처리 일수 · 원 인원', 'end', 'tk');
+    D.forEach(function () { s += '<polyline class="mt" style="fill:none;stroke:var(--c1);stroke-width:1.5;stroke-opacity:.45;stroke-linejoin:round"/>'; });
+    D.forEach(function (d) { s += '<circle class="mb" style="fill:var(--c1);fill-opacity:.5;stroke:var(--u-panel);stroke-width:1.5"/><text class="mn" text-anchor="middle">' + d[0] + '</text>'; });
+    s += '<circle cx="56" cy="207" r="11" style="fill:var(--u-panel);stroke:var(--u-line)"/><path class="pi" style="fill:var(--u-ink)"/>' + ln(TX(0), 207, TX(5), 207, 'stroke:var(--u-line);stroke-width:4;stroke-linecap:round') + '<line class="tf" y1="207" y2="207" x1="' + TX(0) + '" style="stroke:var(--c1);stroke-width:4;stroke-linecap:round"/><circle class="th" cy="207" r="7" style="fill:var(--c1);stroke:var(--u-panel);stroke-width:2"/>';
+    M.forEach(function (m, i) { s += tx(TX(i), 226, m, 'middle', 'tk'); });
+    var k = chartKit(st, s), mts = k.q('.mt'), mbs = k.q('.mb'), mns = k.q('.mn'), mo = k.q('.mo')[0], pi = k.q('.pi')[0], tf = k.q('.tf')[0], th = k.q('.th')[0];
+    mo.style.opacity = 0.22; mns.forEach(function (e) { e.style.fill = 'var(--u-ink)'; e.style.fontWeight = 600; });
+    function pos(d, f) { var q = Math.min(4, Math.floor(f)), r = f - q, a = d[1][q], z = d[1][q + 1]; return [X(lerp(a[0], z[0], r)), Y(lerp(a[1], z[1], r)), R(lerp(a[2], z[2], r))]; }
+    return { ms: MS, rest: 0.3, at: function (t) {
+      var ms = t * MS, g = clamp((ms - P0) / PM / 5) * 5, f;
+      if (step) { var n = Math.floor(g); f = n >= 5 ? 5 : n + ease.inOut(seg((g - n) * PM, PM - 250, PM)); } else f = g;
+      if (ms >= S0) f = lerp(5, 2, ease.inOut(seg(ms, S0, S1)));
+      var play = ms > P0 && ms < P1, ap = ease.out(seg(ms, 100, 500));
+      D.forEach(function (d, i) {
+        var p = pos(d, f); mbs[i].setAttribute('cx', p[0]); mbs[i].setAttribute('cy', p[1]); mbs[i].setAttribute('r', p[2] * ap); mns[i].setAttribute('x', p[0]); mns[i].setAttribute('y', p[1] + 4); mns[i].style.opacity = ap;
+        var tr = []; for (var m = 0; m <= Math.floor(f); m++) tr.push(X(d[1][m][0]).toFixed(1) + ',' + Y(d[1][m][1]).toFixed(1)); tr.push(p[0].toFixed(1) + ',' + p[1].toFixed(1));
+        mts[i].setAttribute('points', tr.join(' ')); mts[i].style.opacity = trail ? 1 : 0;
+      });
+      mo.textContent = M[Math.round(f)];
+      pi.setAttribute('d', play ? 'M51 202h3.5v10H51zM57.5 202H61v10h-3.5z' : 'M52.5 201.5L62 207l-9.5 5.5z');
+      tf.setAttribute('x2', TX(f)); th.setAttribute('cx', TX(f));
+      var cu = ms < S0 - 400 ? glide(ms, 500, 900, [VW - 8, VH - 4], [56, 208]) : ms < S0 ? glide(ms, S0 - 400, S0 - 50, [56, 208], [TX(5), 208]) : [TX(f), 208];
+      k.cur(cu[0], cu[1], (ms > 950 && ms < 1080) || (ms > S0 - 40 && ms < S1));
+      return ms < P0 ? '1월 · 재생 단추를 누름' : play ? M[Math.round(f)] + ' · ' + (step ? '한 달씩 끊어 이동' : '달 사이를 이어서 이동') : ms < S0 ? '6월에서 멈춤' : ms < S1 ? '슬라이더를 끌어 되돌림' : '3월로 되돌림 · ' + (trail ? '지나온 자취로 방향이 보임' : '자취 없음');
+    } };
+  };
+
+  S['focus-dimming'] = function (st, c) {
+    var gray = c.dim === '회색으로', dur = +c.duration_ms, MS = 4400, b = { x: 34, y: 30, w: 372, h: 162 }, max = 60;
+    var X = function (i) { return b.x + b.w * i / 11; }, Y = function (v) { return b.y + b.h - v / max * b.h; }, s = yAxis(b, max) + xAxis12(b), lx = [34, 118, 202];
+    LINES.forEach(function (l, j) { s += '<polyline class="fl" pathLength="1" points="' + l[1].map(function (v, i) { return X(i).toFixed(1) + ',' + Y(v).toFixed(1); }).join(' ') + '" style="fill:none;stroke-width:2;stroke-linejoin:round;stroke-dasharray:1"/>' + tx(X(11) + 8, Y(l[1][11]) + 4, l[0], '', 'fn nm') + '<rect class="fg" x="' + lx[j] + '" y="5" width="10" height="10" rx="2"/>' + tx(lx[j] + 14, 14, l[0], '', 'fgt tk'); });
+    s += '<circle class="fd" r="4.5" style="stroke:var(--u-panel);stroke-width:2;opacity:0"/>';
+    var k = chartKit(st, s), fls = k.q('.fl'), fns = k.q('.fn'), fgs = k.q('.fg'), fgt = k.q('.fgt'), fd = k.q('.fd')[0];
+    // 가리킨 계열이 바뀌는 순간들: [시각, 계열(-1은 없음)]
+    var EV = [[0, -1], [1600, 1], [2750, 2], [3700, -1]], HW = 7;
+    function dimOf(j, f) { return f < 0 || f === j ? 0 : 1; }
+    return { ms: MS, rest: 0.35, at: function (t) {
+      var ms = t * MS, e = 0; while (e + 1 < EV.length && ms >= EV[e + 1][0]) e++;
+      var cur = EV[e][1], prev = e ? EV[e - 1][1] : -1, p = dur ? ease.out(seg(ms, EV[e][0], EV[e][0] + dur)) : 1;
+      LINES.forEach(function (l, j) {
+        var d = lerp(dimOf(j, prev), dimOf(j, cur), p), col = CC[j];
+        fls[j].style.strokeDashoffset = 1 - ease.inOut(seg(ms, 150 + j * 150, 1050 + j * 150));
+        fls[j].style.stroke = gray && d > 0.5 ? 'var(--u-muted)' : col; fls[j].style.opacity = gray ? 1 - d * 0.45 : 1 - d * 0.8; fls[j].style.strokeWidth = cur === j ? 3 : 2;
+        fns[j].style.opacity = seg(ms, 1000 + j * 150, 1200 + j * 150) * (1 - d * 0.7); fns[j].style.fill = 'var(--u-ink)';
+        fgs[j].style.fill = gray && d > 0.5 ? 'var(--u-muted)' : col; fgs[j].style.opacity = 1 - d * 0.6; fgt[j].style.opacity = 1 - d * 0.5;
+      });
+      var on1 = cur === 1, q;
+      fd.setAttribute('cx', X(HW)); fd.setAttribute('cy', Y(LINES[1][1][HW])); fd.style.fill = CC[1]; fd.style.opacity = on1 ? 1 : 0;
+      if (ms < 2400) q = glide(ms, 1150, 1600, [VW - 8, VH - 4], [X(HW) + 3, Y(LINES[1][1][HW]) + 4]);
+      else if (ms < 3400) q = glide(ms, 2350, 2750, [X(HW) + 3, Y(LINES[1][1][HW]) + 4], [lx[2] + 20, 12]);
+      else q = glide(ms, 3300, 3700, [lx[2] + 20, 12], [VW - 8, VH - 4]);
+      k.cur(q[0], q[1], false); k.tip(on1, X(HW), Y(LINES[1][1][HW]) - 12, sw(1) + '<b>닫힌 이슈</b> ' + WK[HW] + ' ' + LINES[1][1][HW]);
+      var how = (gray ? '나머지 회색' : '나머지 20%') + ' · ' + (dur ? dur + 'ms' : '바로');
+      return ms < 1600 ? '선 3개 · 모두 같은 진하기' : cur === 1 ? '선을 가리킴 · ' + how : cur === 2 ? '범례를 가리킴 · 그 계열만' : '벗어나면 되돌림';
+    } };
+  };
+
+  S['annotation-reveal'] = function (st, c) {
+    var mode = c.timing, one = c.count === '1개', MS = 4200, D = [32, 33, 35, 34, 36, 44, 45, 43, 41, 40, 38, 37], max = 60;
+    var b = { x: 34, y: 18, w: 410, h: 176 }, X = function (i) { return b.x + b.w * i / 11; }, Y = function (v) { return b.y + b.h - v / max * b.h; }, L0 = 200, L1 = 1600;
+    var s = yAxis(b, max) + xAxis12(b);
+    // 주석: 출시 주간 띠, 급증 지시선, 목표선. pass는 선이 그 자리를 지나는 시각
+    var A = [{ k: 'band', i: 4.5 }, { k: 'spike', i: 5 }, { k: 'goal', i: 0 }];
+    if (one) A = [A[1]];
+    A.forEach(function (a) {
+      if (a.k === 'band') s += '<g class="an"><rect x="' + X(3.5) + '" y="' + b.y + '" width="' + (X(5.5) - X(3.5)) + '" height="' + b.h + '" style="fill:var(--u-muted);opacity:.12"/>' + tx(X(4.5), b.y + 12, '새 버전 출시', 'middle', 'tk') + '</g>';
+      if (a.k === 'spike') s += '<g class="an"><path d="M' + (X(5) + 6) + ' ' + (Y(44) - 6) + 'L' + (X(5) + 40) + ' ' + (Y(44) - 34) + 'H' + (X(5) + 48) + '" style="fill:none;stroke:var(--u-ink);stroke-width:1.2"/>' + tx(X(5) + 52, Y(44) - 30, '6주 +8건 급증', 'start', 'vl') + '</g>';
+      if (a.k === 'goal') s += '<g class="an">' + ln(b.x, Y(40), b.x + b.w, Y(40), 'stroke:var(--u-ink);stroke-width:1.2;stroke-dasharray:5 4') + tx(b.x + b.w, Y(40) - 6, '목표 40건 이하', 'end', 'tk') + '</g>';
+    });
+    s += '<polyline class="al" pathLength="1" points="' + D.map(function (v, i) { return X(i).toFixed(1) + ',' + Y(v).toFixed(1); }).join(' ') + '" style="fill:none;stroke:var(--c1);stroke-width:2;stroke-linejoin:round;stroke-dasharray:1"/>' + tx(b.x - 6, 10, '열린 이슈', 'start', 'tk');
+    var k = chartKit(st, s), al = k.q('.al')[0], ans = k.q('.an');
+    k.noCursor();
+    var T0 = A.map(function (a, n) { return mode === '처음부터 모두' ? 0 : mode === '선이 지나갈 때' ? L0 + (L1 - L0) * a.i / 11 : L1 + 250 + n * 450; });
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, shown = 0;
+      al.style.strokeDashoffset = 1 - seg(ms, L0, L1);
+      ans.forEach(function (g, n) { var p = mode === '처음부터 모두' ? 1 : ease.out(seg(ms, T0[n], T0[n] + 300)); g.style.opacity = p; g.style.transform = 'translateY(' + (1 - p) * 6 + 'px)'; if (p > 0.5) shown++; });
+      if (mode === '처음부터 모두') return ms < L1 ? '주석이 처음부터 다 떠 있어 선보다 먼저 읽힘' : '주석 ' + A.length + '개가 처음부터 보임';
+      return ms < L1 ? '선이 그려짐' + (mode === '선이 지나갈 때' && shown ? ' · 지나간 자리의 주석이 나타남' : '') : shown < A.length ? '주석이 하나씩 나타남(' + shown + '/' + A.length + ')' : '주석 ' + A.length + '개 · 읽는 순서대로 등장';
+    } };
+  };
+
+  S['step-transition'] = function (st, c) {
+    var discrete = c.trigger === '단계에 들어갈 때', dur = +c.duration_ms, MS = 5600, TL = 115;
+    var TEAM = ['앱', '웹', '결제', '정산', '검색'], VA = [34, 22, 38, 12, 26], VB = [30, 24, 20, 14, 25];
+    var STEP = [['이번 달 팀별', '처리 건수예요'], ['결제 팀이 가장', '많이 처리했어요'], ['목표 30건을 넘은', '팀은 둘이에요'], ['지난달에는 결제가', '20건이었어요']];
+    var SX = [{ e: [1, 1, 1, 1, 1], r: 0, d: 0 }, { e: [0, 0, 1, 0, 0], r: 0, d: 0 }, { e: [1, 0, 1, 0, 0], r: 1, d: 0 }, { e: [0, 0, 1, 0, 0], r: 0, d: 1 }];
+    var SC = [[800, 1400], [2200, 2800], [3600, 4200]], ENT = SC.map(function (z) { return z[0] + (z[1] - z[0]) * 0.7; });
+    var b = { x: 258, y: 22, w: 207, h: 168 }, band = b.w / 5, th = band * 0.56, max = 40, Y = function (v) { return b.y + b.h - v / max * b.h; };
+    var s = ln(230, 8, 230, 220, 'stroke:var(--u-line)') + yAxis(b, max);
+    STEP.forEach(function (l, i) { s += '<g class="sc"><rect x="10" y="-30" width="170" height="56" rx="8"/><text x="22" y="-6" class="vl">' + l[0] + '</text><text x="22" y="12" class="vl">' + l[1] + '</text></g>'; });
+    s += ln(4, TL, 186, TL, 'stroke:var(--u-muted);stroke-width:1;stroke-dasharray:3 3;opacity:.8') + tx(190, TL + 4, '기준선', 'start', 'tk');
+    TEAM.forEach(function (n, i) { s += '<path class="sb" style="fill:var(--c1)"/>' + tx(b.x + band * i + band / 2, b.y + b.h + 16, n, 'middle', 'tk'); });
+    s += '<g class="sr">' + ln(b.x, Y(30), b.x + b.w, Y(30), 'stroke:var(--u-ink);stroke-width:1.2;stroke-dasharray:5 4') + tx(b.x + b.w, Y(30) - 5, '목표 30', 'end', 'tk') + '</g>' + tx(b.x - 6, 12, '', 'start', 'spn tk');
+    var k = chartKit(st, s), scs = k.q('.sc'), sbs = k.q('.sb'), sr = k.q('.sr')[0], spn = k.q('.spn')[0];
+    k.noCursor();
+    function scroll(ms) { var v = 0; SC.forEach(function (z, i) { v += ease.inOut(seg(ms, z[0], z[1])); }); return v; }
+    function mix(u) { var i = Math.min(2, Math.floor(u)), f = u - i, A = SX[i], B = SX[i + 1]; return { e: A.e.map(function (x, j) { return lerp(x, B.e[j], f); }), r: lerp(A.r, B.r, f), d: lerp(A.d, B.d, f) }; }
+    return { ms: MS, rest: 0.3, at: function (t) {
+      var ms = t * MS, sp = scroll(ms), step = 0, u;
+      ENT.forEach(function (x, i) { if (ms >= x) step = i + 1; });
+      u = discrete ? (step ? step - 1 + ease.inOut(seg(ms, ENT[step - 1], ENT[step - 1] + dur)) : 0) : sp;
+      var S = mix(u), g = ease.out(seg(ms, 100, 600));
+      scs.forEach(function (e, i) {
+        var y = TL + (i - sp) * 92, act = discrete ? i === step : Math.abs(i - sp) < 0.5, r = e.firstChild;
+        e.setAttribute('transform', 'translate(0 ' + y.toFixed(1) + ')'); e.style.opacity = Math.max(0, 1 - Math.abs(y - TL) / 130);
+        r.style.cssText = act ? 'fill:color-mix(in oklab, var(--c1) 12%, var(--u-panel));stroke:var(--c1);stroke-width:1.5' : 'fill:var(--u-panel);stroke:var(--u-line);stroke-width:1';
+      });
+      TEAM.forEach(function (n, i) {
+        var v = lerp(VA[i], VB[i], S.d) * g, x = b.x + band * i + (band - th) / 2;
+        sbs[i].setAttribute('d', barPath(x, Y(v), th, v / max * b.h)); sbs[i].style.opacity = 0.25 + 0.75 * S.e[i];
+      });
+      sr.style.opacity = S.r; spn.textContent = S.d > 0.5 ? '지난달 처리 건수' : '이번 달 처리 건수';
+      var moving = SC.some(function (z) { return ms > z[0] && ms < z[1]; });
+      return discrete ? '단계 ' + (step + 1) + (moving ? ' · 스크롤 중' : ' · 기준선 넘으면 ' + dur + 'ms 전환') : '스크롤만큼 이어서 바뀜';
     } };
   };
 
@@ -2791,8 +3397,8 @@
     var below = c.layout === '차트 아래에 표', pct = c.format === '값과 비율', MS = 3400, T1 = 1300;
     var D = [['완료', 22], ['진행', 6], ['검토', 4], ['대기', 2]], tot = 34, b = below ? { x: 40, y: 34, w: 400, h: 70 } : { x: 40, y: 34, w: 400, h: 150 }, band = b.w / 4, th = band * 0.5, max = 24;
     var s = '<g class="ch">' + yAxis(b, max) + D.map(function (d, i) { var h = d[1] / max * b.h, x = b.x + band * i + (band - th) / 2; return '<path d="' + barPath(x, b.y + b.h - h, th, h) + '" style="fill:var(--c1)"/>' + tx(x + th / 2, b.y + b.h + 14, d[0], 'middle', 'tk'); }).join('') + '</g>' +
-      '<g class="sw"><rect x="' + (b.x + b.w - 96) + '" y="2" width="96" height="22" rx="6" style="fill:var(--u-panel);stroke:var(--u-line)"/>' + tx(b.x + b.w - 48, 17, below ? '표 펼치기' : '표로 보기', 'middle', 'swt nm') + '</g>' + tx(b.x - 30, 17, '4주차 상태별 이슈', '', 'nm');
-    var k = chartKit(st, s), ch = k.q('.ch')[0], swt = k.q('.swt')[0];
+      '<g class="sw"><rect x="' + (b.x + b.w - 96) + '" y="2" width="96" height="22" rx="6" style="fill:var(--u-panel);stroke:var(--u-line)"/>' + tx(b.x + b.w - 48, 17, below ? '표 펼치기' : '표로 보기', 'middle', 'swt nm') + '</g>' + tx(b.x - 30, 17, '4주차 상태별 이슈', '', 'dtt nm');
+    var k = chartKit(st, s), ch = k.q('.ch')[0], swt = k.q('.swt')[0], dtt = k.q('.dtt')[0];
     var a = below ? k.px(b.x - 30, b.y + b.h + 20) : k.px(b.x - 30, b.y), z = k.px(b.x + b.w, below ? VH - 2 : b.y + b.h);
     st.insertAdjacentHTML('beforeend', '<table class="u-dtv" style="left:' + a[0] + 'px;top:' + a[1] + 'px;width:' + (z[0] - a[0]) + 'px"><caption>4주차 상태별 이슈(합계 ' + tot + '건)</caption><thead><tr><th scope="col">상태</th><th scope="col">건수</th>' + (pct ? '<th scope="col">비율</th>' : '') + '</tr></thead><tbody>' +
       D.map(function (d) { return '<tr><th scope="row">' + d[0] + '</th><td>' + d[1] + '</td>' + (pct ? '<td>' + Math.round(d[1] / tot * 100) + '%</td>' : '') + '</tr>'; }).join('') + '</tbody></table>');
@@ -2800,7 +3406,7 @@
     return { ms: MS, rest: 0.4, at: function (t) {
       var ms = t * MS, on = ease.inOut(seg(ms, T1, T1 + 300));
       if (below) { ch.style.opacity = 1; tb.style.opacity = on; tb.style.transform = 'translateY(' + (1 - on) * 8 + 'px)'; }
-      else { ch.style.opacity = 1 - on; tb.style.opacity = on; }
+      else { ch.style.opacity = 1 - on; tb.style.opacity = on; dtt.style.opacity = 1 - on; }
       tb.style.visibility = on > 0.01 ? 'visible' : 'hidden';
       swt.textContent = ms < T1 ? (below ? '표 펼치기' : '표로 보기') : (below ? '표 접기' : '차트로 보기');
       var q = glide(ms, 600, T1 - 100, [VW - 8, VH - 4], [b.x + b.w - 48, 13]); k.cur(q[0], q[1], pressAt(ms, [T1]));
@@ -2836,9 +3442,11 @@
     } };
   };
 
+  // 선 끝 이름이 겹치지 않게 y를 gap 이상 벌린다(위에서부터 차례로)
+  function endLabels(ys, gap) { var o = ys.map(function (y, i) { return [y, i]; }).sort(function (a, z) { return a[0] - z[0]; }), r = []; o.forEach(function (q, n) { var y = n ? Math.max(q[0], o[n - 1][0] + gap) : q[0]; o[n][0] = y; r[q[1]] = y; }); var shift = (ys.reduce(function (a, v) { return a + v; }, 0) - r.reduce(function (a, v) { return a + v; }, 0)) / ys.length; return r.map(function (y) { return y + shift; }); }
   S['chart-summary'] = function (st, c) {
     var top = c.where === '차트 위 한 줄', num = c.detail === '추세와 숫자', L = LINES.slice(0, 2), max = 60, MS = 3400, b = top ? { x: 34, y: 80, w: 380, h: 112 } : { x: 34, y: 10, w: 380, h: 132 }, base = lineBase(b, L, max);
-    var s = yAxis(b, max) + xAxis12(b) + base.svg + L.map(function (l, j) { return tx(base.X(11) + 8, base.Y(l[1][11]) + 4, l[0], '', 'nm'); }).join('') +
+    var s = yAxis(b, max) + xAxis12(b) + base.svg + endLabels(L.map(function (l) { return base.Y(l[1][11]); }), 15).map(function (y, j) { return tx(base.X(11) + 10, y + 4, L[j][0], '', 'nm'); }).join('') +
       L.map(function (l) { return '<circle class="hl" cx="' + base.X(0) + '" cy="' + base.Y(l[1][0]) + '" r="6" style="fill:none;stroke:var(--u-ink);stroke-width:1.5;opacity:0"/><circle class="hl" cx="' + base.X(11) + '" cy="' + base.Y(l[1][11]) + '" r="6" style="fill:none;stroke:var(--u-ink);stroke-width:1.5;opacity:0"/>'; }).join('');
     var k = chartKit(st, s), hls = k.q('.hl');
     k.noCursor();
@@ -2855,7 +3463,7 @@
   };
 
   // 조합 화면(분석·보고서)도 같은 차트 보조 함수를 쓴다
-  UI.chart = { CC: CC, barPath: barPath, niceMax: niceMax, lttb: lttb, seqFill: seqFill, divFill: divFill };
+  UI.chart = { CC: CC, barPath: barPath, niceMax: niceMax, lttb: lttb, seqFill: seqFill, divFill: divFill, treeLayout: treeLayout };
 
   /* ───── 신청·설정 묶음 ───── */
   var FIELD = 'border:1px solid var(--u-line);border-radius:var(--u-r);background:var(--u-panel);padding:7px 10px;font-size:13.5px;min-height:34px;position:relative';

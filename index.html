@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>UI 용어집</title>
-<meta name="description" content="바이브코딩 때 사람과 AI가 화면을 같은 이름으로 부르게 하는 UI·모션 용어집. 업무 화면 부품과 소개·랜딩 효과, 차트, 움직이는 예시, 헷갈리는 짝, 요청 문장.">
+<title>UI 도감</title>
+<meta name="description" content="바이브코딩 때 사람과 AI가 화면을 같은 이름으로 부르게 하는 UI·모션 도감. 업무 화면 부품과 소개·랜딩 효과, 차트, 움직이는 예시, 헷갈리는 짝, 요청 문장.">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
@@ -122,7 +122,7 @@ header { display: grid; gap: 10px; }
 .ex { display: grid; gap: 8px; }
 .scene-row { display: flex; gap: 10px; align-items: center; }
 .scene-row input { flex: 1; min-width: 0; accent-color: var(--accent); }
-.scene-out { font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--muted); }
+.scene-out { font-family: var(--font-mono); font-size: 12px; line-height: 1.5; min-height: 3em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; color: var(--muted); }
 .ctls { display: grid; gap: 12px; align-content: start; }
 .ctl-k { font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: baseline; }
 .ctl-k b { font-family: var(--font-mono); font-weight: 600; color: var(--ink); font-size: 12px; }
@@ -182,8 +182,8 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
 <div class="wrap">
   <header>
     <span class="eyebrow">UI Vocabulary · 업무 화면 · 소개·랜딩 · 차트</span>
-    <h1>UI 용어집</h1>
-    <p class="lead">바이브코딩을 할 때 사람과 AI가 화면을 같은 이름으로 부르게 하는 용어집입니다. 용어를 누르면 헷갈리는 짝, 틀리기 쉬운 말, 그대로 복사해 쓸 요청 문장이 나옵니다.</p>
+    <h1>UI 도감</h1>
+    <p class="lead">바이브코딩을 할 때 사람과 AI가 화면을 같은 이름으로 부르게 하는 UI 도감입니다. 용어를 누르면 헷갈리는 짝, 틀리기 쉬운 말, 그대로 복사해 쓸 요청 문장이 나옵니다.</p>
   </header>
 
   <nav class="tabs" aria-label="보기 고르기">
@@ -212,7 +212,7 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
 
   </div>
   <section id="screensview" class="screensview" hidden></section>
-  <footer>용어 <span id="total"></span>개 · 데이터는 <code>terms.json</code>, 조합 화면은 <code>recipes.json</code>입니다. 용어마다 움직이는 예시가 있고, 조합 화면은 7개입니다. 업무 화면 5개가 업무 화면 용어 62개를 한 번씩 쓰고, 제품 소개 랜딩이 소개·랜딩 효과를, 분석·보고서가 차트 용어 32개를 모두 엮습니다. 코드는 MIT, 글은 CC BY 4.0 · <a href="https://github.com/whitejo401/ui-labs">GitHub</a> · <a href="llms.txt">llms.txt</a></footer>
+  <footer>용어 <span id="total"></span>개 · 데이터는 <code>terms.json</code>, 조합 화면은 <code>recipes.json</code>입니다. 용어마다 움직이는 예시가 있고, 조합 화면은 8개입니다. 업무 화면 5개가 업무 화면 용어 62개를 한 번씩 쓰고, 제품 소개 랜딩이 소개·랜딩 효과를, 분석·보고서가 1차 차트 용어 32개를 모두 엮고, 데이터 스토리가 스크롤 글 한 편에 차트 2차 용어를 엮습니다. 코드는 MIT, 글은 CC BY 4.0 · <a href="https://github.com/whitejo401/ui-labs">GitHub</a> · <a href="llms.txt">llms.txt</a></footer>
 </div>
 
 <dialog id="dlg" aria-label="용어">
@@ -228,6 +228,7 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
 <script src="screen-request-form.js"></script>
 <script src="screen-landing.js"></script>
 <script src="screen-analytics.js"></script>
+<script src="screen-data-story.js"></script>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
