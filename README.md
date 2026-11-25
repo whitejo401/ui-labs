@@ -1,6 +1,8 @@
 # UI 도감
 
-바이브코딩을 할 때 사람과 AI가 화면을 **같은 이름**으로 부르게 하는 UI·모션 도감입니다. 업무 화면 부품 62개와 소개·랜딩 효과, 차트·시각화 용어를 담습니다.
+바이브코딩을 할 때 사람과 AI가 화면을 **같은 이름**으로 부르게 하는 UI·모션 도감입니다. 용어 142개를 담습니다: 업무 화면 부품 62개, 소개·랜딩 효과 28개, 차트·시각화 52개(차트 종류, 부품, 조작, 모션, 기법).
+
+예전 이름은 "UI 용어집"입니다. 주소는 그대로입니다.
 
 **페이지**: https://whitejo401.github.io/ui-labs/
 
@@ -16,7 +18,7 @@
 
 ## AI 세션에서 쓰기
 
-- [`llms.txt`](https://whitejo401.github.io/ui-labs/llms.txt): 용어마다 한 줄 설명, 헷갈리는 짝, 요청 예를 담은 요약
+- [`llms.txt`](https://whitejo401.github.io/ui-labs/llms.txt): 용어마다 한 줄 설명, 헷갈리는 짝, 요청 예를 담은 요약과 조합 화면 요청 문장
 - [`terms.json`](terms.json): 용어 전체 데이터
 - [`recipes.json`](recipes.json): 조합 화면과 화면 하나를 통째로 만드는 요청 문장
 
@@ -30,6 +32,7 @@
 | `screen-*.js` | 조합 화면 8개 |
 | `terms.json`, `recipes.json` | 데이터 |
 | `tools/make_llms.py` | `terms.json`에서 `llms.txt`를 만든다 |
+| `tools/artifact_fragment.py` | `index.html`에서 Claude 아티팩트에 올릴 페이지 조각을 만든다 |
 
 빌드 없이 정적 파일만으로 돕니다. 내 컴퓨터에서 볼 때는 `python3 -m http.server`로 열어 주세요(파일을 바로 열면 `terms.json`을 읽지 못합니다).
 

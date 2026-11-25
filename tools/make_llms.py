@@ -32,20 +32,21 @@ def prompt(t):
 
 
 out = ['# UI 도감 (ui-labs)', '',
-       '> 바이브코딩 때 사람과 AI가 화면을 같은 이름으로 부르게 하는 UI·모션 용어 ' + str(len(terms)) + '개(업무 화면 부품과 소개·랜딩 효과). 용어마다 한 줄 설명, 헷갈리는 짝, 틀리기 쉬운 말, 그대로 쓸 수 있는 요청 문장이 있다.', '',
+       '> 바이브코딩 때 사람과 AI가 화면을 같은 이름으로 부르게 하는 UI·모션 용어 ' + str(len(terms)) + '개(업무 화면 부품, 소개·랜딩 효과, 차트·시각화). 용어마다 한 줄 설명, 헷갈리는 짝, 틀리기 쉬운 말, 그대로 쓸 수 있는 요청 문장이 있다.', '',
        '사람이 "사이드 팝업"이라고 말할 때 Drawer인지 Modal Dialog인지 정해 두려고 만든 목록이다. 화면을 만들어 달라는 요청을 받으면 아래 영어 이름을 그대로 쓰고, 헷갈리는 짝과 구별해서 만든다.', '',
        '## 데이터', '',
        '- [terms.json](' + BASE + 'terms.json): 용어 ' + str(len(terms)) + '개 전체. 칸: id, name, ko, path(묶음·갈래·작은 묶음), one(한 줄 설명), aka(다른 이름), tags, controls(조절판), control_ko, defaults, phrases, states, pairs(헷갈리는 짝), wrong(틀리기 쉬운 말), right(바르게 말하는 법), prompt(언제·무엇·어떻게), motion(효과 용어만: 성능·가볍게 만드는 법·지원·동작 줄이기)',
        '- [recipes.json](' + BASE + 'recipes.json): 용어를 엮은 조합 화면 ' + str(len(recipes)) + '개와 화면 하나를 통째로 만드는 요청 문장',
        '- [페이지](' + BASE + '): 용어마다 움직이는 예시와 조절판, 조합 화면에서 부품 이름 보기', '']
-group = None
+# 같은 묶음(path 앞 두 칸)은 처음 나온 자리에 모아 쓴다. terms.json에서 묶음이 떨어져 있어도 제목은 한 번만
+groups = {}
 for t in terms:
-    g = ' › '.join(t['path'][:2])
-    if g != group:
-        out += ['', '## ' + g, '']
-        group = g
-    pairs = ', '.join(p['name'] for p in t['pairs'])
-    out.append('- **' + t['name'] + '** (' + t['ko'] + '): ' + t['one'] + '. 헷갈리는 짝: ' + pairs + '. 요청 예: ' + prompt(t) + ('. 가볍게: ' + t['motion']['light'] if t.get('motion') else ''))
+    groups.setdefault(' › '.join(t['path'][:2]), []).append(t)
+for g, ts in groups.items():
+    out += ['', '## ' + g, '']
+    for t in ts:
+        pairs = ', '.join(p['name'] for p in t['pairs'])
+        out.append('- **' + t['name'] + '** (' + t['ko'] + '): ' + t['one'] + '. 헷갈리는 짝: ' + pairs + '. 요청 예: ' + prompt(t) + ('. 가볍게: ' + t['motion']['light'] if t.get('motion') else ''))
 out += ['', '## 조합 화면', '']
 for r in recipes:
     out.append('- **' + r['name'] + '** (용어 ' + str(len(r['terms'])) + '개: ' + ', '.join(by_id[i]['name'] for i in r['terms']) + ')' + (': ' + r['prompt'] if r.get('prompt') else ''))
