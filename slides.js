@@ -31,6 +31,8 @@
       frame: { eyebrow: 11.25, title: 22.5 },   // 머리말 15px, 제목 30px 한 줄
       node: { name: 13.5, tech: 12, label: 12 }, // 상자 이름 18px, 기술·화살표 글 16px
       scale: 0.82,                // 벤 글자를 이만큼 줄인다
+      head: 11,                   // 화살촉 길이(px). 없으면 선 굵기의 3배
+      warn: '#b45309',            // 판 제목 tone: 'warn'(못 하는 것, 위험)
       lh: 1.3, slack: 0.9
     }
   };
@@ -184,7 +186,7 @@
       });
       if (i < n - 1) {
         var ax = box.x + 40;
-        prims.push({ k: 'line', x1: ax, y1: y + rh + 3, x2: ax, y2: y + rh + gap - 3, stroke: th.muted, sw: 1.5, arrow: 'end', step: i + 1 });
+        prims.push({ k: 'line', x1: ax, y1: y + rh + 3, x2: ax, y2: y + rh + gap - 3, stroke: th.muted, sw: 1.5, arrow: 'end', head: th.head, step: i + 1 });
         if (d.call) prims.push(S.textBox({ x: ax + 12, y: y + rh, w: 400, h: gap, text: d.call, size: 12, color: th.muted, valign: 'middle', step: i + 1 }, th, errors, 'call'));
       }
     });
@@ -197,10 +199,10 @@
     var c = th.c4;
     if (th.light) return {
       plain: { fill: th.bg, stroke: th.line, ink: th.ink, sub: th.muted },
-      mark: { fill: th.accentSoft, stroke: th.accent, ink: th.ink, sub: th.muted, dash: true },
+      mark: { fill: th.accentSoft, stroke: th.accent, ink: th.ink, sub: th.muted },
       main: { fill: th.accentSoft, stroke: th.accent, ink: th.ink, sub: th.muted },
       app: { fill: th.bg, stroke: th.accent, ink: th.ink, sub: th.muted },
-      store: { fill: th.bg, stroke: th.accent, ink: th.ink, sub: th.muted },
+      store: { fill: th.panel, stroke: th.muted, ink: th.ink, sub: th.muted },
       ext: { fill: th.panel, stroke: th.line, ink: th.ink, sub: th.muted },
       person: { fill: th.bg, stroke: th.ink, ink: th.ink, sub: th.muted }
     };
@@ -221,7 +223,7 @@
   // 상자 하나: 이름(한 줄), [기술](한 줄), 설명(두 줄)을 세로 가운데에 쌓는다
   function nodeBox(n, x, y, w, h, th, errors, slot, step, term) {
     var lk = looks(th)[n.look || 'plain'] || looks(th).plain, prims = [], top = y, pad = 12;
-    if (n.look === 'store') {
+    if (n.look === 'store' || n.can) {
       prims.push({ k: 'can', x: x, y: y, w: w, h: h, fill: lk.fill, stroke: lk.stroke, sw: 1.5, step: step, term: term });
       top = y + Math.min(w, h) / 4;
     } else {
@@ -236,20 +238,21 @@
     var total = roomy(parts.map(function (p) { p.h = 0; return p; }), th).reduce(function (a, p) { return a + p.h; }, 0) + 2 * (parts.length - 1), cy = top + (y + h - top - total) / 2;
     if (n.parts) cy = top + 16;     // 안쪽 줄이 있으면 이름은 위에 붙인다
     parts.forEach(function (p) { p.y = cy; cy += p.h + 2; prims.push(p); });
-    // 안쪽 구성 요소: 이름(왼쪽)과 기술(오른쪽) 한 줄씩 흰 칸에
+    // 안쪽 구성 요소: 이름(왼쪽)과 기술(오른쪽) 한 줄씩 흰 칸에. 칸은 남은 높이를 나눠 채운다(칸 높이 40~58)
+    var np = (n.parts || []).length, pg = np ? Math.max(48, Math.min(66, (y + h - 16 - cy - 14 + 8) / np)) : 0, ph = pg - 8;
     (n.parts || []).forEach(function (q, i) {
-      var ry = cy + 14 + i * 48, sl = slot + '.parts[' + i + ']';
-      prims.push({ k: 'rect', x: x + 16, y: ry, w: w - 32, h: 40, r: 4, fill: th.bg, stroke: th.line, sw: 1, step: step });
-      prims.push(S.textBox({ x: x + 28, y: ry, w: (w - 56) * 0.63, h: 40, text: q.name, size: 12, valign: 'middle' }, th, errors, sl + '.name'));
-      if (q.tech) prims.push(S.textBox({ x: x + 28 + (w - 56) * 0.63, y: ry, w: (w - 56) * 0.37, h: 40, text: q.tech, size: 12, color: th.muted, align: 'right', valign: 'middle' }, th, errors, sl + '.tech'));
+      var ry = cy + 14 + i * pg, sl = slot + '.parts[' + i + ']';
+      prims.push({ k: 'rect', x: x + 16, y: ry, w: w - 32, h: ph, r: 4, fill: th.bg, stroke: th.line, sw: 1, step: step });
+      prims.push(S.textBox({ x: x + 28, y: ry, w: (w - 56) * 0.63, h: ph, text: q.name, size: 12, valign: 'middle' }, th, errors, sl + '.name'));
+      if (q.tech) prims.push(S.textBox({ x: x + 28 + (w - 56) * 0.63, y: ry, w: (w - 56) * 0.37, h: ph, text: q.tech, size: 12, color: th.muted, align: 'right', valign: 'middle' }, th, errors, sl + '.tech'));
     });
     return prims;
   }
-  // 화살표 글: 선 가운데에 바탕색 띠를 깔고 얹는다. above면 선 위에 놓는다
+  // 화살표 글: 선 가운데에 바탕색 띠를 깔고 얹는다. above면 선 위, 'below'면 선 아래에 놓는다
   function linkLabel(text, mx, my, w, above, th, errors, slot, step) {
     var ls = th.node ? th.node.label : 11;
     var p = fitH(S.textBox({ x: mx - w / 2, y: 0, w: w, text: text, size: ls, color: th.muted, align: 'center', max: 2, step: step }, th, errors, slot), th);
-    p.y = above ? my - 6 - p.h : my - p.h / 2;
+    p.y = above === 'below' ? my + 6 : above ? my - 6 - p.h : my - p.h / 2;
     var lw = Math.min(w, Math.max.apply(null, p.lines.map(function (l) { return S.measure(l, ls, 400, th.font); }))) + 12;
     return [{ k: 'rect', x: mx - lw / 2, y: p.y - 2, w: lw, h: p.h + 4, fill: th.bg, step: step }, roomy([p], th)[0]];
   }
@@ -260,23 +263,32 @@
     return [c[0] + dx * s, c[1] + dy * s];
   }
   // 격자 배치: 상자마다 col·row(소수 가능)를 받아 칸 가운데에 놓고, 이름으로 이은 화살표를 긋는다
-  // o: { w, h(상자 최대), gapX, gapY, slot, linkSlot, term }
+  // o: { w, h(상자 최대), gapX, gapY, slot, linkSlot, term, horiz(가로로만 잇기), flush(첫·끝 열을 상자 영역 양끝에 붙임) }
+  // 상자 칸 w(폭, 없으면 공통), 화살표 칸 loop(상자 아래로 돌아 잇기), below(글을 선 아래에)
   function graph(nodes, links, box, th, errors, o) {
     var prims = [], pos = {}, cols = 1, rows = 1;
     nodes.forEach(function (n) { cols = Math.max(cols, Math.ceil((n.col || 0) + 1)); rows = Math.max(rows, Math.ceil((n.row || 0) + (n.span || 1))); });
     var cw = box.w / cols, ch = box.h / rows;
     var w = Math.min(cw - (o.gapX || 90), o.w || 260), h = Math.min(ch - (o.gapY || 70), o.h || 110);
     nodes.forEach(function (n, i) {
-      var nh = n.span ? n.span * ch - (o.gapY || 70) : h;
+      var nh = n.span ? n.span * ch - (o.gapY || 70) : h, nw = n.w || w;
       var cx = box.x + ((n.col || 0) + 0.5) * cw, cy = box.y + ((n.row || 0) + (n.span || 1) / 2) * ch;
-      pos[n.name] = { cx: cx, cy: cy, i: i, x: cx - w / 2, y: cy - nh / 2, w: w, h: nh, look: n.look };
-      prims = prims.concat(nodeBox(n, cx - w / 2, cy - nh / 2, w, nh, th, errors, o.slot + '[' + i + ']', i, i ? undefined : o.term));
+      if (o.flush && !n.col) cx = box.x + nw / 2; else if (o.flush && n.col === cols - 1) cx = box.x + box.w - nw / 2;
+      pos[n.name] = { cx: cx, cy: cy, i: i, x: cx - nw / 2, y: cy - nh / 2, w: nw, h: nh, look: n.look };
+      prims = prims.concat(nodeBox(n, cx - nw / 2, cy - nh / 2, nw, nh, th, errors, o.slot + '[' + i + ']', i, i ? undefined : o.term));
     });
     // 화살표는 직각으로만 꺾는다. 같은 줄이면 가로 직선, 줄이 겹치지 않으면 세로-가로-세로, 아니면 가로-세로-가로
     var L = [], side = {};
     (links || []).forEach(function (l, i) {
       var a = pos[l.from], b = pos[l.to], slot = (o.linkSlot || 'links') + '[' + i + ']';
       if (!a || !b) { errors.push({ slot: slot, msg: '없는 상자 이름: ' + (a ? l.to : l.from) }); return; }
+      if (l.loop) {
+        // 두 상자 아래로 내려가 가로로 건너 올라간다. 글은 가로 선 위
+        var ly = Math.max(a.y + a.h, b.y + b.h) + 34, st = Math.max(a.i, b.i), lp = [[a.cx, a.y + a.h + 8], [a.cx, ly], [b.cx, ly], [b.cx, b.y + b.h + 8]];
+        for (var j = 0; j < 3; j++) prims.push({ k: 'line', x1: lp[j][0], y1: lp[j][1], x2: lp[j + 1][0] + (j < 2 ? Math.sign(lp[j + 1][0] - lp[j][0]) : 0), y2: lp[j + 1][1] + (j < 2 ? Math.sign(lp[j + 1][1] - lp[j][1]) : 0), stroke: th.muted, sw: 2, dash: l.dash, arrow: j === 2 ? 'end' : undefined, head: th.head, step: st });
+        if (l.label) prims = prims.concat(linkLabel(l.label, (a.cx + b.cx) / 2, ly, 300, true, th, errors, slot + '.label', st).slice(1));
+        return;
+      }
       var v = !o.horiz && Math.abs(a.cy - b.cy) >= 1 && (a.y + a.h <= b.y || b.y + b.h <= a.y);
       var q = { l: l, a: a, b: b, slot: slot, v: v, flat: Math.abs(a.cy - b.cy) < 1 };
       q.sa = v ? (b.cy > a.cy ? 'b' : 't') : (b.cx > a.cx ? 'r' : 'l');
@@ -296,10 +308,11 @@
     });
     L.forEach(function (q) {
       var a = q.a, b = q.b, l = q.l, step = Math.max(a.i, b.i), pts, mid;
-      if (q.flat) {
-        var p1 = edge([a.cx, a.cy], [b.cx, b.cy], w / 2 + 8, a.h / 2 + 8), p2 = edge([b.cx, b.cy], [a.cx, a.cy], w / 2 + 8, b.h / 2 + 8);
-        prims.push({ k: 'line', x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1], stroke: th.muted, sw: 2, dash: l.dash, arrow: 'end', step: step });
-        if (l.label) prims = prims.concat(linkLabel(l.label, (p1[0] + p2[0]) / 2, p1[1], Math.abs(p2[0] - p1[0]) - 4, true, th, errors, q.slot + '.label', step));
+      // 같은 높이라도 밝은 테마에서 두 변 모두 선이 여럿이면(왕복 화살표 등) 나눠 둔 점으로 긋는다
+      if (q.flat && !(th.light && q.na > 1 && q.nb > 1)) {
+        var p1 = edge([a.cx, a.cy], [b.cx, b.cy], a.w / 2 + 8, a.h / 2 + 8), p2 = edge([b.cx, b.cy], [a.cx, a.cy], b.w / 2 + 8, b.h / 2 + 8);
+        prims.push({ k: 'line', x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1], stroke: th.muted, sw: 2, dash: l.dash, arrow: 'end', head: th.head, step: step });
+        if (l.label) prims = prims.concat(linkLabel(l.label, (p1[0] + p2[0]) / 2, p1[1], Math.abs(p2[0] - p1[0]) - 4, l.below ? 'below' : true, th, errors, q.slot + '.label', step));
         return;
       }
       var ta = q.ta, tb = q.tb;
@@ -307,27 +320,30 @@
       function straight(lo, hi) {
         var s = Math.max(lo[0], hi[0]) + 16, e = Math.min(lo[1], hi[1]) - 16;
         if (q.nb === 1 && ta >= hi[0] + 16 && ta <= hi[1] - 16) tb = ta; else if (q.na === 1 && tb >= lo[0] + 16 && tb <= lo[1] - 16) ta = tb;
-        else if (s <= e) ta = tb = Math.min(e, Math.max(s, q.nb > 1 ? tb : ta));
+        // 겹치는 폭 안에서는 작은 상자 쪽에 나눠 둔 점을 쓴다(큰 상자 쪽 점은 잘려 서로 겹칠 수 있다)
+        else if (s <= e) ta = tb = Math.min(e, Math.max(s, q.nb > 1 && (q.na === 1 || (hi[1] - hi[0]) <= (lo[1] - lo[0])) ? tb : ta));
       }
       if (q.v) {
-        straight([a.x, a.x + w], [b.x, b.x + w]);
+        straight([a.x, a.x + a.w], [b.x, b.x + b.w]);
         var gap = function (n, s) { return s === 't' && n.look === 'person' && !th.light ? 30 : 8; };
         var y1 = q.sa === 'b' ? a.y + a.h + gap(a, 'b') : a.y - gap(a, 't'), y2 = q.sb === 't' ? b.y - gap(b, 't') : b.y + b.h + gap(b, 'b'), my = (y1 + y2) / 2;
         pts = Math.abs(ta - tb) < 1 ? [[ta, y1], [ta, y2]] : [[ta, y1], [ta, my], [tb, my], [tb, y2]];
       } else {
         straight([a.y, a.y + a.h], [b.y, b.y + b.h]);
-        var x1 = q.sa === 'r' ? a.x + w + 8 : a.x - 8, x2 = q.sb === 'l' ? b.x - 8 : b.x + w + 8, mx = (x1 + x2) / 2;
+        var x1 = q.sa === 'r' ? a.x + a.w + 8 : a.x - 8, x2 = q.sb === 'l' ? b.x - 8 : b.x + b.w + 8, mx = (x1 + x2) / 2;
         pts = Math.abs(ta - tb) < 1 ? [[x1, ta], [x2, ta]] : [[x1, ta], [mx, ta], [mx, tb], [x2, tb]];
       }
       // 꺾이는 곳은 앞 선을 굵기 절반만큼 늘려 바깥 모서리 홈을 메운다. 화살촉은 마지막 선에만
       for (var j = 0; j < pts.length - 1; j++) {
         var s0 = pts[j], s1 = pts[j + 1], last = j === pts.length - 2, ex = last ? 0 : 1;
         var ux = Math.sign(s1[0] - s0[0]), uy = Math.sign(s1[1] - s0[1]);
-        prims.push({ k: 'line', x1: s0[0], y1: s0[1], x2: s1[0] + ux * ex, y2: s1[1] + uy * ex, stroke: th.muted, sw: 2, dash: l.dash, arrow: last ? 'end' : undefined, step: step });
+        prims.push({ k: 'line', x1: s0[0], y1: s0[1], x2: s1[0] + ux * ex, y2: s1[1] + uy * ex, stroke: th.muted, sw: 2, dash: l.dash, arrow: last ? 'end' : undefined, head: th.head, step: step });
       }
       // 글은 가운데 선분 위에 바탕색 띠를 깔고 얹는다
+      // 밝은 테마에서 곧은 가로선이면 선을 끊지 않고 위(below면 아래)에 놓는다
       mid = pts.length === 2 ? [pts[0], pts[1]] : [pts[1], pts[2]];
-      if (l.label) prims = prims.concat(linkLabel(l.label, (mid[0][0] + mid[1][0]) / 2, (mid[0][1] + mid[1][1]) / 2, 170, false, th, errors, q.slot + '.label', step));
+      var flatOn = th.light && pts.length === 2 && !q.v, lw2 = flatOn ? Math.abs(pts[1][0] - pts[0][0]) - 8 : 170;
+      if (l.label) prims = prims.concat(linkLabel(l.label, (mid[0][0] + mid[1][0]) / 2, (mid[0][1] + mid[1][1]) / 2, lw2, flatOn ? (l.below ? 'below' : true) : false, th, errors, q.slot + '.label', step));
     });
     return { prims: prims, pos: pos };
   }
@@ -384,40 +400,54 @@
   }
 
   // 상자와 화살표: 정해진 기호 규칙이 없으니 꼴마다 뜻을 범례로 밝힌다
-  // { boxes: [{ name, one, col, row, look: plain|mark }], arrows: [{ from, to, label, dash }], legend: [{ look, name }], gapX(상자 사이, 없으면 80) }
+  // { boxes: [{ name, one, col, row, look: plain|mark }], arrows: [{ from, to, label, dash, loop }], legend: [{ look, name }], gapX(상자 사이, 없으면 80) }
   S.diagrams['box-and-arrow-diagram'] = function (d, box, th) {
     var errors = [], boxes = d.boxes || [];
     count(boxes, 2, 8, 'boxes', errors);
-    var area = d.legend ? { x: box.x, y: box.y, w: box.w, h: box.h - 52 } : box;
-    var g = graph(boxes, d.arrows, area, th, errors, { slot: 'boxes', linkSlot: 'arrows', term: 'box-and-arrow-diagram', w: 220, h: 104, gapX: d.gapX || 80 });
+    var area = d.legend ? { x: box.x, y: box.y, w: box.w, h: box.h - 52 } : box, loop = (d.arrows || []).some(function (a) { return a.loop; });
+    if (loop) area = { x: area.x, y: area.y, w: area.w, h: area.h - 44 };   // 아래로 도는 화살표 자리
+    var g = graph(boxes, d.arrows, area, th, errors, { slot: 'boxes', linkSlot: 'arrows', term: 'box-and-arrow-diagram', w: 220, h: 104, gapX: d.gapX || 80, gapY: loop ? 16 : undefined });
     var prims = g.prims;
     if (d.legend) prims = prims.concat(legend(d.legend, box.x + box.w, box.y + box.h - 40, th, errors, 'legend', boxes.length));
     return { prims: prims, errors: errors };
   };
 
   // C4 1단계 System Context: 위에 사람, 가운데 내 시스템 하나, 아래에 바깥 시스템. 화살표마다 하는 일을 적는다
-  // { people: [{ name, one, uses }], system: { name, one }, externals: [{ name, one, rel }] }
+  // { people: [{ name, one, uses, back }], system: { name, one }, externals: [{ name, one, rel, back, in, can }] }
+  // back은 거꾸로 돌아오는 화살표 글, in이면 바깥에서 들어오는 쪽, can이면 원통(저장소). dir: 'lr'이면 열 이름(사람, 바깥 시스템)을 위에
   S.diagrams['c4-system-context'] = function (d, box, th) {
     var errors = [], people = d.people || [], ext = d.externals || [];
     count(people, 1, 3, 'people', errors); count(ext, 1, 4, 'externals', errors);
     if (!d.system) { errors.push({ slot: 'system', msg: '내 시스템이 없습니다' }); return { prims: [], errors: errors }; }
     var cols = Math.max(people.length, ext.length, 1), nodes = [], links = [], lr = d.dir === 'lr';
     // lr: 사람은 왼쪽 열, 내 시스템은 가운데 열을 세로로 다 차지(parts로 안쪽 구성 요소), 바깥 시스템은 오른쪽 열
-    function row(list, r, look, tech) { list.forEach(function (n, i) { nodes.push(lr ? { name: n.name, one: n.one, look: look, col: r, row: (cols - list.length) / 2 + i } : { name: n.name, one: n.one, tech: tech, look: look, row: r, col: (cols - list.length) / 2 + i }); }); }
+    function row(list, r, look, tech) { list.forEach(function (n, i) { nodes.push(lr ? { name: n.name, one: n.one, look: look, can: n.can, w: 230, col: r, row: (cols - list.length) / 2 + i } : { name: n.name, one: n.one, tech: tech, look: look, row: r, col: (cols - list.length) / 2 + i }); }); }
     row(people, 0, 'person', '사람');
-    nodes.push(lr ? { name: d.system.name, one: d.system.one, look: 'main', col: 1, row: 0, span: cols, parts: d.system.parts }
+    nodes.push(lr ? { name: d.system.name, one: d.system.one, look: 'main', col: 1, row: 0, span: cols, parts: d.system.parts, w: 340 }
       : { name: d.system.name, one: d.system.one, tech: '소프트웨어 시스템', look: 'main', row: 1, col: (cols - 1) / 2 });
     row(ext, 2, 'ext', '바깥 시스템');
-    people.forEach(function (p) { links.push({ from: p.name, to: d.system.name, label: p.uses }); });
-    ext.forEach(function (x) { links.push({ from: d.system.name, to: x.name, label: x.rel }); });
-    var g = lr ? graph(nodes, links, box, th, errors, { slot: 'nodes', term: 'c4-system-context', w: 264, h: 100, gapX: 120, gapY: 24, horiz: true })
+    // 화살표 칸 이름(오류를 입력 칸 기준으로 알린다)
+    var lslot = [];
+    people.forEach(function (p, i) { links.push({ from: p.name, to: d.system.name, label: p.uses }); lslot.push('people[' + i + '].uses'); });
+    ext.forEach(function (x, i) { links.push(x.in ? { from: x.name, to: d.system.name, label: x.rel } : { from: d.system.name, to: x.name, label: x.rel }); lslot.push('externals[' + i + '].rel'); });
+    people.concat(ext).forEach(function (n, i) {
+      if (!n.back) return;
+      var f = i < people.length || n.in ? d.system.name : n.name, t = f === n.name ? d.system.name : n.name;
+      links.push({ from: f, to: t, label: n.back, below: true }); lslot.push((i < people.length ? 'people[' + i : 'externals[' + (i - people.length)) + '].back');
+    });
+    var prims = [], area = box;
+    if (lr) {
+      [['사람', 0], ['바깥 시스템', 1]].forEach(function (h) { prims.push(S.textBox({ x: h[1] ? box.x + box.w - 230 : box.x, y: box.y, w: 230, text: h[0], size: 12, color: th.muted, step: 0 }, th, errors, 'head')); });
+      area = { x: box.x, y: box.y + 28, w: box.w, h: box.h - 28 };
+    }
+    var g = lr ? graph(nodes, links, area, th, errors, { slot: 'nodes', term: 'c4-system-context', w: 230, h: 100, gapX: 120, gapY: 24, horiz: true, flush: true })
       : graph(nodes, links, { x: box.x, y: box.y + 16, w: box.w, h: box.h - 16 }, th, errors, { slot: 'nodes', term: 'c4-system-context', w: 250, h: 104, gapX: 60, gapY: 40 });
     // 칸 이름을 입력 칸 기준으로 고친다(people[0], system, externals[1])
     errors.forEach(function (e) {
       e.slot = e.slot.replace(/^nodes\[(\d+)\]/, function (m, k) { k = +k; return k < people.length ? 'people[' + k + ']' : k === people.length ? 'system' : 'externals[' + (k - people.length - 1) + ']'; })
-        .replace(/^links\[(\d+)\]\.label$/, function (m, k) { k = +k; return k < people.length ? 'people[' + k + '].uses' : 'externals[' + (k - people.length) + '].rel'; });
+        .replace(/^links\[(\d+)\]\.label$/, function (m, k) { return lslot[+k]; });
     });
-    return { prims: g.prims, errors: errors };
+    return { prims: prims.concat(g.prims), errors: errors };
   };
 
   // C4 2단계 Container: 내 시스템 경계(점선) 안의 앱·저장소와 바깥 시스템. 범례는 쓰인 꼴만
@@ -444,11 +474,20 @@
   };
 
   // 파이프라인: 단계 3~6개를 왼쪽에서 오른쪽으로, 끝에 결과가 쌓이는 저장소(원통). 설명은 상자 아래
-  // { steps: [{ name, one }], store: { name, one } }
+  // { steps: [{ name, one, mark }], store: { name, one } }. 밝은 테마는 설명을 상자 안에 넣고 mark인 단계만 강조한다
   S.diagrams['pipeline-diagram'] = function (d, box, th) {
     var errors = [], prims = [], steps = d.steps || [];
     count(steps, 3, 6, 'steps', errors);
     var all = steps.concat(d.store ? [d.store] : []), n = Math.max(1, all.length), gap = 52;
+    if (th.light) {
+      var lw = (box.w - gap * (n - 1)) / n, lh = Math.min(box.h, 112), ly = box.y + (box.h - lh) / 2;
+      all.forEach(function (s, i) {
+        var x = box.x + i * (lw + gap), last = d.store && i === n - 1, slot = last ? 'store' : 'steps[' + i + ']';
+        prims = prims.concat(nodeBox({ name: s.name, one: s.one, look: last ? 'store' : s.mark ? 'mark' : 'plain', can: last }, x, ly, lw, lh, th, errors, slot, i, i ? undefined : 'pipeline-diagram'));
+        if (i < n - 1) prims.push({ k: 'line', x1: x + lw + 6, y1: ly + lh / 2, x2: x + lw + gap - 6, y2: ly + lh / 2, stroke: th.muted, sw: 2, arrow: 'end', head: th.head, step: i + 1 });
+      });
+      return { prims: prims, errors: errors };
+    }
     var w = (box.w - gap * (n - 1)) / n, bh = 96, oneH = Math.ceil(13 * th.lh * PX * 3);
     var y0 = box.y + (box.h - (bh + 14 + oneH)) / 2, mid = y0 + bh / 2;
     all.forEach(function (s, i) {
@@ -457,30 +496,50 @@
       else prims.push({ k: 'rect', x: x, y: y0, w: w, h: bh, r: 10, fill: th.panel, stroke: th.line, sw: 1.5, step: i, term: i ? undefined : 'pipeline-diagram' });
       prims.push(S.textBox({ x: x + 10, y: last ? y0 + 8 : y0, w: w - 20, h: last ? bh - 8 : bh, text: s.name, size: 17, weight: 700, color: last ? th.accent : th.ink, align: 'center', valign: 'middle', max: 2, step: i }, th, errors, slot + '.name'));
       if (s.one) prims.push(S.textBox({ x: x, y: y0 + bh + 14 + (last ? 18 : 0), w: w, text: s.one, size: 13, color: th.muted, align: 'center', max: 3, step: i }, th, errors, slot + '.one'));
-      if (i < n - 1) prims.push({ k: 'line', x1: x + w + 8, y1: mid, x2: x + w + gap - 8, y2: mid, stroke: th.muted, sw: 2.5, arrow: 'end', step: i + 1 });
+      if (i < n - 1) prims.push({ k: 'line', x1: x + w + 8, y1: mid, x2: x + w + gap - 8, y2: mid, stroke: th.muted, sw: 2.5, arrow: 'end', head: th.head, step: i + 1 });
     });
     return { prims: prims, errors: errors };
   };
 
   // 시퀀스: 참여자를 위에 늘어놓고 세로 점선(생명선), 메시지를 위에서 아래로 시간 순서대로. 돌려주는 답은 점선
-  // { actors: [{ name }], messages: [{ from, to, text, back }] }
+  // { actors: [{ name, look }], messages: [{ from, to, text, back }], mark: { from, to, text } }
+  // 밝은 테마는 참여자를 회색 상자(look: 'person'이면 흰 상자와 짙은 선)로. mark는 메시지 from~to번(0부터)을 강조 띠로 묶고 오른쪽 아래에 글
   S.diagrams['sequence-diagram'] = function (d, box, th) {
     var errors = [], prims = [], actors = d.actors || [], msgs = d.messages || [], at = {};
     count(actors, 2, 5, 'actors', errors); count(msgs, 2, 8, 'messages', errors);
-    var n = Math.max(1, actors.length), cw = box.w / n, aw = Math.min(cw - 24, 210), ah = 50;
+    var n = Math.max(1, actors.length), cw = box.w / n, aw = Math.min(cw - 24, th.light ? 176 : 210), ah = th.light ? 48 : 50;
+    actors.forEach(function (a, i) { at[a.name] = box.x + (i + 0.5) * cw; });
+    var top = box.y + ah + 8, sh = (box.h - ah - 8) / Math.max(1, msgs.length), mk = d.mark;
+    if (mk && msgs[mk.from] && msgs[mk.to]) {
+      var xs = msgs.slice(mk.from, mk.to + 1).map(function (m) { return Math.min(at[m.from], at[m.to]); }).filter(function (v) { return v != null; });
+      var bx1 = Math.min.apply(null, xs) + 12, by1 = top + (mk.from + 1) * sh - 10 - 32, by2 = top + (mk.to + 1) * sh - 10 + 22 + (mk.text ? 4 : 0);
+      prims.push({ k: 'rect', x: bx1, y: by1, w: box.x + box.w - bx1, h: by2 - by1, r: 4, fill: th.accentSoft, step: mk.from + 1 });
+      if (mk.text) prims.push(S.textBox({ x: bx1, y: by2 - 24, w: box.x + box.w - bx1 - 12, h: 22, text: mk.text, size: 12, weight: 700, color: th.accent, align: 'right', valign: 'middle', step: mk.from + 1 }, th, errors, 'mark.text'));
+    }
     actors.forEach(function (a, i) {
-      var cx = box.x + (i + 0.5) * cw; at[a.name] = cx;
-      prims.push({ k: 'rect', x: cx - aw / 2, y: box.y, w: aw, h: ah, r: 8, fill: th.accentSoft, stroke: th.accent, sw: 1.5, step: 0, term: i ? undefined : 'sequence-diagram' });
+      var cx = at[a.name], lk = th.light ? looks(th)[a.look === 'person' ? 'person' : 'ext'] : { fill: th.accentSoft, stroke: th.accent };
+      prims.push({ k: 'rect', x: cx - aw / 2, y: box.y, w: aw, h: ah, r: 8, fill: lk.fill, stroke: lk.stroke, sw: 1.5, step: 0, term: i ? undefined : 'sequence-diagram' });
       prims.push(S.textBox({ x: cx - aw / 2 + 8, y: box.y, w: aw - 16, h: ah, text: a.name, size: 15, weight: 700, align: 'center', valign: 'middle', step: 0 }, th, errors, 'actors[' + i + '].name'));
-      prims.push({ k: 'line', x1: cx, y1: box.y + ah, x2: cx, y2: box.y + box.h, stroke: th.line, sw: 2, dash: true, step: 0 });
+      prims.push(th.light ? { k: 'line', x1: cx, y1: box.y + ah, x2: cx, y2: box.y + box.h, stroke: th.muted, sw: 1, dash: true, step: 0 }
+        : { k: 'line', x1: cx, y1: box.y + ah, x2: cx, y2: box.y + box.h, stroke: th.line, sw: 2, dash: true, step: 0 });
     });
-    var top = box.y + ah + 8, sh = (box.h - ah - 8) / Math.max(1, msgs.length);
+    // 밝은 테마: 받은 뒤 되돌려 보내는 참여자는 그동안 활성 막대(폭 12). 강조 구간 안이면 강조색
+    var bars = {}, my = function (i) { return top + (i + 1) * sh - 10; };
+    if (th.light) actors.forEach(function (a) {
+      var f = -1, l = -1;
+      msgs.forEach(function (m, i) { if (m.to === a.name && f < 0) f = i; if (m.from === a.name && m.back) l = i; });
+      if (f < 0 || l <= f) return;
+      bars[a.name] = [f, l];
+      var hot = mk && f >= mk.from && l <= mk.to;
+      prims.push({ k: 'rect', x: at[a.name] - 6, y: my(f) - 4, w: 12, h: my(l) - my(f) + 8, r: 2, fill: hot ? th.accent : th.bg, stroke: hot ? th.accent : th.muted, sw: 1, step: f + 1 });
+    });
+    var off = function (name, i) { var b = bars[name]; return b && i >= b[0] && i <= b[1] ? 6 : 0; };
     msgs.forEach(function (m, i) {
       var x1 = at[m.from], x2 = at[m.to], slot = 'messages[' + i + ']';
       if (x1 == null || x2 == null) { errors.push({ slot: slot, msg: '없는 참여자: ' + (x1 == null ? m.from : m.to) }); return; }
       if (x1 === x2) { errors.push({ slot: slot, msg: '보내는 쪽과 받는 쪽이 같습니다' }); return; }
       var y = top + (i + 1) * sh - 10, dir = x2 > x1 ? 1 : -1;
-      prims.push({ k: 'line', x1: x1 + dir * 3, y1: y, x2: x2 - dir * 3, y2: y, stroke: m.back ? th.muted : th.ink, sw: 2, dash: !!m.back, arrow: 'end', step: i + 1 });
+      prims.push({ k: 'line', x1: x1 + dir * (3 + off(m.from, i)), y1: y, x2: x2 - dir * (3 + off(m.to, i)), y2: y, stroke: m.back ? th.muted : th.ink, sw: 2, dash: !!m.back, arrow: 'end', head: th.head, step: i + 1 });
       var w = Math.abs(x2 - x1) - 16, p = fitH(S.textBox({ x: Math.min(x1, x2) + 8, y: 0, w: w, text: m.text, size: 12, color: m.back ? th.muted : th.ink, align: 'center', step: i + 1 }, th, errors, slot + '.text'), th);
       p.y = y - 5 - p.h; prims.push(p);
     });
@@ -715,8 +774,8 @@
   };
 
   // 조각 배치: 본문을 비율 상자(at: [x, y, w, h], 0~1)로 나눠 조각 1~4개를 놓는다
-  // 조각은 다이어그램({ diagram: 용어 id, 그 다이어그램 칸..., bg, label: { name, one } }) 또는 판({ panel })
-  // panel: { head, one, mark, flow(항목 사이 화살표), items: [글 | { name, one, mark }], rows: [[이름, 값]], split, note }
+  // 조각은 다이어그램({ diagram: 용어 id, 그 다이어그램 칸..., bg, label: { name, one }, cap(위 설명 한 줄) }) 또는 판({ panel })
+  // panel: { head, one, mark, tone('warn'이면 제목을 주의색), flow(항목 사이 화살표), items: [글 | { name, one, mark }], rows: [[이름, 값]], split, note }
   S.layouts.parts = {
     slots: { eyebrow: '1줄', title: '1줄', takeaway: '1줄', parts: '조각 1~4개', notes: '자유' },
     build: function (s, th, page) {
@@ -733,6 +792,7 @@
   function partDiagram(p, bx, th, e) {
     var out = [], box = bx, D = S.diagrams[p.diagram];
     if (p.bg) { out.push({ k: 'rect', x: bx.x, y: bx.y, w: bx.w, h: bx.h, r: 6, fill: th.panel }); box = { x: bx.x + 20, y: bx.y + 16, w: bx.w - 40, h: bx.h - 32 }; }
+    if (p.cap) { out.push(S.textBox({ x: box.x, y: box.y, w: box.w, text: p.cap, size: 12, color: th.muted }, th, e, 'cap')); box = { x: box.x, y: box.y + 30, w: box.w, h: box.h - 30 }; }
     if (p.label) {
       var lw = 150, a = fitH(S.textBox({ x: box.x, y: 0, w: lw, text: p.label.name, size: 13.5, weight: 700 }, th, e, 'label.name'), th);
       var c = p.label.one ? fitH(S.textBox({ x: box.x, y: 0, w: lw, text: p.label.one, size: 12, color: th.muted, max: 3 }, th, e, 'label.one'), th) : null;
@@ -748,30 +808,37 @@
   function panel(o, bx, th, e) {
     var out = [], mk = o.mark, pad = 20, x = bx.x + pad, w = bx.w - 2 * pad, y = bx.y + 18, sm = 12 * th.lh * PX;
     out.push({ k: 'rect', x: bx.x, y: bx.y, w: bx.w, h: bx.h, r: 6, fill: mk ? th.accentSoft : th.panel, stroke: mk ? th.accent : undefined, sw: 1.5 });
-    if (o.head) { var hb = fitH(S.textBox({ x: x, y: y, w: w, text: o.head, size: 13.5, weight: 700, color: mk ? th.accent : th.ink, max: 2 }, th, e, 'head'), th); out.push(hb); y += hb.h + 4; }
-    if (o.one) { var ob = fitH(S.textBox({ x: x, y: y, w: w, text: o.one, size: 12, color: th.muted, max: 2 }, th, e, 'one'), th); out.push(ob); y += ob.h; }
+    if (o.head) { var hb = fitH(S.textBox({ x: x, y: y, w: w, text: o.head, size: 13.5, weight: 700, color: mk ? th.accent : o.tone === 'warn' && th.warn ? th.warn : th.ink, max: 2 }, th, e, 'head'), th); out.push(hb); y += hb.h + 4; }
+    // 강조 판의 one은 판이 묻는 질문이라 크게 쓴다
+    if (o.one) { var ob = fitH(S.textBox({ x: x, y: y + (mk ? 6 : 0), w: w, text: o.one, size: mk ? 15 : 12, weight: mk ? 700 : 400, color: mk ? th.ink : th.muted, max: 2 }, th, e, 'one'), th); out.push(ob); y += ob.h + (mk ? 12 : 0); }
     y += 12;
     var noteH = o.note ? Math.ceil(2 * sm) + 12 : 0, bottom = bx.y + bx.h - 18 - noteH;
     if (o.items) {
-      var n = o.items.length, g = o.flow ? 24 : 10, ih = Math.min(o.flow ? 66 : 52, (bottom - y - g * (n - 1)) / n);
+      var n = o.items.length, g = o.flow ? 24 : th.light ? 16 : 10, ih = Math.min(o.flow ? 66 : th.light ? 76 : 52, (bottom - y - g * (n - 1)) / n);
       o.items.forEach(function (it, i) {
         it = typeof it === 'string' ? { name: it } : it;
         var iy = y + i * (ih + g), sl = 'items[' + i + ']', big = o.flow || it.one, bold = it.one || it.mark;
         out.push({ k: 'rect', x: x, y: iy, w: w, h: ih, r: 4, fill: it.mark ? th.accentSoft : th.bg, stroke: it.mark ? th.accent : th.line, sw: 1 });
         if (it.one) out = out.concat(nodeText({ name: it.name, one: it.one }, x + 12, iy, w - 24, ih, th, e, sl));
         else out.push(S.textBox({ x: x + 16, y: iy, w: w - 32, h: ih, text: it.name, size: big ? 13.5 : 12, weight: bold ? 700 : 400, align: o.flow ? 'center' : 'left', valign: 'middle' }, th, e, sl));
-        if (o.flow && i < n - 1) out.push({ k: 'line', x1: x + w / 2, y1: iy + ih + 3, x2: x + w / 2, y2: iy + ih + g - 3, stroke: th.muted, sw: 1.5, arrow: 'end' });
+        if (o.flow && i < n - 1) out.push({ k: 'line', x1: x + w / 2, y1: iy + ih + 3, x2: x + w / 2, y2: iy + ih + g - 3, stroke: th.muted, sw: 1.5, arrow: 'end', head: th.head });
       });
     } else if (o.rows) {
-      var rh = Math.min(44, (bottom - y) / Math.max(1, o.rows.length)), kw = w * (o.split || 0.36);
+      var rh = Math.min(th.light ? 60 : 44, (bottom - y) / Math.max(1, o.rows.length)), kw = w * (o.split || 0.36);
       o.rows.forEach(function (r, i) {
-        var ry = y + i * rh, sl = 'rows[' + i + ']';
-        out.push({ k: 'line', x1: x, y1: ry, x2: x + w, y2: ry, stroke: th.line, sw: 1 });
-        out.push(S.textBox({ x: x, y: ry, w: kw - 12, h: rh, text: r[0], size: 12, color: th.muted, valign: 'middle' }, th, e, sl + '[0]'));
-        out.push(S.textBox({ x: x + kw, y: ry, w: w - kw, h: rh, text: r[1], size: 12, valign: 'middle', max: rh > 40 ? 2 : 1 }, th, e, sl + '[1]'));
+        var ry = y + i * rh, sl = 'rows[' + i + ']', ch = rh, ci = 0;
+        // 밝은 테마는 줄마다 흰 칸(사이 8px), 아니면 줄 위에 선
+        if (th.light) { ch = rh - 8; ci = 14; out.push({ k: 'rect', x: x, y: ry, w: w, h: ch, r: 4, fill: th.bg, stroke: th.line, sw: 1 }); }
+        else out.push({ k: 'line', x1: x, y1: ry, x2: x + w, y2: ry, stroke: th.line, sw: 1 });
+        out.push(S.textBox({ x: x + ci, y: ry, w: kw - 12 - ci, h: ch, text: r[0], size: 12, color: th.muted, valign: 'middle' }, th, e, sl + '[0]'));
+        out.push(S.textBox({ x: x + kw, y: ry, w: w - kw - ci, h: ch, text: r[1], size: 12, valign: 'middle', max: ch > 40 ? 2 : 1 }, th, e, sl + '[1]'));
       });
     }
-    if (o.note) out.push(S.textBox({ x: x, y: bx.y + bx.h - 18 - noteH + 12, w: w, text: o.note, size: 12, color: th.muted, max: 2 }, th, e, 'note'));
+    if (o.note) {
+      var ny = bx.y + bx.h - 18 - noteH + 12;
+      out.push({ k: 'line', x1: x, y1: ny - 8, x2: x + w, y2: ny - 8, stroke: th.line, sw: 1 });
+      out.push(S.textBox({ x: x, y: ny, w: w, text: o.note, size: 12, color: th.muted, max: 2 }, th, e, 'note'));
+    }
     return out;
   }
 
@@ -815,8 +882,8 @@
         var sw = p.sw || 1, head = '';
         var heads = p.arrow === 'both' ? [[p.x1, p.y1, p.x2, p.y2], [p.x2, p.y2, p.x1, p.y1]] : p.arrow === 'end' ? [[p.x1, p.y1, p.x2, p.y2]] : [];
         heads.forEach(function (a) {
-          // 화살촉: 선 굵기의 3배(PowerPoint 중간 크기와 같은 비율로 잡음)
-          var ang = Math.atan2(a[3] - a[1], a[2] - a[0]), L = Math.max(sw * 3, 6), W = L / 2;
+          // 화살촉: 선 굵기의 3배(PowerPoint 중간 크기와 같은 비율로 잡음). 도형에 head가 있으면 그 길이
+          var ang = Math.atan2(a[3] - a[1], a[2] - a[0]), L = p.head || Math.max(sw * 3, 6), W = L / 2;
           var bx = a[2] - Math.cos(ang) * L, by = a[3] - Math.sin(ang) * L;
           head += '<path d="M' + n2(a[2]) + ' ' + n2(a[3]) + 'L' + n2(bx - Math.sin(ang) * W) + ' ' + n2(by + Math.cos(ang) * W) + 'L' + n2(bx + Math.sin(ang) * W) + ' ' + n2(by - Math.cos(ang) * W) + 'Z" fill="' + p.stroke + '"/>';
         });
