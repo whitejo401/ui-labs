@@ -1,5 +1,6 @@
 /* 조합 화면: 덱. recipes.json에서 slides가 있는 항목마다 UI.screens[id]로 등록한다 (UI.deckScreens(recipes))
-   장 목록 → slides.js 배치 함수 → SVG 미리보기. 같은 도형 목록으로 .pptx를 내려받는다(slides-pptx.js)
+   장 목록 → slides.js 배치 함수 → SVG 미리보기. 같은 도형 목록으로 .pptx(slides-pptx.js), 같은 덱으로 목차 있는 HTML 문서(slides-doc.js)를 내려받는다
+   테마는 레시피의 theme(없으면 paper)
    UI.screens[id](뿌리 요소, { termName(id), openTerm(id), onLabels(보이는 id들) }) → { setLabels, demo, destroy } */
 (function () {
   var UI = window.UI = window.UI || {};
@@ -7,7 +8,7 @@
   var esc = UI.esc, S = UI.slide;
 
   function deck(r, root, opt) {
-    var th = S.themes.paper, mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    var th = S.themes[r.theme] || S.themes.paper, mq = window.matchMedia('(prefers-reduced-motion: reduce)');
     var st = { i: 0, labels: false }, built = [], raf = null, tm = null, alive = true;
     var D = { id: r.id, name: r.name, slides: r.slides };
     root.innerHTML =
@@ -16,7 +17,7 @@
         '<div class="dk-main">' +
           '<div class="dk-bar"><button type="button" class="u-btn" data-act="prev" aria-label="이전 장">‹ 이전</button><span class="num" id="dk-num" aria-live="polite"></span>' +
             '<button type="button" class="u-btn" data-act="next" aria-label="다음 장">다음 ›</button><span style="flex:1"></span>' +
-            '<button type="button" class="u-btn" data-act="json">입력 JSON 복사</button><button type="button" class="u-btn primary" data-act="pptx">.pptx 내려받기</button></div>' +
+            '<button type="button" class="u-btn" data-act="json">입력 JSON 복사</button><button type="button" class="u-btn" data-act="doc">HTML 문서 내려받기</button><button type="button" class="u-btn primary" data-act="pptx">.pptx 내려받기</button></div>' +
           '<p class="dk-bar"><span class="st" id="dk-st" role="status"></span></p>' +
           '<div class="dk-stage" id="dk-stage"></div>' +
           '<div class="dk-notes" data-term="speaker-notes"><b>발표자 노트 · 청중에게는 안 보임</b><p id="dk-notes"></p></div>' +
@@ -93,6 +94,14 @@
           S.pptx(D, th).then(function () { status('내려받았습니다: ' + D.id + '.pptx (장 ' + built.length + '개, 발표자 노트 포함)'); }, function (err) {
             status(Array.isArray(err) ? '제한을 넘은 칸이 있어 만들지 않았습니다: ' + err.map(function (x) { return x.slide + '장 ' + x.slot + ' ' + x.msg; }).join(' · ') : err.message, true);
           });
+          break;
+        case 'doc':
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(new Blob([S.doc(D, th)], { type: 'text/html' }));
+          a.download = D.id + '.html';
+          document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+          status('내려받았습니다: ' + D.id + '.html (장마다 절 하나, 맨 위에 목차)');
           break;
       }
     });

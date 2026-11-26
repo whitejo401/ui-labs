@@ -603,7 +603,7 @@
   // now는 지금 하는 일(강조 막대), dash는 아직 일정에 없는 일(점선 막대), note는 막대 오른쪽 글
   // solid: 이름 칸 바탕 없이, 막대를 바탕색으로 채우고 높게, 글은 왼쪽 맞춤, 열 머리는 보통 굵기
   // { cols: ['1~2주', ...], span: [2, 4, ...], rows: [{ name, one, from, to, text, note, now, dash }], solid }
-  S.diagrams['gantt-diagram'] = function (d, box, th) {
+  S.diagrams['gantt-chart'] = function (d, box, th) {
     var errors = [], prims = [], cols = d.cols || [], rows = d.rows || [];
     count(cols, 2, 8, 'cols', errors); count(rows, 2, 6, 'rows', errors);
     var span = d.span || cols.map(function () { return 1; }), tot = span.reduce(function (a, b) { return a + b; }, 0) || 1;
@@ -611,7 +611,7 @@
     span.forEach(function (v) { xs.push(xs[xs.length - 1] + gw * v / tot); });
     var rh = (box.h - hh) / Math.max(1, rows.length);
     var so = d.solid;
-    prims.push({ k: 'rect', x: box.x, y: box.y, w: nw - 16, h: box.h, r: 6, fill: so ? th.bg : th.panel, term: 'gantt-diagram' });
+    prims.push({ k: 'rect', x: box.x, y: box.y, w: nw - 16, h: box.h, r: 6, fill: so ? th.bg : th.panel, term: 'gantt-chart' });
     cols.forEach(function (c, i) {
       prims.push(S.textBox({ x: xs[i], y: box.y, w: xs[i + 1] - xs[i], h: hh, text: c, size: 12, weight: so ? 400 : 700, color: th.muted, align: 'center', valign: 'middle' }, th, errors, 'cols[' + i + ']'));
     });
@@ -773,8 +773,9 @@
     }
     xs.forEach(function (t, i) { prims.push(S.textBox({ x: X(i) - slot / 2, y: py + ph + 8, w: slot, h: 26, text: t, size: 12, color: th.muted, align: 'center', valign: 'middle' }, th, errors, 'x[' + i + ']')); });
     if (d.target) {
-      prims.push({ k: 'line', x1: px, y1: Y(d.target.value), x2: px + pw, y2: Y(d.target.value), stroke: th.ink, sw: 1.5, dash: true, term: 'reference-line' });
-      if (d.target.text) prims.push(tb({ x: px + 8, y: Y(d.target.value) - 26, w: 160, text: d.target.text, size: 12 }, th, errors, 'target.text'));
+      prims.push({ k: 'line', x1: px, y1: Y(d.target.value), x2: px + pw, y2: Y(d.target.value), stroke: th.ink, sw: 1.5, dash: true, term: d.target.text ? undefined : 'reference-line' });
+      // 용어 보기는 높이 0인 가로선을 못 감싸므로 글이 있으면 글에 붙인다
+      if (d.target.text) prims.push(tb({ x: px + 8, y: Y(d.target.value) - 26, w: 160, text: d.target.text, size: 12, term: 'reference-line' }, th, errors, 'target.text'));
     }
     var ends = [];
     ser.forEach(function (s, k) {
@@ -1014,6 +1015,8 @@
     if (!D) { e.push({ slot: 'diagram', msg: '없는 다이어그램 ' + p.diagram }); return out; }
     var r = D(p, box, th);
     e.push.apply(e, r.errors);
+    // 용어 보기: 다이어그램에 그 용어 표시가 없으면 첫 도형에 붙인다
+    if (r.prims[0] && !r.prims[0].term && !r.prims.some(function (q) { return q.term === p.diagram; })) r.prims[0].term = p.diagram;
     return out.concat(r.prims);
   }
   function panel(o, bx, th, e) {
@@ -1078,7 +1081,7 @@
     return out;
   }
 
-  S.layouts.gantt = diagramLayout('gantt-diagram', ['cols', 'span', 'rows']);
+  S.layouts.gantt = diagramLayout('gantt-chart', ['cols', 'span', 'rows']);
 
   // 덱의 장 하나를 만든다. 오류에는 몇째 장인지 붙인다
   S.build = function (slide, i, theme) {

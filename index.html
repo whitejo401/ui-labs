@@ -329,7 +329,7 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
 
   </div>
   <section id="screensview" class="screensview" hidden></section>
-  <footer>용어 <span id="total"></span>개 · 데이터는 <code>terms.json</code>, 조합 화면은 <code>recipes.json</code>입니다. 용어마다 움직이는 예시가 있고, 조합 화면은 9개입니다. 업무 화면 5개가 업무 화면 용어 62개를 한 번씩 쓰고, 제품 소개 랜딩이 소개·랜딩 효과를, 분석·보고서가 1차 차트 용어 32개를 모두 엮고, 데이터 스토리가 스크롤 글 한 편에 차트 2차 용어를 엮고, 설명·발표 덱이 다이어그램과 슬라이드 용어로 .pptx까지 만듭니다. 코드는 MIT, 글은 CC BY 4.0 · <a href="https://github.com/whitejo401/ui-labs">GitHub</a> · <a href="llms.txt">llms.txt</a></footer>
+  <footer>용어 <span id="total"></span>개 · 데이터는 <code>terms.json</code>, 조합 화면은 <code>recipes.json</code>입니다. 용어마다 움직이는 예시가 있고, 조합 화면은 10개입니다. 업무 화면 5개가 업무 화면 용어 62개를 한 번씩 쓰고, 제품 소개 랜딩이 소개·랜딩 효과를, 분석·보고서가 1차 차트 용어 32개를 모두 엮고, 데이터 스토리가 스크롤 글 한 편에 차트 2차 용어를 엮고, 설명·발표 덱이 다이어그램과 슬라이드 용어로, 보고서 덱이 차트·표 용어로 .pptx와 HTML 문서까지 만듭니다. 코드는 MIT, 글은 CC BY 4.0 · <a href="https://github.com/whitejo401/ui-labs">GitHub</a> · <a href="llms.txt">llms.txt</a></footer>
 
 <div class="scr-labels" id="pg-labels" hidden></div>
 <div class="scr-labels" id="pg-labels-fix" hidden></div>
@@ -351,6 +351,7 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
 <script src="screen-data-story.js"></script>
 <script src="slides.js"></script>
 <script src="slides-pptx.js"></script>
+<script src="slides-doc.js"></script>
 <script src="screen-deck.js"></script>
 <script>
 (function () {
@@ -920,9 +921,9 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
     var r = RECIPES.filter(function (x) { return x.id === screenId; })[0];
     if (!r) return;
     var names = r.terms.map(function (id) { return BY_ID[id].name; }).sort(function (a, b) { return b.length - a.length; });
-    var promptHtml = esc(r.prompt);
-    names.forEach(function (n) { promptHtml = promptHtml.split(esc(n)).join('\u0000' + n + '\u0001'); });
-    promptHtml = promptHtml.replace(/\u0000/g, '<span class="slot what">').replace(/\u0001/g, '</span>');
+    // 긴 이름부터 한 번에 찾아 감싼다(Stacked Bar Chart 안의 Bar Chart를 또 감싸지 않게)
+    var promptHtml = esc(r.prompt).replace(new RegExp(names.map(function (n) { return esc(n).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|'), 'g'),
+      function (m) { return '<span class="slot what">' + m + '</span>'; });
     $('screensview').innerHTML =
       '<p class="lead">용어 여러 개를 엮어 만든 화면입니다. 실제로 눌러 볼 수 있습니다. "용어 보기"를 켜면 부품마다 용어 이름이 붙고, 이름을 누르면 그 용어 카드가 열립니다.</p>' +
       '<div class="scbar">' + RECIPES.map(function (x) {
