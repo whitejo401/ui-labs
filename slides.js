@@ -19,6 +19,19 @@
       c4: { person: '#22466b', main: '#2f5d8a', app: '#4a78a6', ext: '#6b7077' },   // 흰 글자와 대비 4.5:1 이상
       lh: 1.3,                    // 줄 간격(글자 크기의 배수). .pptx에도 같은 값을 pt로 적는다
       slack: 0.9                  // 제한 검사는 이 비율로 좁힌 폭으로 한다(맑은 고딕으로 바뀌어도 들어가게)
+    },
+    // 보고서: 블라인드 비교 2회차에서 이긴 꼴(화면으로 읽기). 머리말·한 줄 제목·짙은 결론 띠 틀, 흰 상자와 선, 강조색 하나
+    report: {
+      name: '보고서', font: 'Noto Sans KR',
+      bg: '#ffffff', ink: '#111827', muted: '#4b5563', line: '#d9dee5', panel: '#f3f5f8',
+      accent: '#1d4ed8', accentSoft: '#e6edfc', band: '#0f1e3d',
+      sets: ['#6b7280', '#1d4ed8', '#b45309'],
+      c4: { person: '#22466b', main: '#2f5d8a', app: '#4a78a6', ext: '#6b7077' },
+      light: true,                // 상자를 흰 바탕과 선으로(looks)
+      frame: { eyebrow: 11.25, title: 22.5 },   // 머리말 15px, 제목 30px 한 줄
+      node: { name: 13.5, tech: 12, label: 12 }, // 상자 이름 18px, 기술·화살표 글 16px
+      scale: 0.82,                // 벤 글자를 이만큼 줄인다
+      lh: 1.3, slack: 0.9
     }
   };
 
@@ -115,15 +128,15 @@
       prims.push({ k: 'ellipse', x: c[0] - R, y: c[1] - R, w: D, h: D, fill: col, alpha: 0.16, stroke: col, sw: 2.5, term: i ? undefined : 'venn-diagram', step: i });
       var dx = c[0] - cx, dy = c[1] - cy, len = Math.hypot(dx, dy) || 1;
       var px = c[0] + dx / len * R * push, py = c[1] + dy / len * R * push;
-      var nameSize = three ? 18 : 22, oneSize = three ? 13 : 15;
-      var nh = nameSize * th.lh * PX, oh = s.one ? oneSize * th.lh * PX * 2 : 0;
+      var k = th.scale || 1, nameSize = (three ? 18 : 22) * k, oneSize = (three ? 13 : 15) * k;
+      var nh = nameSize * th.lh * PX + (th.light ? 4 : 0), oh = s.one ? oneSize * th.lh * PX * 2 : 0;
       var top = py - (nh + oh) / 2;
       prims.push(S.textBox({ x: px - lw / 2, y: top, w: lw, text: s.name, size: nameSize, weight: 700, color: col, align: 'center', step: i }, th, errors, 'sets[' + i + '].name'));
       if (s.one) prims.push(S.textBox({ x: px - lw / 2, y: top + nh, w: lw, text: s.one, size: oneSize, color: th.ink, align: 'center', max: 2, step: i }, th, errors, 'sets[' + i + '].one'));
     });
     if (d.overlap) {
       var ow = three ? R * 0.62 : (2 * R - 2 * off) * 0.86;
-      var osz = three ? 13 : 15;
+      var osz = (three ? 13 : 15) * (th.scale || 1);
       var ocy = cy + sy;
       var oh2 = osz * th.lh * PX * 3;
       prims.push(S.textBox({ x: cx - ow / 2, y: ocy - oh2 / 2, w: ow, h: oh2, text: d.overlap, size: osz, weight: 700, align: 'center', valign: 'middle', max: 3, step: sets.length }, th, errors, 'overlap'));
@@ -136,6 +149,7 @@
     var errors = [], prims = [];
     var layers = d.layers || [];
     count(layers, 3, 5, 'layers', errors);
+    if (d.head) return layerTable(d, layers, box, th, errors);
     var n = Math.max(1, layers.length), gap = 30;
     var lh = (box.h - gap * (n - 1)) / n;
     var nameW = 300, pad = 28;
@@ -153,10 +167,43 @@
     return { prims: prims, errors: errors };
   };
 
+  // 층 구조 표: 층마다 한 줄, 칸은 head(첫 칸은 층 이름). 층 사이 화살표 옆에 call(부르는 방식). mark면 강조 줄
+  // { head: ['층', '하는 일', ...], widths: [비율...], call, layers: [{ name, cells: [...], mark }] }
+  function layerTable(d, layers, box, th, errors) {
+    var prims = [], n = Math.max(1, layers.length), hh = 30, gap = 28, pad = 20;
+    var ws = d.widths || d.head.map(function () { return 1; }), tot = ws.reduce(function (a, b) { return a + b; }, 0), xs = [box.x];
+    ws.forEach(function (v) { xs.push(xs[xs.length - 1] + box.w * v / tot); });
+    var rh = (box.h - hh - gap * (n - 1)) / n;
+    d.head.forEach(function (t, j) { prims.push(S.textBox({ x: xs[j] + pad, y: box.y, w: xs[j + 1] - xs[j] - 2 * pad, h: hh, text: t, size: 12, color: th.muted, valign: 'middle' }, th, errors, 'head[' + j + ']')); });
+    layers.forEach(function (L, i) {
+      var y = box.y + hh + i * (rh + gap), sl = 'layers[' + i + ']';
+      prims.push({ k: 'rect', x: box.x, y: y, w: box.w, h: rh, r: 6, fill: L.mark ? th.accentSoft : th.panel, stroke: L.mark ? th.accent : undefined, sw: 1.5, step: i, term: i ? undefined : 'layered-architecture-diagram' });
+      [L.name].concat(L.cells || []).forEach(function (t, j) {
+        if (j >= d.head.length) return;
+        prims.push(S.textBox({ x: xs[j] + pad, y: y, w: xs[j + 1] - xs[j] - 2 * pad, h: rh, text: t, size: j ? 12 : 13.5, weight: j ? 400 : 700, color: L.mark && j === d.head.length - 1 ? th.accent : th.ink, valign: 'middle', max: j ? 2 : 1, step: i }, th, errors, j ? sl + '.cells[' + (j - 1) + ']' : sl + '.name'));
+      });
+      if (i < n - 1) {
+        var ax = box.x + 40;
+        prims.push({ k: 'line', x1: ax, y1: y + rh + 3, x2: ax, y2: y + rh + gap - 3, stroke: th.muted, sw: 1.5, arrow: 'end', step: i + 1 });
+        if (d.call) prims.push(S.textBox({ x: ax + 12, y: y + rh, w: 400, h: gap, text: d.call, size: 12, color: th.muted, valign: 'middle', step: i + 1 }, th, errors, 'call'));
+      }
+    });
+    return { prims: prims, errors: errors };
+  }
+
   /* ───── 상자·화살표·범례 공통 ─────
      상자 꼴(look): plain 보통, mark 강조(점선 테두리), main C4 내 시스템, app C4 컨테이너, store 저장소(원통), ext 바깥 시스템, person 사람 */
   function looks(th) {
     var c = th.c4;
+    if (th.light) return {
+      plain: { fill: th.bg, stroke: th.line, ink: th.ink, sub: th.muted },
+      mark: { fill: th.accentSoft, stroke: th.accent, ink: th.ink, sub: th.muted, dash: true },
+      main: { fill: th.accentSoft, stroke: th.accent, ink: th.ink, sub: th.muted },
+      app: { fill: th.bg, stroke: th.accent, ink: th.ink, sub: th.muted },
+      store: { fill: th.bg, stroke: th.accent, ink: th.ink, sub: th.muted },
+      ext: { fill: th.panel, stroke: th.line, ink: th.ink, sub: th.muted },
+      person: { fill: th.bg, stroke: th.ink, ink: th.ink, sub: th.muted }
+    };
     return {
       plain: { fill: th.panel, stroke: th.line, ink: th.ink, sub: th.muted },
       mark: { fill: th.accentSoft, stroke: th.accent, ink: th.ink, sub: th.muted, dash: true },
@@ -179,21 +226,31 @@
       top = y + Math.min(w, h) / 4;
     } else {
       prims.push({ k: 'rect', x: x, y: y, w: w, h: h, r: n.look === 'person' ? 22 : 8, fill: lk.fill, stroke: lk.stroke, sw: lk.dash ? 2 : 1.5, dash: lk.dash, step: step, term: term });
-      if (n.look === 'person') { prims.push({ k: 'ellipse', x: x + w / 2 - 16, y: y - 26, w: 32, h: 32, fill: lk.fill, stroke: th.bg, sw: 3, step: step }); top = y + 6; }
+      if (n.look === 'person' && !th.light) { prims.push({ k: 'ellipse', x: x + w / 2 - 16, y: y - 26, w: 32, h: 32, fill: lk.fill, stroke: th.bg, sw: 3, step: step }); top = y + 6; }
     }
-    var parts = [S.textBox({ x: x + pad, y: 0, w: w - 2 * pad, text: n.name, size: 16, weight: 700, color: lk.ink, align: 'center', step: step }, th, errors, slot + '.name')];
-    if (n.tech) parts.push(S.textBox({ x: x + pad, y: 0, w: w - 2 * pad, text: '[' + n.tech + ']', size: 11, color: lk.sub, align: 'center', step: step }, th, errors, slot + '.tech'));
+    var ns = th.node || { name: 16, tech: 11 };
+    var parts = [S.textBox({ x: x + pad, y: 0, w: w - 2 * pad, text: n.name, size: ns.name, weight: 700, color: lk.ink, align: 'center', step: step }, th, errors, slot + '.name')];
+    if (n.tech) parts.push(S.textBox({ x: x + pad, y: 0, w: w - 2 * pad, text: '[' + n.tech + ']', size: ns.tech, color: lk.sub, align: 'center', step: step }, th, errors, slot + '.tech'));
     if (n.one) parts.push(S.textBox({ x: x + pad, y: 0, w: w - 2 * pad, text: n.one, size: 12, color: lk.sub, align: 'center', max: 2, step: step }, th, errors, slot + '.one'));
     // 세로 가운데는 최대 줄 수로 잡는다. 글꼴이 바뀌어 설명이 두 줄이 돼도 상자 안에 든다
     var total = roomy(parts.map(function (p) { p.h = 0; return p; }), th).reduce(function (a, p) { return a + p.h; }, 0) + 2 * (parts.length - 1), cy = top + (y + h - top - total) / 2;
+    if (n.parts) cy = top + 16;     // 안쪽 줄이 있으면 이름은 위에 붙인다
     parts.forEach(function (p) { p.y = cy; cy += p.h + 2; prims.push(p); });
+    // 안쪽 구성 요소: 이름(왼쪽)과 기술(오른쪽) 한 줄씩 흰 칸에
+    (n.parts || []).forEach(function (q, i) {
+      var ry = cy + 14 + i * 48, sl = slot + '.parts[' + i + ']';
+      prims.push({ k: 'rect', x: x + 16, y: ry, w: w - 32, h: 40, r: 4, fill: th.bg, stroke: th.line, sw: 1, step: step });
+      prims.push(S.textBox({ x: x + 28, y: ry, w: (w - 56) * 0.63, h: 40, text: q.name, size: 12, valign: 'middle' }, th, errors, sl + '.name'));
+      if (q.tech) prims.push(S.textBox({ x: x + 28 + (w - 56) * 0.63, y: ry, w: (w - 56) * 0.37, h: 40, text: q.tech, size: 12, color: th.muted, align: 'right', valign: 'middle' }, th, errors, sl + '.tech'));
+    });
     return prims;
   }
   // 화살표 글: 선 가운데에 바탕색 띠를 깔고 얹는다. above면 선 위에 놓는다
   function linkLabel(text, mx, my, w, above, th, errors, slot, step) {
-    var p = fitH(S.textBox({ x: mx - w / 2, y: 0, w: w, text: text, size: 11, color: th.muted, align: 'center', max: 2, step: step }, th, errors, slot), th);
+    var ls = th.node ? th.node.label : 11;
+    var p = fitH(S.textBox({ x: mx - w / 2, y: 0, w: w, text: text, size: ls, color: th.muted, align: 'center', max: 2, step: step }, th, errors, slot), th);
     p.y = above ? my - 6 - p.h : my - p.h / 2;
-    var lw = Math.min(w, Math.max.apply(null, p.lines.map(function (l) { return S.measure(l, 11, 400, th.font); }))) + 12;
+    var lw = Math.min(w, Math.max.apply(null, p.lines.map(function (l) { return S.measure(l, ls, 400, th.font); }))) + 12;
     return [{ k: 'rect', x: mx - lw / 2, y: p.y - 2, w: lw, h: p.h + 4, fill: th.bg, step: step }, roomy([p], th)[0]];
   }
   // 상자 중심에서 상대 쪽으로 그은 선이 상자 테두리(+틈)와 만나는 점
@@ -206,20 +263,21 @@
   // o: { w, h(상자 최대), gapX, gapY, slot, linkSlot, term }
   function graph(nodes, links, box, th, errors, o) {
     var prims = [], pos = {}, cols = 1, rows = 1;
-    nodes.forEach(function (n) { cols = Math.max(cols, Math.ceil((n.col || 0) + 1)); rows = Math.max(rows, Math.ceil((n.row || 0) + 1)); });
+    nodes.forEach(function (n) { cols = Math.max(cols, Math.ceil((n.col || 0) + 1)); rows = Math.max(rows, Math.ceil((n.row || 0) + (n.span || 1))); });
     var cw = box.w / cols, ch = box.h / rows;
     var w = Math.min(cw - (o.gapX || 90), o.w || 260), h = Math.min(ch - (o.gapY || 70), o.h || 110);
     nodes.forEach(function (n, i) {
-      var cx = box.x + ((n.col || 0) + 0.5) * cw, cy = box.y + ((n.row || 0) + 0.5) * ch;
-      pos[n.name] = { cx: cx, cy: cy, i: i, x: cx - w / 2, y: cy - h / 2, w: w, h: h, look: n.look };
-      prims = prims.concat(nodeBox(n, cx - w / 2, cy - h / 2, w, h, th, errors, o.slot + '[' + i + ']', i, i ? undefined : o.term));
+      var nh = n.span ? n.span * ch - (o.gapY || 70) : h;
+      var cx = box.x + ((n.col || 0) + 0.5) * cw, cy = box.y + ((n.row || 0) + (n.span || 1) / 2) * ch;
+      pos[n.name] = { cx: cx, cy: cy, i: i, x: cx - w / 2, y: cy - nh / 2, w: w, h: nh, look: n.look };
+      prims = prims.concat(nodeBox(n, cx - w / 2, cy - nh / 2, w, nh, th, errors, o.slot + '[' + i + ']', i, i ? undefined : o.term));
     });
     // 화살표는 직각으로만 꺾는다. 같은 줄이면 가로 직선, 줄이 겹치지 않으면 세로-가로-세로, 아니면 가로-세로-가로
     var L = [], side = {};
     (links || []).forEach(function (l, i) {
       var a = pos[l.from], b = pos[l.to], slot = (o.linkSlot || 'links') + '[' + i + ']';
       if (!a || !b) { errors.push({ slot: slot, msg: '없는 상자 이름: ' + (a ? l.to : l.from) }); return; }
-      var v = Math.abs(a.cy - b.cy) >= 1 && (a.y + h <= b.y || b.y + h <= a.y);
+      var v = !o.horiz && Math.abs(a.cy - b.cy) >= 1 && (a.y + a.h <= b.y || b.y + b.h <= a.y);
       var q = { l: l, a: a, b: b, slot: slot, v: v, flat: Math.abs(a.cy - b.cy) < 1 };
       q.sa = v ? (b.cy > a.cy ? 'b' : 't') : (b.cx > a.cx ? 'r' : 'l');
       q.sb = { b: 't', t: 'b', r: 'l', l: 'r' }[q.sa];
@@ -239,7 +297,7 @@
     L.forEach(function (q) {
       var a = q.a, b = q.b, l = q.l, step = Math.max(a.i, b.i), pts, mid;
       if (q.flat) {
-        var p1 = edge([a.cx, a.cy], [b.cx, b.cy], w / 2 + 8, h / 2 + 8), p2 = edge([b.cx, b.cy], [a.cx, a.cy], w / 2 + 8, h / 2 + 8);
+        var p1 = edge([a.cx, a.cy], [b.cx, b.cy], w / 2 + 8, a.h / 2 + 8), p2 = edge([b.cx, b.cy], [a.cx, a.cy], w / 2 + 8, b.h / 2 + 8);
         prims.push({ k: 'line', x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1], stroke: th.muted, sw: 2, dash: l.dash, arrow: 'end', step: step });
         if (l.label) prims = prims.concat(linkLabel(l.label, (p1[0] + p2[0]) / 2, p1[1], Math.abs(p2[0] - p1[0]) - 4, true, th, errors, q.slot + '.label', step));
         return;
@@ -253,11 +311,11 @@
       }
       if (q.v) {
         straight([a.x, a.x + w], [b.x, b.x + w]);
-        var gap = function (n, s) { return s === 't' && n.look === 'person' ? 30 : 8; };
-        var y1 = q.sa === 'b' ? a.y + h + gap(a, 'b') : a.y - gap(a, 't'), y2 = q.sb === 't' ? b.y - gap(b, 't') : b.y + h + gap(b, 'b'), my = (y1 + y2) / 2;
+        var gap = function (n, s) { return s === 't' && n.look === 'person' && !th.light ? 30 : 8; };
+        var y1 = q.sa === 'b' ? a.y + a.h + gap(a, 'b') : a.y - gap(a, 't'), y2 = q.sb === 't' ? b.y - gap(b, 't') : b.y + b.h + gap(b, 'b'), my = (y1 + y2) / 2;
         pts = Math.abs(ta - tb) < 1 ? [[ta, y1], [ta, y2]] : [[ta, y1], [ta, my], [tb, my], [tb, y2]];
       } else {
-        straight([a.y, a.y + h], [b.y, b.y + h]);
+        straight([a.y, a.y + a.h], [b.y, b.y + b.h]);
         var x1 = q.sa === 'r' ? a.x + w + 8 : a.x - 8, x2 = q.sb === 'l' ? b.x - 8 : b.x + w + 8, mx = (x1 + x2) / 2;
         pts = Math.abs(ta - tb) < 1 ? [[x1, ta], [x2, ta]] : [[x1, ta], [mx, ta], [mx, tb], [x2, tb]];
       }
@@ -326,12 +384,12 @@
   }
 
   // 상자와 화살표: 정해진 기호 규칙이 없으니 꼴마다 뜻을 범례로 밝힌다
-  // { boxes: [{ name, one, col, row, look: plain|mark }], arrows: [{ from, to, label, dash }], legend: [{ look, name }] }
+  // { boxes: [{ name, one, col, row, look: plain|mark }], arrows: [{ from, to, label, dash }], legend: [{ look, name }], gapX(상자 사이, 없으면 80) }
   S.diagrams['box-and-arrow-diagram'] = function (d, box, th) {
     var errors = [], boxes = d.boxes || [];
     count(boxes, 2, 8, 'boxes', errors);
     var area = d.legend ? { x: box.x, y: box.y, w: box.w, h: box.h - 52 } : box;
-    var g = graph(boxes, d.arrows, area, th, errors, { slot: 'boxes', linkSlot: 'arrows', term: 'box-and-arrow-diagram', w: 220, h: 104, gapX: 80 });
+    var g = graph(boxes, d.arrows, area, th, errors, { slot: 'boxes', linkSlot: 'arrows', term: 'box-and-arrow-diagram', w: 220, h: 104, gapX: d.gapX || 80 });
     var prims = g.prims;
     if (d.legend) prims = prims.concat(legend(d.legend, box.x + box.w, box.y + box.h - 40, th, errors, 'legend', boxes.length));
     return { prims: prims, errors: errors };
@@ -343,14 +401,17 @@
     var errors = [], people = d.people || [], ext = d.externals || [];
     count(people, 1, 3, 'people', errors); count(ext, 1, 4, 'externals', errors);
     if (!d.system) { errors.push({ slot: 'system', msg: '내 시스템이 없습니다' }); return { prims: [], errors: errors }; }
-    var cols = Math.max(people.length, ext.length, 1), nodes = [], links = [];
-    function row(list, r, look, tech) { list.forEach(function (n, i) { nodes.push({ name: n.name, one: n.one, tech: tech, look: look, row: r, col: (cols - list.length) / 2 + i }); }); }
+    var cols = Math.max(people.length, ext.length, 1), nodes = [], links = [], lr = d.dir === 'lr';
+    // lr: 사람은 왼쪽 열, 내 시스템은 가운데 열을 세로로 다 차지(parts로 안쪽 구성 요소), 바깥 시스템은 오른쪽 열
+    function row(list, r, look, tech) { list.forEach(function (n, i) { nodes.push(lr ? { name: n.name, one: n.one, look: look, col: r, row: (cols - list.length) / 2 + i } : { name: n.name, one: n.one, tech: tech, look: look, row: r, col: (cols - list.length) / 2 + i }); }); }
     row(people, 0, 'person', '사람');
-    nodes.push({ name: d.system.name, one: d.system.one, tech: '소프트웨어 시스템', look: 'main', row: 1, col: (cols - 1) / 2 });
+    nodes.push(lr ? { name: d.system.name, one: d.system.one, look: 'main', col: 1, row: 0, span: cols, parts: d.system.parts }
+      : { name: d.system.name, one: d.system.one, tech: '소프트웨어 시스템', look: 'main', row: 1, col: (cols - 1) / 2 });
     row(ext, 2, 'ext', '바깥 시스템');
     people.forEach(function (p) { links.push({ from: p.name, to: d.system.name, label: p.uses }); });
     ext.forEach(function (x) { links.push({ from: d.system.name, to: x.name, label: x.rel }); });
-    var g = graph(nodes, links, { x: box.x, y: box.y + 16, w: box.w, h: box.h - 16 }, th, errors, { slot: 'nodes', term: 'c4-system-context', w: 250, h: 104, gapX: 60, gapY: 40 });
+    var g = lr ? graph(nodes, links, box, th, errors, { slot: 'nodes', term: 'c4-system-context', w: 264, h: 100, gapX: 120, gapY: 24, horiz: true })
+      : graph(nodes, links, { x: box.x, y: box.y + 16, w: box.w, h: box.h - 16 }, th, errors, { slot: 'nodes', term: 'c4-system-context', w: 250, h: 104, gapX: 60, gapY: 40 });
     // 칸 이름을 입력 칸 기준으로 고친다(people[0], system, externals[1])
     errors.forEach(function (e) {
       e.slot = e.slot.replace(/^nodes\[(\d+)\]/, function (m, k) { k = +k; return k < people.length ? 'people[' + k + ']' : k === people.length ? 'system' : 'externals[' + (k - people.length - 1) + ']'; })
@@ -474,6 +535,44 @@
     return roomy(b ? [a, b] : [a], th);
   }
 
+  // 간트: 할 일마다 한 줄, 가로는 기간 칸(span은 칸 너비 비율). 막대는 from~to 칸(0부터)
+  // now는 지금 하는 일(강조 막대), dash는 아직 일정에 없는 일(점선 막대), note는 막대 오른쪽 글
+  // { cols: ['1~2주', ...], span: [2, 4, ...], rows: [{ name, one, from, to, text, note, now, dash }] }
+  S.diagrams['gantt-diagram'] = function (d, box, th) {
+    var errors = [], prims = [], cols = d.cols || [], rows = d.rows || [];
+    count(cols, 2, 8, 'cols', errors); count(rows, 2, 6, 'rows', errors);
+    var span = d.span || cols.map(function () { return 1; }), tot = span.reduce(function (a, b) { return a + b; }, 0) || 1;
+    var nw = 220, hh = 30, gx = box.x + nw, gw = box.w - nw, xs = [gx];
+    span.forEach(function (v) { xs.push(xs[xs.length - 1] + gw * v / tot); });
+    var rh = (box.h - hh) / Math.max(1, rows.length);
+    prims.push({ k: 'rect', x: box.x, y: box.y, w: nw - 16, h: box.h, r: 6, fill: th.panel, term: 'gantt-diagram' });
+    cols.forEach(function (c, i) {
+      prims.push(S.textBox({ x: xs[i], y: box.y, w: xs[i + 1] - xs[i], h: hh, text: c, size: 12, weight: 700, color: th.muted, align: 'center', valign: 'middle' }, th, errors, 'cols[' + i + ']'));
+    });
+    xs.forEach(function (x) { prims.push({ k: 'line', x1: x, y1: box.y + hh, x2: x, y2: box.y + box.h, stroke: th.line, sw: 1 }); });
+    rows.forEach(function (r, i) {
+      var y = box.y + hh + i * rh, sl = 'rows[' + i + ']';
+      if (i) prims.push({ k: 'line', x1: gx, y1: y, x2: box.x + box.w, y2: y, stroke: th.line, sw: 1, dash: true });
+      prims = prims.concat(nodeTextLeft(r, box.x + 20, y, nw - 52, rh, r.now ? th.accent : th.muted, th, errors, sl, i));
+      if (r.from == null) return;
+      var to = r.to == null ? r.from : r.to;
+      if (r.from < 0 || to >= cols.length || to < r.from) { errors.push({ slot: sl, msg: '칸 범위가 맞지 않습니다' }); return; }
+      var x1 = xs[r.from] + 8, x2 = xs[to + 1] - 8, bh = Math.min(40, rh - 18), by = y + (rh - bh) / 2;
+      prims.push({ k: 'rect', x: x1, y: by, w: x2 - x1, h: bh, r: 4, fill: r.now ? th.accent : r.dash ? th.bg : th.bg, stroke: r.now ? th.accent : r.dash ? th.muted : th.line, sw: 1.5, dash: r.dash, step: i });
+      if (r.text) prims.push(S.textBox({ x: x1 + 10, y: by, w: x2 - x1 - 20, h: bh, text: r.text, size: 12, weight: r.now ? 700 : 400, color: r.now ? th.bg : th.ink, align: 'center', valign: 'middle', step: i }, th, errors, sl + '.text'));
+      if (r.note) prims.push(S.textBox({ x: x2 + 14, y: by, w: box.x + box.w - x2 - 14, h: bh, text: r.note, size: 12, valign: 'middle', step: i }, th, errors, sl + '.note'));
+    });
+    return { prims: prims, errors: errors };
+  };
+  // 이름(한 줄)과 설명(한 줄)을 왼쪽 맞춤으로 세로 가운데에
+  function nodeTextLeft(s, x, y, w, h, oneColor, th, errors, slot, step) {
+    var a = fitH(S.textBox({ x: x, y: 0, w: w, text: s.name, size: 13.5, weight: 700, step: step }, th, errors, slot + '.name'), th);
+    var b = s.one ? fitH(S.textBox({ x: x, y: 0, w: w, text: s.one, size: 12, color: oneColor, step: step }, th, errors, slot + '.one'), th) : null;
+    var tot = a.h + (b ? b.h + 2 : 0);
+    a.y = y + (h - tot) / 2; if (b) b.y = a.y + a.h + 2;
+    return roomy(b ? [a, b] : [a], th);
+  }
+
   /* ───── 레이아웃 ───── */
   var M = 64;                       // 좌우 여백
   S.layouts = {};
@@ -493,11 +592,26 @@
 
   // 내용 장의 틀: 제목 띠(Action Title, 두 줄까지) + 본문 상자 + 쪽 번호
   function frame(s, th, page, errors) {
+    if (th.frame) return reportFrame(s, th, page, errors);
     var prims = [{ k: 'rect', x: 0, y: 0, w: S.W, h: S.H, fill: th.bg }];
     prims.push(S.textBox({ x: M, y: 40, w: S.W - 2 * M, text: s.title, size: 26, weight: 700, max: 2, ph: 'title', term: 'action-title' }, th, errors, 'title'));
     prims.push({ k: 'line', x1: M, y1: 150, x2: S.W - M, y2: 150, stroke: th.line, sw: 1.5 });
     if (page) prims.push(S.textBox({ x: S.W - M - 80, y: 676, w: 80, text: String(page), size: 11, color: th.muted, align: 'right' }, th, errors, 'page'));
     return { prims: prims, body: { x: M, y: 176, w: S.W - 2 * M, h: 480 } };
+  }
+  // 보고서 틀: 머리말(eyebrow) · 한 줄 제목 · 줄 · 본문 · 짙은 결론 띠(takeaway, 한 줄) · 쪽 번호
+  function reportFrame(s, th, page, errors) {
+    var F = th.frame, prims = [{ k: 'rect', x: 0, y: 0, w: S.W, h: S.H, fill: th.bg }], bottom = 650;
+    if (s.eyebrow) prims.push(S.textBox({ x: M, y: 38, w: S.W - 2 * M, text: s.eyebrow, size: F.eyebrow, weight: 500, color: th.muted }, th, errors, 'eyebrow'));
+    prims.push(S.textBox({ x: M, y: 64, w: S.W - 2 * M, text: s.title, size: F.title, weight: 700, max: 1, ph: 'title', term: 'action-title' }, th, errors, 'title'));
+    prims.push({ k: 'line', x1: M, y1: 122, x2: S.W - M, y2: 122, stroke: th.line, sw: 1 });
+    if (s.takeaway) {
+      prims.push({ k: 'rect', x: M, y: 592, w: S.W - 2 * M, h: 56, r: 6, fill: th.band });
+      prims.push(S.textBox({ x: M + 24, y: 592, w: S.W - 2 * M - 48, h: 56, text: s.takeaway, size: 13.5, color: th.bg, valign: 'middle' }, th, errors, 'takeaway'));
+      bottom = 572;
+    }
+    if (page) prims.push(S.textBox({ x: S.W - M - 80, y: 658, w: 80, text: String(page), size: F.eyebrow, color: th.muted, align: 'right' }, th, errors, 'page'));
+    return { prims: prims, body: { x: M, y: 146, w: S.W - 2 * M, h: bottom - 146 } };
   }
   function diagramLayout(termId, keys) {
     var slots = { title: '2줄', notes: '자유' };
@@ -570,6 +684,98 @@
       return { prims: prims, errors: errors };
     }
   };
+
+  // 표지(보고서): 위는 짙은 띠에 머리말·작성자·제목·부제, 아래는 순서 묶음 2~4개
+  // { eyebrow, by, title, sub, agenda: [{ key, head, items: [1~4개] }] }
+  S.layouts.cover = {
+    slots: { eyebrow: '1줄', by: '1줄', title: '2줄', sub: '2줄', agenda: '묶음 2~4개(머리 1줄, 항목 1~4개)', notes: '자유' },
+    build: function (s, th) {
+      var errors = [], top = 400, ag = s.agenda || [], light = th.line;
+      var prims = [{ k: 'rect', x: 0, y: 0, w: S.W, h: S.H, fill: th.bg }, { k: 'rect', x: 0, y: 0, w: S.W, h: top, fill: th.band || th.ink }];
+      if (s.eyebrow) prims.push(S.textBox({ x: M, y: 56, w: 760, text: s.eyebrow, size: 11.25, weight: 500, color: light }, th, errors, 'eyebrow'));
+      if (s.by) prims.push(S.textBox({ x: S.W - M - 360, y: 56, w: 360, text: s.by, size: 11.25, color: light, align: 'right' }, th, errors, 'by'));
+      prims.push(S.textBox({ x: M, y: 140, w: 920, text: s.title, size: 30, weight: 700, color: th.bg, max: 2, ph: 'title' }, th, errors, 'title'));
+      if (s.sub) prims.push(S.textBox({ x: M, y: 300, w: 1000, text: s.sub, size: 13.5, color: light, max: 2 }, th, errors, 'sub'));
+      count(ag, 2, 4, 'agenda', errors);
+      var gap = 24, n = Math.max(1, ag.length), cw = (S.W - 2 * M - gap * (n - 1)) / n, y0 = top + 32;
+      ag.forEach(function (a, i) {
+        var x = M + i * (cw + gap), sl = 'agenda[' + i + ']';
+        count(a.items, 1, 4, sl + '.items', errors);
+        prims.push({ k: 'rect', x: x, y: y0, w: cw, h: S.H - 40 - y0, r: 6, fill: th.panel });
+        if (a.key) prims.push(S.textBox({ x: x + 24, y: y0 + 20, w: cw - 48, text: a.key, size: 12, color: th.muted }, th, errors, sl + '.key'));
+        prims.push(S.textBox({ x: x + 24, y: y0 + 44, w: cw - 48, text: a.head, size: 13.5, weight: 700 }, th, errors, sl + '.head'));
+        (a.items || []).slice(0, 4).forEach(function (t, j) {
+          var y = y0 + 86 + j * 36;
+          prims.push({ k: 'line', x1: x + 24, y1: y, x2: x + cw - 24, y2: y, stroke: th.line, sw: 1 });
+          prims.push(S.textBox({ x: x + 24, y: y, w: cw - 48, h: 36, text: t, size: 12, valign: 'middle' }, th, errors, sl + '.items[' + j + ']'));
+        });
+      });
+      return { prims: prims, errors: errors };
+    }
+  };
+
+  // 조각 배치: 본문을 비율 상자(at: [x, y, w, h], 0~1)로 나눠 조각 1~4개를 놓는다
+  // 조각은 다이어그램({ diagram: 용어 id, 그 다이어그램 칸..., bg, label: { name, one } }) 또는 판({ panel })
+  // panel: { head, one, mark, flow(항목 사이 화살표), items: [글 | { name, one, mark }], rows: [[이름, 값]], split, note }
+  S.layouts.parts = {
+    slots: { eyebrow: '1줄', title: '1줄', takeaway: '1줄', parts: '조각 1~4개', notes: '자유' },
+    build: function (s, th, page) {
+      var errors = [], f = frame(s, th, page, errors), b = f.body, prims = f.prims;
+      count(s.parts, 1, 4, 'parts', errors);
+      (s.parts || []).forEach(function (p, i) {
+        var a = p.at || [0, 0, 1, 1], bx = { x: b.x + a[0] * b.w, y: b.y + a[1] * b.h, w: a[2] * b.w, h: a[3] * b.h }, e = [];
+        prims = prims.concat(p.panel ? panel(p.panel, bx, th, e) : partDiagram(p, bx, th, e));
+        errors = errors.concat(tag(e, 'parts[' + i + ']'));
+      });
+      return { prims: prims, errors: errors };
+    }
+  };
+  function partDiagram(p, bx, th, e) {
+    var out = [], box = bx, D = S.diagrams[p.diagram];
+    if (p.bg) { out.push({ k: 'rect', x: bx.x, y: bx.y, w: bx.w, h: bx.h, r: 6, fill: th.panel }); box = { x: bx.x + 20, y: bx.y + 16, w: bx.w - 40, h: bx.h - 32 }; }
+    if (p.label) {
+      var lw = 150, a = fitH(S.textBox({ x: box.x, y: 0, w: lw, text: p.label.name, size: 13.5, weight: 700 }, th, e, 'label.name'), th);
+      var c = p.label.one ? fitH(S.textBox({ x: box.x, y: 0, w: lw, text: p.label.one, size: 12, color: th.muted, max: 3 }, th, e, 'label.one'), th) : null;
+      a.y = box.y + (box.h - a.h - (c ? c.h + 4 : 0)) / 2; if (c) c.y = a.y + a.h + 4;
+      out = out.concat(roomy(c ? [a, c] : [a], th));
+      box = { x: box.x + lw + 20, y: box.y, w: box.w - lw - 20, h: box.h };
+    }
+    if (!D) { e.push({ slot: 'diagram', msg: '없는 다이어그램 ' + p.diagram }); return out; }
+    var r = D(p, box, th);
+    e.push.apply(e, r.errors);
+    return out.concat(r.prims);
+  }
+  function panel(o, bx, th, e) {
+    var out = [], mk = o.mark, pad = 20, x = bx.x + pad, w = bx.w - 2 * pad, y = bx.y + 18, sm = 12 * th.lh * PX;
+    out.push({ k: 'rect', x: bx.x, y: bx.y, w: bx.w, h: bx.h, r: 6, fill: mk ? th.accentSoft : th.panel, stroke: mk ? th.accent : undefined, sw: 1.5 });
+    if (o.head) { var hb = fitH(S.textBox({ x: x, y: y, w: w, text: o.head, size: 13.5, weight: 700, color: mk ? th.accent : th.ink, max: 2 }, th, e, 'head'), th); out.push(hb); y += hb.h + 4; }
+    if (o.one) { var ob = fitH(S.textBox({ x: x, y: y, w: w, text: o.one, size: 12, color: th.muted, max: 2 }, th, e, 'one'), th); out.push(ob); y += ob.h; }
+    y += 12;
+    var noteH = o.note ? Math.ceil(2 * sm) + 12 : 0, bottom = bx.y + bx.h - 18 - noteH;
+    if (o.items) {
+      var n = o.items.length, g = o.flow ? 24 : 10, ih = Math.min(o.flow ? 66 : 52, (bottom - y - g * (n - 1)) / n);
+      o.items.forEach(function (it, i) {
+        it = typeof it === 'string' ? { name: it } : it;
+        var iy = y + i * (ih + g), sl = 'items[' + i + ']', big = o.flow || it.one, bold = it.one || it.mark;
+        out.push({ k: 'rect', x: x, y: iy, w: w, h: ih, r: 4, fill: it.mark ? th.accentSoft : th.bg, stroke: it.mark ? th.accent : th.line, sw: 1 });
+        if (it.one) out = out.concat(nodeText({ name: it.name, one: it.one }, x + 12, iy, w - 24, ih, th, e, sl));
+        else out.push(S.textBox({ x: x + 16, y: iy, w: w - 32, h: ih, text: it.name, size: big ? 13.5 : 12, weight: bold ? 700 : 400, align: o.flow ? 'center' : 'left', valign: 'middle' }, th, e, sl));
+        if (o.flow && i < n - 1) out.push({ k: 'line', x1: x + w / 2, y1: iy + ih + 3, x2: x + w / 2, y2: iy + ih + g - 3, stroke: th.muted, sw: 1.5, arrow: 'end' });
+      });
+    } else if (o.rows) {
+      var rh = Math.min(44, (bottom - y) / Math.max(1, o.rows.length)), kw = w * (o.split || 0.36);
+      o.rows.forEach(function (r, i) {
+        var ry = y + i * rh, sl = 'rows[' + i + ']';
+        out.push({ k: 'line', x1: x, y1: ry, x2: x + w, y2: ry, stroke: th.line, sw: 1 });
+        out.push(S.textBox({ x: x, y: ry, w: kw - 12, h: rh, text: r[0], size: 12, color: th.muted, valign: 'middle' }, th, e, sl + '[0]'));
+        out.push(S.textBox({ x: x + kw, y: ry, w: w - kw, h: rh, text: r[1], size: 12, valign: 'middle', max: rh > 40 ? 2 : 1 }, th, e, sl + '[1]'));
+      });
+    }
+    if (o.note) out.push(S.textBox({ x: x, y: bx.y + bx.h - 18 - noteH + 12, w: w, text: o.note, size: 12, color: th.muted, max: 2 }, th, e, 'note'));
+    return out;
+  }
+
+  S.layouts.gantt = diagramLayout('gantt-diagram', ['cols', 'span', 'rows']);
 
   // 덱의 장 하나를 만든다. 오류에는 몇째 장인지 붙인다
   S.build = function (slide, i, theme) {
