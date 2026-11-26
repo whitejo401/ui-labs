@@ -39,8 +39,8 @@
   function add(pptx, slide, p, theme) {
     var o;
     if (p.k === 'text') {
-      if (p.ph) return slide.addText(p.text, Object.assign(textOpts(p, theme), { placeholder: p.ph }));
-      return slide.addText(p.text, textOpts(p, theme));
+      if (p.ph) return slide.addText(S.glue(p.text), Object.assign(textOpts(p, theme), { placeholder: p.ph }));
+      return slide.addText(S.glue(p.text), textOpts(p, theme));
     }
     if (p.k === 'line') {
       return slide.addShape(pptx.ShapeType.line, {

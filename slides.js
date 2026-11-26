@@ -52,10 +52,12 @@
   };
   // 어절 단위로 줄을 나눈다. 한 어절이 폭보다 길면 글자 단위로 자른다(PowerPoint 16과 같은 방식)
   // 숫자와 단위(4,800만 원, 330시간 등) 사이 빈칸에서는 줄을 바꾸지 않는다(줄 안에서는 빈칸 그대로 보임)
+  // .pptx에도 같은 묶음 빈칸(NBSP)을 넣어 PowerPoint가 그 자리에서 줄을 바꾸지 않게 한다
   var UNIT = /(\d[\d,.]*(?:만|억|천)?) (원|건|명|시간|초|주|개|장|점|배)/g;
+  S.glue = function (text) { return String(text).replace(UNIT, '$1\u00a0$2'); };
   S.wrap = function (text, w, size, weight, fam) {
     var lines = [], cur = '';
-    String(text).replace(UNIT, '$1\u00a0$2').split(/[ \t\n\r]+/).filter(Boolean).forEach(function (word) {
+    S.glue(text).split(/[ \t\n\r]+/).filter(Boolean).forEach(function (word) {
       var next = cur ? cur + ' ' + word : word;
       if (S.measure(next, size, weight, fam) <= w) { cur = next; return; }
       if (cur) lines.push(cur);
@@ -1086,6 +1088,8 @@
     r.errors.forEach(function (e) { e.slide = i + 1; });
     return r;
   };
+  // 장 틀 안의 본문 상자. 문서 출력(slides-doc.js)이 장 그림을 이 칸으로 자른다
+  S.bodyBox = function (slide, theme) { return frame(slide, theme, 0, []).body; };
 
   /* ───── 도형 목록 → SVG ─────
      t(0~1)가 있으면 step이 붙은 도형이 차례로 나타난다. 없으면 다 보인다 */
