@@ -1179,3 +1179,65 @@
   .cv-mm { display: none; }
   .cv-find input { width: 120px; }
 }
+
+/* ───── 조합 화면: 연락처 목록 (screen-contacts.js) ───── */
+.scr.ct-scr { grid-template-columns: minmax(0, 400px) minmax(0, 1fr); }
+.ct-pane, .ct-photos { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); min-width: 0; min-height: 0; background: var(--u-panel); }
+.ct-photos { grid-template-rows: auto minmax(0, 1fr); border-left: 1px solid var(--u-line); background: var(--u-bg); }
+.ct-head { padding: 14px 16px 8px; }
+.ct-head h2 { margin: 0; font-size: 16px; }
+.ct-head small { font-weight: 400; font-size: 12px; color: var(--u-muted); }
+.ct-chips { position: relative; display: flex; align-items: center; gap: 4px; padding: 0 10px 10px; min-width: 0; border-bottom: 1px solid var(--u-line); }
+.ct-arr { flex: none; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--u-line); background: var(--u-panel); color: var(--u-ink); cursor: pointer; }
+.ct-arr:disabled { opacity: 0.35; cursor: default; }
+.ct-cvp { flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.ct-cvp::-webkit-scrollbar { display: none; }
+.ct-crow { display: flex; gap: 6px; width: max-content; padding: 2px; }
+.ct-crow button { border: 1px solid var(--u-line); border-radius: 999px; padding: 4px 12px; background: var(--u-panel); color: var(--u-ink); font: inherit; font-size: 12.5px; cursor: pointer; white-space: nowrap; }
+.ct-crow button[aria-pressed="true"] { background: var(--u-accent); border-color: var(--u-accent); color: var(--u-accent-ink); }
+.ct-crow button:focus-visible, .ct-arr:focus-visible { outline: 2px solid var(--u-accent); outline-offset: 2px; }
+.ct-sh { position: absolute; top: 0; bottom: 10px; width: 28px; pointer-events: none; transition: opacity 150ms ease-out; }
+.ct-sh.l { left: 40px; background: linear-gradient(to right, var(--u-panel), transparent); }
+.ct-sh.r { right: 40px; background: linear-gradient(to left, var(--u-panel), transparent); }
+.ct-body { display: grid; grid-template-columns: minmax(0, 1fr) 26px; min-height: 0; }
+.ct-wrap { position: relative; min-height: 0; }
+.ct-list { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.ct-list::-webkit-scrollbar { display: none; }
+.ct-list:focus-visible { outline: 2px solid var(--u-accent); outline-offset: -2px; }
+.ct-sec h3 { position: sticky; top: 0; z-index: 1; margin: 0; padding: 3px 16px; font-size: 12px; color: var(--u-muted); background: var(--u-side); border-bottom: 1px solid var(--u-line); }
+.ct-sec h3:focus { outline: none; }
+.ct-sec ul { list-style: none; margin: 0; padding: 0; }
+.ct-sec button { display: flex; align-items: center; gap: 10px; width: 100%; height: 44px; padding: 0 16px; border: 0; border-bottom: 1px solid var(--u-line); background: none; font: inherit; font-size: 13.5px; color: var(--u-ink); text-align: left; cursor: pointer; }
+.ct-sec button[aria-current="true"] { background: var(--u-sel); }
+.ct-sec button:focus-visible { outline: 2px solid var(--u-accent); outline-offset: -2px; }
+.ct-sec button i { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-weight: 700; font-size: 12px; }
+.ct-sec button span { flex: 1; }
+.ct-sec button small { color: var(--u-muted); font-size: 11.5px; }
+.ct-track { position: absolute; top: 4px; bottom: 4px; right: 3px; width: 14px; z-index: 2; }
+.ct-track b { position: absolute; right: 0; width: 4px; border-radius: 6px; background: color-mix(in srgb, var(--u-ink) 45%, transparent); opacity: 0; transition: opacity 300ms ease-out, width 120ms ease-out; cursor: grab; touch-action: none; }
+.ct-track.on b { opacity: 1; }
+.ct-track:hover b, .ct-track b:active { width: 10px; opacity: 1; }
+.ct-bub { position: absolute; left: 50%; top: 45%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 14px; display: grid; place-items: center; font-size: 30px; background: var(--u-toast-bg); color: var(--u-toast-fg); opacity: 0; pointer-events: none; transition: opacity 150ms ease-out; z-index: 3; }
+.ct-bub.on { opacity: 1; }
+.ct-index { display: grid; align-content: space-evenly; justify-items: center; padding: 6px 0; border-left: 1px solid var(--u-line); user-select: none; touch-action: none; }
+.ct-index a { display: grid; place-items: center; width: 24px; min-height: 22px; font-size: 11.5px; font-weight: 700; color: var(--u-accent); text-decoration: none; border-radius: 4px; cursor: pointer; }
+.ct-index a[aria-disabled="true"] { color: color-mix(in srgb, var(--u-muted) 45%, transparent); cursor: default; }
+.ct-index a:focus-visible { outline: 2px solid var(--u-accent); }
+.ct-gwrap { position: relative; min-height: 0; }
+.ct-grid { position: absolute; inset: 0; overflow-y: auto; scrollbar-width: none; padding: 0 16px 16px; }
+.ct-grid::-webkit-scrollbar { display: none; }
+.ct-grid:focus-visible { outline: 2px solid var(--u-accent); outline-offset: -2px; }
+.ct-grid h3 { margin: 14px 0 6px; font-size: 13px; }
+.ct-grid h3 small { color: var(--u-muted); font-weight: 400; }
+.ct-cells { display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 3px; }
+.ct-cells i { aspect-ratio: 1; border-radius: 3px; }
+.ct-ftrack { position: absolute; top: 6px; bottom: 6px; right: 4px; width: 14px; pointer-events: none; }
+.ct-ftrack b { position: absolute; right: 0; width: 12px; height: 48px; border-radius: 7px; background: var(--u-accent); box-shadow: var(--u-shadow-sm); opacity: 0; transition: opacity 300ms ease-out; pointer-events: auto; cursor: grab; touch-action: none; }
+.ct-ftrack.on b { opacity: 1; }
+.ct-ftrack span { position: absolute; right: 22px; top: 0; padding: 5px 10px; border-radius: 8px; background: var(--u-toast-bg); color: var(--u-toast-fg); font-size: 12.5px; white-space: nowrap; opacity: 0; transition: opacity 150ms ease-out; }
+.ct-ftrack.drag span { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .ct-track b, .ct-ftrack b, .ct-ftrack span, .ct-bub, .ct-sh { transition: none; } }
+@media (max-width: 760px) {
+  .scr.ct-scr { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 360px; height: 1000px; }
+  .ct-photos { border-left: 0; border-top: 1px solid var(--u-line); }
+}

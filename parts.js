@@ -2376,6 +2376,127 @@
     } };
   };
 
+  /* ───── 구조 › 스크롤 막대·색인 (연락처 목록 묶음) ───── */
+  // 연락처 이름(가상)과 초성. ㄲ·ㄸ·ㅃ·ㅆ·ㅉ은 ㄱ·ㄷ·ㅂ·ㅅ·ㅈ에 넣는다. ㅋ 성은 없어 색인에서 흐리게 보인다
+  var CHO = 'ㄱㄱㄴㄷㄷㄹㅁㅂㅂㅅㅅㅇㅈㅈㅊㅋㅌㅍㅎ', INDEX_KO = 'ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ'.split('');
+  var SUR = '김이박최정강조윤장임한오서신권황안송류홍전고문양손배백허노하곽성차주우구민나진지엄채원천방공현함변염여추도소석선설마길연위표명기반왕금옥육인맹제모탁국어은편용예봉경'.split('');
+  var G1 = '민서지하준도예수유시은채현우태다나가소윤재'.split(''), G2 = '지윤호연준서진우아은린원민현영수빈희율혁'.split('');
+  function cho(s) { var c = s.charCodeAt(0) - 0xac00; return c >= 0 && c < 11172 ? CHO[Math.floor(c / 588)] : '#'; }
+  function contacts(n) {
+    var a = []; for (var i = 0; i < n; i++) a.push(SUR[(i * 7 + (i >> 3)) % SUR.length] + G1[(i * 3) % G1.length] + G2[(i * 5 + 1) % G2.length]);
+    return a.sort(function (x, y) { return x.localeCompare(y, 'ko'); });
+  }
+  UI.contacts = contacts; UI.cho = cho; UI.INDEX_KO = INDEX_KO;
+  var EN = ['Aaron', 'Abby', 'Ben', 'Bella', 'Chris', 'Clara', 'Daniel', 'Dana', 'Eli', 'Emma', 'Finn', 'Grace', 'Hana', 'Ian', 'Jay', 'Julia', 'Kai', 'Leo', 'Lily', 'Mia', 'Noah', 'Olive', 'Paul', 'Ryan', 'Sara', 'Theo', 'Uma', 'Vera', 'Will', 'Yuna'];
+  function personRow(nm) { return '<div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 10px;font-size:12px;border-bottom:1px solid var(--u-line);background:var(--u-panel)"><i style="width:18px;height:18px;border-radius:50%;background:' + ph(nm.charCodeAt(0)) + ';display:grid;place-items:center;font-style:normal;font-size:9.5px;font-weight:700">' + nm[0] + '</i>' + nm + '</div>'; }
+  function secHead(l) { return '<div class="sh" style="height:18px;padding:0 10px;font:700 11px/18px var(--u-font);color:var(--u-muted);background:var(--u-side)">' + l + '</div>'; }
+
+  S['section-index'] = function (st, c) {
+    var ko = c.letters === '가나다(초성)', drag = c.move === '끌면서 이동', MS = 4000;
+    var names = ko ? contacts(60) : EN.slice(), keyOf = ko ? cho : function (s) { return s[0]; }, LET = ko ? INDEX_KO : 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    var by = {}; names.forEach(function (n) { var k = keyOf(n); (by[k] = by[k] || []).push(n); });
+    var html = '', pos = {}, y = 0;
+    LET.forEach(function (l) { if (!by[l]) return; pos[l] = y; html += secHead(l) + by[l].map(personRow).join(''); y += 18 + by[l].length * 26; });
+    st.innerHTML = '<div style="position:absolute;inset:0;display:grid;grid-template-columns:minmax(0,1fr) 22px"><div style="position:relative;overflow:hidden"><div class="ct">' + html + '</div></div>' +
+      '<div class="ix" style="display:grid;align-content:space-evenly;justify-items:center;padding:4px 0;font:700 ' + (ko ? 10.5 : 8) + 'px/1 var(--u-font);background:var(--u-panel);border-left:1px solid var(--u-line)">' +
+        LET.map(function (l) { return '<span style="color:' + (by[l] ? 'var(--u-accent)' : 'color-mix(in srgb, var(--u-muted) 45%, transparent)') + '">' + l + '</span>'; }).join('') + '</div>' +
+      '<b class="bb" style="position:absolute;left:calc(50% - 40px);top:50%;width:52px;height:52px;margin-top:-26px;border-radius:12px;background:var(--u-toast-bg);color:var(--u-toast-fg);display:grid;place-items:center;font-size:26px"></b></div>';
+    var ct = st.querySelector('.ct'), ix = st.querySelectorAll('.ix span'), bb = st.querySelector('.bb'), cur = cursor(st), maxY = Math.max(0, y - st.clientHeight);
+    var A = ko ? 0 : 1, B = ko ? 6 : 18;   // 끌기: A번째 글자에서 B번째 글자까지
+    return { ms: MS, rest: 0.85, at: function (t) {
+      var ms = t * MS, k;
+      if (drag) k = ms < 600 ? -1 : Math.round(lerp(A, B, ease.inOut(seg(ms, 600, 2400))));
+      else k = ms < 1000 ? -1 : ms < 2200 ? (ko ? 5 : 4) : (ko ? 8 : 15);
+      var l = k >= 0 ? LET[k] : null, hit = l && by[l] ? l : null;
+      // 사람이 없는 글자를 지날 때는 바로 앞 구역에 머문다
+      if (l && !hit) for (var j = k; j >= 0; j--) if (by[LET[j]]) { hit = LET[j]; break; }
+      ct.style.transform = 'translateY(' + (-(hit ? Math.min(pos[hit], maxY) : 0)) + 'px)';
+      ix.forEach(function (s, i) { s.style.transform = i === k ? 'scale(1.5)' : ''; });
+      var pressing = drag ? ms > 600 && ms < 2400 : (ms > 1000 && ms < 1200) || (ms > 2200 && ms < 2400);
+      bb.style.opacity = drag && pressing ? 1 : 0; bb.textContent = l || '';
+      var r = rel(st, ix[Math.max(0, k)]); put(cur, r.x + r.w / 2, k < 0 ? r.y + 30 : r.y + r.h / 2, pressing);
+      cur.style.opacity = ms > 300 && ms < 3200 ? 1 : 0;
+      if (k < 0) return '오른쪽 끝에 ' + (ko ? '초성' : 'A–Z') + ' 색인 · 흐린 글자는 사람이 없음';
+      return (drag ? (pressing ? '끄는 중 · "' + l + '"' : '놓음 · "' + hit + '" 구역') : '"' + l + '" 누름 → ' + hit + ' 구역') + (l !== hit ? ' (사람이 없어 앞 구역)' : '');
+    } };
+  };
+
+  S['overlay-scrollbar'] = function (st, c) {
+    var show = c.show, grow = c.width === '올리면 굵어짐', MS = 4400, names = contacts(40);
+    st.innerHTML = '<div class="vp" style="position:absolute;inset:0;overflow:hidden"><div class="ct">' + names.map(personRow).join('') + '</div>' +
+      '<i class="tr" style="position:absolute;right:2px;top:4px;bottom:4px;width:12px"></i><b class="th" style="position:absolute;right:3px;border-radius:6px;background:color-mix(in srgb, var(--u-ink) 45%, transparent)"></b></div>';
+    var ct = st.querySelector('.ct'), th = st.querySelector('.th'), cur = cursor(st);
+    var PATH = [[300, 0], [1500, 0.5], [3300, 0.5], [3900, 0.85]];
+    return { ms: MS, rest: 0.6, at: function (t) {
+      var ms = t * MS, vh = st.clientHeight, total = ct.scrollHeight, p = scrollAlong(PATH, ms), y = p * (total - vh);
+      ct.style.transform = 'translateY(' + (-y) + 'px)';
+      var hover = ms > 2900 && ms < 4200, dragging = ms > 3300 && ms < 3900, scrolling = (ms > 300 && ms < 1500) || dragging;
+      var since = ms < 1500 ? 0 : ms - 1500, vis;
+      if (show === '늘 보임') vis = 1;
+      else if (show === '마우스 올리면') vis = (ms > 200 && ms < 1500) || hover ? 1 : 0;   // 목록 위에 마우스가 있을 때
+      else vis = scrolling || hover ? 1 : ms > 300 ? clamp(1 - (since - 1000) / 300) : 0;
+      var w = grow && hover ? 10 : grow ? 4 : 6, H = vh - 8, h = Math.max(20, vh / total * H);
+      th.style.width = w + 'px'; th.style.height = h + 'px'; th.style.top = (4 + p * (H - h)) + 'px'; th.style.opacity = vis;
+      var r = rel(st, th); put(cur, hover ? r.x + r.w / 2 : st.clientWidth * 0.5, hover ? r.y + r.h / 2 : vh * 0.55, dragging);
+      cur.style.opacity = ms > 150 && ms < 4300 ? 1 : 0;
+      if (ms < 1500) return '굴리는 중' + (vis ? ' · 막대가 겹쳐 나타남(자리를 안 차지함)' : ' · 막대 안 보임');
+      if (ms < 2900) return show === '늘 보임' ? '멈춤 · 막대는 늘 보임' : vis > 0.5 ? '멈춤 · 1초 뒤 흐려짐' : '멈춤 · 막대가 사라짐';
+      return dragging ? '막대를 끌어 옮김' : grow ? '막대에 마우스 · 10px로 굵어져 잡기 쉬움' : '막대에 마우스 · 굵기 그대로';
+    } };
+  };
+
+  S['hidden-scrollbar'] = function (st, c) {
+    var cue = c.cue, btn = c.keys === '좌우 단추도', MS = 3600, CH = ['전체', '즐겨찾기', '회사', '가족', '거래처', '동호회', '학교', '최근 통화', '차단'];
+    st.innerHTML = '<div class="u-pad" style="gap:10px;grid-template-columns:minmax(0,1fr)"><b style="font-size:13px">연락처</b><div style="display:flex;align-items:center;gap:4px;min-width:0">' +
+      (btn ? '<button type="button" class="pv" style="flex:none;width:24px;height:24px;border-radius:50%;border:1px solid var(--u-line);background:var(--u-panel);color:var(--u-ink);font-size:13px">‹</button>' : '') +
+      '<div class="vp" style="position:relative;overflow:hidden;flex:0 1 auto;min-width:0"><div class="row" style="display:flex;gap:6px;width:max-content">' + CH.map(function (x, i) { return '<span class="ch" style="flex:none;border:1px solid ' + (i ? 'var(--u-line)' : 'var(--u-accent)') + ';border-radius:999px;padding:4px 11px;font-size:12px;background:' + (i ? 'var(--u-panel)' : 'var(--u-accent)') + ';color:' + (i ? 'var(--u-ink)' : 'var(--u-accent-ink)') + '">' + x + '</span>'; }).join('') + '</div>' +
+        '<i class="sl" style="position:absolute;left:0;top:0;bottom:0;width:26px;background:linear-gradient(to right, var(--u-bg), transparent);opacity:0"></i><i class="sr" style="position:absolute;right:0;top:0;bottom:0;width:26px;background:linear-gradient(to left, var(--u-bg), transparent);opacity:0"></i></div>' +
+      (btn ? '<button type="button" class="nx" style="flex:none;width:24px;height:24px;border-radius:50%;border:1px solid var(--u-line);background:var(--u-panel);color:var(--u-ink);font-size:13px">›</button>' : '') + '</div>' + names3() + '</div>';
+    function names3() { return contacts(5).map(personRow).join(''); }
+    var vp = st.querySelector('.vp'), row = st.querySelector('.row'), chs = st.querySelectorAll('.ch'), sl = st.querySelector('.sl'), sr = st.querySelector('.sr'), nx = st.querySelector('.nx'), cur = cursor(st), fit = null;
+    return { ms: MS, rest: 0.25, at: function (t) {
+      var ms = t * MS;
+      if (fit === null) {   // 줄 폭: 단서 없음이면 칩 경계에 딱 맞게, 살짝이면 다음 칩 반만, 그림자면 남은 폭 전부
+        var W = vp.parentNode.clientWidth - (btn ? 2 * 28 : 0), last = 0, half = 0;
+        for (var i = 0; i < chs.length; i++) { var r = chs[i].offsetLeft + chs[i].offsetWidth; if (r <= W) last = r; else { half = chs[i].offsetLeft + chs[i].offsetWidth / 2; break; } }
+        fit = cue === '단서 없음' ? last : cue === '다음 칩 살짝' ? Math.min(W, half || W) : W;
+        vp.style.flex = '0 0 ' + fit + 'px';
+      }
+      var max = Math.max(0, row.scrollWidth - fit), x = max * ease.inOut(seg(ms, 1500, 2200));
+      row.style.transform = 'translateX(' + (-x) + 'px)';
+      sl.style.opacity = cue === '끝 그림자' ? Math.min(1, x / 20) : 0; sr.style.opacity = cue === '끝 그림자' ? Math.min(1, (max - x) / 20) : 0;
+      if (btn) { var r = rel(st, nx); put(cur, lerp(st.clientWidth * 0.5, r.x + r.w / 2, ease.inOut(seg(ms, 800, 1400))), lerp(150, r.y + r.h / 2, ease.inOut(seg(ms, 800, 1400))), ms > 1400 && ms < 1550); }
+      else { var q = rel(st, vp); put(cur, lerp(q.x + q.w * 0.8, q.x + q.w * 0.2, ease.inOut(seg(ms, 1500, 2200))), q.y + q.h / 2, ms > 1500 && ms < 2200); }
+      cur.style.opacity = ms > 700 && ms < 2700 ? 1 : 0;
+      if (ms < 1500) return '막대 없음 · ' + (cue === '단서 없음' ? '칩이 딱 끝나 더 있는지 모름' : cue === '다음 칩 살짝' ? '잘린 칩이 더 있다고 알림' : '끝 그림자가 더 있다고 알림');
+      return btn ? '› 단추로 넘김(마우스·키보드도 됨)' : '손가락으로 밀어 넘김 · 마우스로는 넘길 길이 없음';
+    } };
+  };
+
+  S['fast-scroller'] = function (st, c) {
+    var bubble = c.bubble === '날짜 말풍선', big = c.size === '48px 손잡이', MS = 4600, COLS = 6, CELL = 34, M = [];
+    for (var i = 0; i < 24; i++) { var mo = 11 - i, yr = 2026; while (mo < 1) { mo += 12; yr--; } M.push([yr + '년 ' + mo + '월', 30 + (i * 37) % 50]); }
+    var html = '', tops = [], y = 0;
+    M.forEach(function (m, i) { tops.push(y); var rows = Math.ceil(m[1] / COLS); html += '<div style="height:20px;padding:0 8px;font:700 11px/20px var(--u-font)">' + m[0] + '</div><div style="display:grid;grid-template-columns:repeat(' + COLS + ',1fr);gap:2px;padding:0 6px 4px">' + new Array(m[1] + 1).join('<i style="height:' + (CELL - 2) + 'px;background:' + ph(i, 26) + '"></i>') + '</div>'; y += 20 + rows * CELL + 4; });
+    st.innerHTML = '<div style="position:absolute;inset:0;overflow:hidden"><div class="ct">' + html + '</div></div>' +
+      '<b class="hd" style="position:absolute;right:2px;width:' + (big ? 10 : 5) + 'px;border-radius:6px;background:var(--u-accent);box-shadow:var(--u-shadow-sm)"></b>' +
+      '<span class="bu" style="position:absolute;right:22px;padding:5px 10px;border-radius:8px;background:var(--u-toast-bg);color:var(--u-toast-fg);font-size:12px;white-space:nowrap;transform:translateY(-50%)"></span>';
+    var ct = st.querySelector('.ct'), hd = st.querySelector('.hd'), bu = st.querySelector('.bu'), cur = cursor(st);
+    return { ms: MS, rest: 0.6, at: function (t) {
+      var ms = t * MS, vh = st.clientHeight, total = ct.scrollHeight, maxS = total - vh;
+      var p = ms < 900 ? 0.03 * seg(ms, 300, 900) : lerp(0.03, 0.72, ease.inOut(seg(ms, 900, 2400)));
+      var sy = p * maxS, hh = big ? 48 : Math.max(14, vh / total * vh), hy = p * (vh - hh), dragging = ms > 900 && ms < 2500;
+      ct.style.transform = 'translateY(' + (-sy) + 'px)';
+      hd.style.height = hh + 'px'; hd.style.top = hy + 'px'; hd.style.opacity = ms < 300 ? 0 : ms < 2500 ? 1 : clamp(1 - (ms - 4000) / 300);
+      var mi = 0; tops.forEach(function (tp, i) { if (tp <= sy + 10) mi = i; });
+      bu.style.top = (hy + hh / 2) + 'px'; bu.textContent = M[mi][0]; bu.style.opacity = bubble && dragging ? 1 : 0;
+      var r = rel(st, hd); put(cur, r.x + r.w / 2, r.y + r.h / 2, dragging); cur.style.opacity = ms > 700 && ms < 2700 ? 1 : 0;
+      if (ms < 900) return '굴리기 시작 · 손잡이가 나타남';
+      if (dragging) return '손잡이를 끄는 중' + (bubble ? ' · 지금 "' + M[mi][0] + '"' : ' · 어디쯤인지 말풍선이 없음');
+      return ms < 4000 ? M[mi][0] + '에 닿음 · 1.5초 뒤 손잡이가 숨음' : '손잡이 숨음';
+    } };
+  };
+
   /* ───── 움직임 › 화면 전환 (뷰 전환) ───── */
   function centerOf(st, el) { var r = rel(st, el); return [r.x + r.w / 2, r.y + r.h / 2]; }
 

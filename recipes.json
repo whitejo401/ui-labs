@@ -303,6 +303,22 @@
     "prompt": "400줄짜리 refund.js를 읽는 코드 열람기 화면을 만들어줘. 위에 파일 위치 Breadcrumb(결제 › src › refund.js)와 Search Bar 찾기 칸(두 글자부터 찾고 \"3 / 16\"처럼 개수, Enter와 ↑↓로 다음·앞), 그 아래 초록 팁 Callout으로 찾은 곳이 눈금과 미니맵에 같이 표시된다고 알리고 눈금 범례를 글로. 코드 칸은 줄 번호와 함께 따로 스크롤되고 Custom Scrollbar(scrollbar-color로 손잡이·트랙을 칸 바탕에 맞춤, 두께는 기본). 코드 칸 옆 14px 칸에 Scrollbar Markers: 찾은 곳은 가운데 노랑, 오류는 왼쪽 빨강, 바뀐 줄은 오른쪽 초록, 누르면 그 자리로. 오른쪽 90px에는 canvas Minimap(줄마다 가는 막대, 찾은 줄 노랑·오류 줄 빨강, 보이는 부분 틀을 끌거나 빈 곳을 눌러 이동, aria-hidden). 아래 문제 칸은 경고도 보기 스위치로 항목이 늘면 막대가 생기는데 Scrollbar Gutter: stable로 글이 옆으로 밀리지 않게, 견주기용으로 끄는 스위치도. 좁은 화면에서는 미니맵을 숨겨."
   },
   {
+    "id": "contacts",
+    "name": "연락처 목록",
+    "ready": true,
+    "terms": [
+      "chip-group",
+      "hidden-scrollbar",
+      "scroll-shadow",
+      "grouped-list",
+      "sticky-section-header",
+      "overlay-scrollbar",
+      "section-index",
+      "fast-scroller"
+    ],
+    "prompt": "연락처 320명과 고른 사람과 주고받은 사진 1,820장을 보는 화면을 만들어줘. 왼쪽 연락처 위에는 Chip Group 필터 줄(전체·즐겨찾기·최근 통화·회사·가족…, 하나만 켜짐)을 가로로 넘기되 Hidden Scrollbar로 막대는 숨기고, 넘칠 쪽 끝에 Scroll Shadow와 양 끝 ‹ › 단추. 목록은 초성(ㄱ~ㅎ)별 Grouped List, 구역 제목은 Sticky Section Header. 목록 오른쪽 끝에는 Section Index(ㄱ~ㅎ 세로, 사람이 없는 글자는 흐리게, 누르거나 끌면 그 구역으로 가며 가운데 큰 글자 말풍선, 글자는 구역 링크). 목록의 막대는 Overlay Scrollbar로 내용 위에 겹쳐 그려 스크롤할 때 나타나 1초 뒤 흐려지고, 마우스를 올리면 4px에서 10px로 굵어지고 끌 수 있게. 오른쪽 사진 격자(달마다 제목)에는 Fast Scroller: 스크롤할 때 나타나는 48px 손잡이, 끄는 동안 \"2025년 3월\" 같은 날짜 말풍선, 놓으면 1.5초 뒤 숨게. 목록과 격자는 키보드로도 스크롤되게."
+  },
+  {
     "id": "deck-explainer",
     "name": "설명·발표 덱",
     "ready": true,
