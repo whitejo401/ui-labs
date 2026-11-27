@@ -1477,20 +1477,21 @@
   };
 
   S['scroll-progress'] = function (st, c) {
-    var body = c.target === '본문만', MS = 3600;
+    var body = c.target === '본문만', ring = c.shape === '맨 위로 단추 둘레 원', MS = 3600, R = 17, L = 2 * Math.PI * R;
     st.innerHTML = '<div class="ct" style="position:absolute;left:0;right:0;top:0;padding-top:34px">' +
       '<div class="ar" style="padding:12px 18px;display:grid;gap:9px"><b style="font-size:15px">휴대폰으로 화면 요청하는 법</b>' + fakes(16) + '</div>' +
       '<div style="padding:16px 18px;background:var(--u-side);border-top:1px solid var(--u-line);display:grid;gap:8px;font-size:12px;color:var(--u-muted)">바닥글' + fakes(6) + '</div></div>' +
       '<div style="position:absolute;left:0;right:0;top:0;height:34px;z-index:3;display:flex;align-items:center;padding:0 14px;background:var(--u-panel);border-bottom:1px solid var(--u-line);font-weight:700;font-size:12.5px">블로그</div>' +
-      '<div class="pb" style="position:absolute;left:0;right:0;top:34px;height:' + (+c.height_px) + 'px;z-index:4;background:var(--u-accent);transform-origin:left;transform:scaleX(0)"></div>' + SBAR;
-    var ct = st.querySelector('.ct'), ar = st.querySelector('.ar'), pb = st.querySelector('.pb');
+      (ring ? '<div style="position:absolute;right:14px;bottom:14px;z-index:4;width:44px;height:44px;display:grid;place-items:center"><svg width="44" height="44" viewBox="0 0 44 44" style="position:absolute;inset:0;transform:rotate(-90deg)"><circle cx="22" cy="22" r="' + R + '" fill="var(--u-panel)" stroke="var(--u-line)" stroke-width="' + (+c.height_px) + '"/><circle class="pr" cx="22" cy="22" r="' + R + '" fill="none" stroke="var(--u-accent)" stroke-width="' + (+c.height_px) + '" stroke-linecap="round" stroke-dasharray="' + L.toFixed(1) + '" stroke-dashoffset="' + L.toFixed(1) + '"/></svg><span style="position:relative;font-size:15px;color:var(--u-ink)">↑</span></div>' :
+        '<div class="pb" style="position:absolute;left:0;right:0;top:34px;height:' + (+c.height_px) + 'px;z-index:4;background:var(--u-accent);transform-origin:left;transform:scaleX(0)"></div>') + SBAR;
+    var ct = st.querySelector('.ct'), ar = st.querySelector('.ar'), pb = st.querySelector('.pb'), pr = st.querySelector('.pr');
     return { ms: MS, rest: 0.5, at: function (t) {
       var ms = t * MS, vh = st.clientHeight, maxS = Math.max(0, ct.scrollHeight - vh), y = maxS * scrollAlong([[300, 0], [3000, 1]], ms);
       ct.style.transform = 'translateY(' + (-y) + 'px)';
       scrollbar(st, y, vh, ct.scrollHeight);
       var end = body ? ar.offsetTop + ar.offsetHeight - vh : maxS, p = clamp(y / Math.max(1, end));
-      pb.style.transform = 'scaleX(' + p + ')';
-      return '읽은 만큼 ' + Math.round(p * 100) + '%' + (body && p >= 1 && y < maxS - 1 ? ' · 본문 끝에서 다 참(바닥글은 빼고)' : '');
+      if (ring) pr.setAttribute('stroke-dashoffset', (L * (1 - p)).toFixed(1)); else pb.style.transform = 'scaleX(' + p + ')';
+      return (ring ? '단추 둘레 원 · ' : '') + '읽은 만큼 ' + Math.round(p * 100) + '%' + (body && p >= 1 && y < maxS - 1 ? ' · 본문 끝에서 다 참(바닥글은 빼고)' : '');
     } };
   };
 
@@ -2150,7 +2151,7 @@
   function taskRow(w) { return '<div style="display:flex;align-items:center;gap:8px;height:18px;padding:0 8px;border-radius:5px;background:var(--u-panel);border:1px solid var(--u-line)"><i style="width:9px;height:9px;border-radius:50%;border:1.5px solid var(--u-muted)"></i><div class="u-fake" style="width:' + w + '%"></div></div>'; }
 
   S['group-style'] = function (st, c) {
-    var way = c.way, sig = c.signal, cnt = c.count, rows = c.rows, MS = 4200, G3 = GRP.slice(0, 3);
+    var way = c.way, sig = c.signal, cnt = c.count, rows = c.rows, empty = c.empty || '안내 글과 한 줄 적기', MS = 4200, G3 = GRP.slice(0, 3);   // 첫 묶음은 비어 있다
     // 상자를 항목 묶음(.gi)에 거는 방식과 묶음 전체(.gp)에 거는 방식
     var onItems = way === '상자+왼쪽 색 테두리', boxed = ['테두리 상자', '상자+위쪽 색 띠', '제목 띠', '그림자 카드'].indexOf(way) >= 0;
     function row(w, k) {
@@ -2168,16 +2169,20 @@
         '<span style="color:' + g[1] + '">' + g[2] + '</span>' + (sig === '색+아이콘' ? '' : '<span style="color:' + (sig === '아이콘만 색' ? 'var(--u-ink)' : g[1]) + '">' + g[0] + '</span>');
       return '<section class="gp" style="position:relative;display:grid;gap:4px;border-radius:8px;border:1px solid transparent;overflow:hidden">' +
         '<i class="gb" style="position:absolute;left:0;top:22px;bottom:0;width:4px;border-radius:2px;background:' + g[1] + ';transform-origin:top"></i>' +
-        '<h4 class="gh" style="margin:0;display:flex;align-items:center;gap:6px;font-size:12px">' + head + badge(g, 2) + '</h4>' +
-        '<div class="gi" style="display:grid;gap:' + (rows === '카드 줄' ? 4 : rows === '간격만' ? 2 : 0) + 'px;border-radius:7px;border:1px solid transparent">' + row([70, 55, 80][i], 0) + row([50, 75, 60][i], 1) + '</div></section>';
+        '<h4 class="gh" style="margin:0;display:flex;align-items:center;gap:6px;font-size:12px">' + head + badge(g, i ? 2 : 0) + '</h4>' +
+        (i === 0 && empty !== '안내 글과 한 줄 적기' ? '<div class="gi"></div>' :
+        '<div class="gi" style="display:grid;gap:' + (rows === '카드 줄' ? 4 : rows === '간격만' ? 2 : 0) + 'px;border-radius:7px;border:1px solid transparent">' + (i === 0 ?
+          '<div style="display:flex;align-items:center;height:20px;padding:0 8px;font-size:11px;color:var(--u-muted)">핀을 눌러 오늘 할 것을 고릅니다</div><div style="display:flex;align-items:center;gap:6px;height:20px;padding:0 8px;font-size:11px;color:var(--u-muted);' + (rows === '가는 선' ? 'border-top:1px solid var(--u-line)' : '') + '">+ 한 줄 적기</div>' :
+          row([70, 55, 80][i], 0) + row([50, 75, 60][i], 1)) + '</div>') + '</section>';
     }).join('') + '</div></div>';
     var gw = st.querySelector('.gw'), gp = st.querySelectorAll('.gp'), gb = st.querySelectorAll('.gb'), gh = st.querySelectorAll('.gh'), gi = st.querySelectorAll('.gi');
+    if (empty === '숨김') gp[0].style.display = 'none';
     return { ms: MS, rest: 0.6, at: function (t) {
       var ms = t * MS, p = ease.inOut(seg(ms, 700, 1600)), gray = seg(ms, 2700, 3100), line = 'color-mix(in srgb, var(--u-line) ' + Math.round(100 * p) + '%, transparent)';
       gw.style.filter = gray ? 'grayscale(' + gray + ')' : '';
       gp.forEach(function (g, i) {
         var col = GRP[i][1], mix = function (pct) { return 'color-mix(in srgb, ' + col + ' ' + Math.round(pct * p) + '%, transparent)'; }, box = g, items = gi[i];
-        g.style.marginTop = i ? lerp(4, way === '간격만' ? 20 : 10, p) + 'px' : '0';
+        g.style.marginTop = i && !(i === 1 && empty === '숨김') ? lerp(4, way === '간격만' ? 20 : 10, p) + 'px' : '0';
         g.style.padding = way === '옅은 배경' || boxed ? lerp(0, 7, p) + 'px ' + lerp(0, 9, p) + 'px' : way === '왼쪽 막대' ? '0 0 0 ' + lerp(0, 12, p) + 'px' : way === '구분선' && i ? lerp(0, 8, p) + 'px 0 0' : '0';
         g.style.background = way === '옅은 배경' ? mix(12) : way === '그림자 카드' ? 'var(--u-panel)' : 'transparent';
         g.style.boxShadow = way === '그림자 카드' ? '0 ' + 2 * p + 'px ' + 8 * p + 'px rgb(20 22 25 / ' + (0.12 * p).toFixed(3) + ')' : 'none';
@@ -2193,7 +2198,7 @@
         gh[i].style.opacity = p; gh[i].style.height = way === '제목 띠' ? '' : 16 * p + 'px'; gh[i].style.overflow = 'hidden';
       });
       if (ms < 700) return '구분 없음 · 어디서 끊기는지 모름';
-      if (ms < 2700) return way + (way === '간격만' ? ' · 선·색 없이 여백으로 묶임' : '으로 묶음을 가름') + (rows === '카드 줄' && (boxed || onItems) ? ' · 상자 안 카드는 테두리가 겹침' : '');
+      if (ms < 2700) return way + (way === '간격만' ? ' · 선·색 없이 여백으로 묶임' : '으로 묶음을 가름') + (rows === '카드 줄' && (boxed || onItems) ? ' · 상자 안 카드는 테두리가 겹침' : '') + ' · 빈 묶음은 ' + (empty === '숨김' ? '숨김' : empty === '제목만' ? '제목만' : '안내 글');
       return '흑백으로 보면 · ' + (sig === '색만' ? '묶음 이름이 사라짐(색만이라)' : sig === '색+아이콘' ? '아이콘 모양으로 구분됨' : '제목 글로 구분됨');
     } };
   };

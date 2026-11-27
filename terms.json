@@ -2255,19 +2255,26 @@
         "카드 줄",
         "가는 선",
         "간격만"
+      ],
+      "empty": [
+        "안내 글과 한 줄 적기",
+        "제목만",
+        "숨김"
       ]
     },
     "control_ko": {
       "way": "방식",
       "signal": "색 신호",
       "count": "개수",
-      "rows": "항목 나눔"
+      "rows": "항목 나눔",
+      "empty": "빈 묶음"
     },
     "defaults": {
       "way": "간격만",
       "signal": "색+글자 이름",
       "count": "회색 알약",
-      "rows": "카드 줄"
+      "rows": "카드 줄",
+      "empty": "안내 글과 한 줄 적기"
     },
     "phrases": {
       "way": {
@@ -2297,6 +2304,11 @@
         "카드 줄": "항목은 줄마다 테두리 카드로",
         "가는 선": "항목은 카드 없이 줄 사이 가는 선으로만 나누고",
         "간격만": "항목은 선 없이 간격으로만 나누고"
+      },
+      "empty": {
+        "안내 글과 한 줄 적기": "빈 묶음은 제목과 0을 두고 상자 안에 무엇을 넣는 곳인지 한 줄 안내와 \"+ 한 줄 적기\" 줄을 보이고",
+        "제목만": "빈 묶음은 제목과 0만 두고",
+        "숨김": "빈 묶음은 통째로 숨기고"
       }
     },
     "pairs": [
@@ -2319,6 +2331,10 @@
       {
         "name": "Card Grid",
         "diff": "항목 하나하나가 카드다. 구역 구분 방식은 여러 항목을 한 묶음으로 보인다"
+      },
+      {
+        "name": "Empty State",
+        "diff": "화면이나 목록 전체가 비었을 때의 안내. 빈 묶음은 여러 묶음 중 하나가 빈 경우다"
       }
     ],
     "wrong": [
@@ -2339,7 +2355,7 @@
     "prompt": {
       "when": "할 일을 오늘 할 일·지연·빠른 메모·오늘 일정·요청으로 묶어 보일 때",
       "what": "Group Style",
-      "how": "{way}, {signal}, {count}, {rows}. 묶음마다 제목을 h3로 두고 목록은 aria-labelledby로 그 제목에 잇기"
+      "how": "{way}, {signal}, {count}, {rows}. {empty}, 묶음마다 제목을 h3로 두고 목록은 aria-labelledby로 그 제목에 잇기"
     }
   },
   {
@@ -14529,6 +14545,10 @@
         "본문만",
         "페이지 전체"
       ],
+      "shape": [
+        "맨 위 막대",
+        "맨 위로 단추 둘레 원"
+      ],
       "height_px": [
         2,
         6
@@ -14536,16 +14556,22 @@
     },
     "control_ko": {
       "target": "기준",
-      "height_px": "두께(px)"
+      "height_px": "굵기(px)",
+      "shape": "모양"
     },
     "defaults": {
       "target": "본문만",
+      "shape": "맨 위 막대",
       "height_px": 3
     },
     "phrases": {
       "target": {
         "본문만": "본문 길이 기준(바닥글 빼고)",
         "페이지 전체": "페이지 전체 길이 기준"
+      },
+      "shape": {
+        "맨 위 막대": "맨 위 가는 막대에 보여 주고(width 대신 transform: scaleX로 채움)",
+        "맨 위로 단추 둘레 원": "오른쪽 아래 \"맨 위로\" 단추 둘레 원에 보여 주고(SVG 원의 stroke-dashoffset으로 채움)"
       }
     },
     "pairs": [
@@ -14556,6 +14582,10 @@
       {
         "name": "Sticky Header",
         "diff": "막대를 붙여 둘 자리. 머리줄 밑줄로 같이 쓴다"
+      },
+      {
+        "name": "Back to Top",
+        "diff": "맨 위로 가는 단추. 원형 진행은 그 단추 둘레에 읽은 양을 같이 보인다"
       }
     ],
     "wrong": [
@@ -14568,7 +14598,7 @@
     "prompt": {
       "when": "긴 소개 글이나 블로그 글에서",
       "what": "Scroll Progress",
-      "how": "읽은 만큼을 {target}으로 맨 위 {height_px}px 막대에 보여 주고, width 대신 transform: scaleX로 채우고, animation-timeline: scroll()을 쓰고 지원하지 않으면 JS로 계산, 동작 줄이기에서도 그대로"
+      "how": "읽은 만큼을 {target}으로 {shape}, 굵기는 {height_px}px. animation-timeline: scroll()을 쓰고 지원하지 않으면 JS로 계산, 동작 줄이기에서도 그대로"
     },
     "motion": {
       "cost": "합성만",

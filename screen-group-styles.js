@@ -6,12 +6,12 @@
   UI.screens = UI.screens || {};
   var esc = UI.esc, GRP = UI.GROUPS;
   var WAYS = ['간격만', '옅은 배경', '테두리 상자', '왼쪽 막대', '상자+왼쪽 색 테두리', '상자+위쪽 색 띠', '제목 띠', '그림자 카드', '구분선'], SIGS = ['색+글자 이름', '아이콘만 색', '색+아이콘', '색만'];
-  var COUNTS = ['회색 알약', '묶음 색 알약', '숫자만', '없음'], ROWS = ['카드 줄', '가는 선', '간격만'];
+  var COUNTS = ['회색 알약', '묶음 색 알약', '숫자만', '없음'], ROWS = ['카드 줄', '가는 선', '간격만'], EMPTY = ['안내 글과 한 줄 적기', '제목만', '숨김'];
   // 묶음별 할 일 [글, 아이콘 글자, 담당]
   var TASKS = [
     [['결제 화면 문구 고치기', '민지'], ['환불 표에 수단 열 넣기', '준호'], ['환불 알림 메일 문장 다듬기', '서연'], ['결제 실패 화면 단추 옮기기', '도윤']],
     [['정산 메일 제목 바꾸기', '서연'], ['카드 등록 쉼표 오류', '도윤'], ['결제 수단 저장 동의 문구', '민지']],
-    [['부분 환불 합계 다시 보기', '민지'], ['영수증 메일에 주문 번호', '준호']],
+    [],   // 빠른 메모는 비어 있다(빈 묶음 모양을 보이려고)
     [['10:00 결제 개편 회의', '준호'], ['13:30 정산 점검', '민지'], ['15:00 고객사 통화', '서연']],
     [['영수증 다시 발행 요청', '도윤'], ['간편결제 순서 문의', '민지'], ['예비 결제 수단 문의', '준호']]];
   var THREAD = [['민지', '영수증을 메일로 다시 보내 달라는 요청이 3건 왔어요.', 0], ['준호', '주문 번호가 메일 제목에 없어서 찾기 어렵대요.', 1], ['민지', '제목에 주문 번호 넣는 건 이번 주에 끝낼게요.', 2], ['서연', '다시 발행 단추를 결제 내역에도 둘까요?', 1], ['도윤', '고객센터 문의도 같은 내용이에요.', 0], ['서연', '그럼 결제 내역에 단추를 먼저 둘게요.', 1]];
@@ -21,7 +21,7 @@
 
   UI.screens['group-styles'] = function (root, opt) {
     function sel(id, label, list, cur) { return '<label>' + label + ' <select id="' + id + '">' + list.map(function (w) { return '<option' + (w === cur ? ' selected' : '') + '>' + w + '</option>'; }).join('') + '</select></label>'; }
-    var st = { labels: false, way: '상자+왼쪽 색 테두리', sig: '아이콘만 색', count: '회색 알약', rows: '가는 선', gray: false, tab: 'list', open: {} }, timers = [];
+    var st = { labels: false, way: '상자+왼쪽 색 테두리', sig: '아이콘만 색', count: '회색 알약', rows: '가는 선', empty: '안내 글과 한 줄 적기', adding: -1, tasks: TASKS.map(function (a) { return a.slice(); }), gray: false, tab: 'list', open: {} }, timers = [];
     function later(fn, ms) { var id = setTimeout(fn, ms); timers.push(id); return id; }
     function $(id) { return document.getElementById(id); }
 
@@ -32,7 +32,7 @@
             '<div class="gs-tabs" role="tablist" aria-label="보기" data-term="tabs">' + [['list', '목록'], ['board', '담당자별 보드'], ['log', '완료 기록']].map(function (x) { return '<button type="button" role="tab" data-tab="' + x[0] + '" aria-selected="' + (x[0] === 'list') + '">' + x[1] + '</button>'; }).join('') + '</div></div>' +
           '<div class="gs-tools" id="gs-tools" data-term="group-style">' +
             '<label>구분 방식 <select id="gs-way">' + WAYS.map(function (w) { return '<option' + (w === st.way ? ' selected' : '') + '>' + w + '</option>'; }).join('') + '</select></label>' +
-            sel('gs-sig', '색 신호', SIGS, st.sig) + sel('gs-cnt', '개수', COUNTS, st.count) + sel('gs-rows', '항목 나눔', ROWS, st.rows) +
+            sel('gs-sig', '색 신호', SIGS, st.sig) + sel('gs-cnt', '개수', COUNTS, st.count) + sel('gs-rows', '항목 나눔', ROWS, st.rows) + sel('gs-empty', '빈 묶음', EMPTY, st.empty) +
             '<label class="gs-gray"><button type="button" class="u-switch" role="switch" aria-checked="false" id="gs-gray" aria-label="흑백 보기"><i></i></button>흑백 보기</label></div>' +
           '<div class="gs-pane" id="gs-list" role="tabpanel"><div class="gs-groups" id="gs-groups" data-term="grouped-list"></div></div>' +
           '<div class="gs-pane" id="gs-board" role="tabpanel" hidden><div class="gs-lanes" data-term="swimlane">' +
@@ -57,10 +57,14 @@
       g.innerHTML = GRP.map(function (gr, i) {
         var head = st.sig === '색만' ? '<i class="gs-dot" aria-hidden="true"></i><span class="gs-sr">' + gr[0] + '</span>' :
           '<span class="gs-ic" aria-hidden="true">' + gr[2] + '</span>' + (st.sig === '색+아이콘' ? '<span class="gs-sr">' + gr[0] + '</span>' : '<span class="gs-nm">' + gr[0] + '</span>');
+        var none = !st.tasks[i].length && st.adding !== i, guide = st.empty === '안내 글과 한 줄 적기';
+        if (none && st.empty === '숨김') return '';
         return '<section class="gs-grp" style="--g:' + gr[1] + '" aria-labelledby="gs-h' + i + '"' + '>' +
           (st.way === '왼쪽 막대' ? '<i class="gs-bar"' + (i === 1 ? ' data-term="accent-bar"' : '') + ' aria-hidden="true"></i>' : '') +
-          '<h3 class="gs-gh" id="gs-h' + i + '"' + (i === 1 ? ' data-term="sticky-section-header"' : '') + '>' + head + '<small>' + TASKS[i].length + '</small></h3>' +
-          '<ul' + (i === 1 && st.way === '상자+왼쪽 색 테두리' ? ' data-term="accent-bar"' : '') + '>' + TASKS[i].map(function (t) { return '<li><button type="button" class="gs-chk" aria-label="' + esc(t[0]) + ' 끝내기"></button><span>' + esc(t[0]) + '</span><em>' + t[1] + '</em></li>'; }).join('') + '</ul></section>';
+          '<h3 class="gs-gh" id="gs-h' + i + '"' + (i === 1 ? ' data-term="sticky-section-header"' : '') + '>' + head + '<small>' + st.tasks[i].length + '</small></h3>' +
+          (none && !guide ? '' : '<ul' + (i === 1 && st.way === '상자+왼쪽 색 테두리' ? ' data-term="accent-bar"' : '') + '>') + st.tasks[i].map(function (t) { return '<li><button type="button" class="gs-chk" aria-label="' + esc(t[0]) + ' 끝내기"></button><span>' + esc(t[0]) + '</span><em>' + t[1] + '</em></li>'; }).join('') +
+            (!none || !guide ? '' : '<li class="gs-empty">핀을 눌러 오늘 할 것을 고르거나, 생각난 일을 바로 적어 두세요.</li>') +
+            (st.adding === i ? '<li class="gs-addrow"><input id="gs-in" aria-label="' + gr[0] + '에 할 일 적기" placeholder="적고 Enter, 그만두려면 Esc"></li>' : none && guide ? '<li class="gs-addrow"><button type="button" class="gs-add" data-add="' + i + '">+ 한 줄 적기</button></li>' : '') + (none && !guide ? '' : '</ul>') + '</section>';
       }).join('');
       $('gs-list').classList.toggle('gray', st.gray);
     }
@@ -95,6 +99,7 @@
       else if (b.id === 'gs-gray') { st.gray = !st.gray; b.setAttribute('aria-checked', String(st.gray)); drawGroups(); }
       else if (b.hasAttribute('data-fold')) { var k = b.getAttribute('data-fold'); st.open[k] = st.open[k] === false; drawThread(); var nb = root.querySelector('[data-fold="' + k + '"]'); if (nb) nb.focus(); }
       else if (b.classList.contains('gs-chk')) { b.closest('li').classList.toggle('done'); }
+      else if (b.hasAttribute('data-add')) { st.adding = +b.getAttribute('data-add'); drawGroups(); $('gs-in').focus(); }
       else return;
       if (st.labels) later(drawLabels, 30);
     });
@@ -106,8 +111,15 @@
       if (st.labels) later(drawLabels, 30);
     });
     $('gs-way').addEventListener('change', function () { st.way = this.value; drawGroups(); if (st.labels) drawLabels(); });
-    [['gs-sig', 'sig'], ['gs-cnt', 'count'], ['gs-rows', 'rows']].forEach(function (x) { $(x[0]).addEventListener('change', function () { st[x[1]] = this.value; drawGroups(); if (st.labels) drawLabels(); }); });
+    [['gs-sig', 'sig'], ['gs-cnt', 'count'], ['gs-rows', 'rows'], ['gs-empty', 'empty']].forEach(function (x) { $(x[0]).addEventListener('change', function () { st[x[1]] = this.value; drawGroups(); if (st.labels) drawLabels(); }); });
     $('gs-list').addEventListener('scroll', function () { if (st.labels) drawLabels(); });
+    // 한 줄 적기: Enter로 더하고 Esc로 그만둔다
+    root.addEventListener('keydown', function (e) {
+      if (e.target.id !== 'gs-in') return;
+      var i = st.adding, v = e.target.value.trim();
+      if (e.key === 'Enter') { if (v) st.tasks[i].push([v, '나']); st.adding = -1; drawGroups(); var li = root.querySelectorAll('.gs-grp')[i]; var f = li && (li.querySelector('li:last-child .gs-chk') || li.querySelector('.gs-add')); if (f) f.focus(); }
+      else if (e.key === 'Escape') { st.adding = -1; drawGroups(); var a = root.querySelector('[data-add="' + i + '"]'); if (a) a.focus(); }
+    });
 
     /* ── 용어 보기 ── */
     function drawLabels() {

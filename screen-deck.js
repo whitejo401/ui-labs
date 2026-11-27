@@ -45,6 +45,13 @@
         }).join('');
     }
     function stop() { cancelAnimationFrame(raf); clearTimeout(tm); raf = tm = null; }
+    // 지금 장 미리보기가 왼쪽 목록 밖이면 목록만 굴려 보이게 한다(페이지는 그대로)
+    function reveal() {
+      var sd = $('dk-side'), t = sd.querySelector('.dk-th[aria-current="true"]');
+      if (!t) return;
+      var a = t.getBoundingClientRect(), b = sd.getBoundingClientRect();
+      if (a.top < b.top) sd.scrollTop -= b.top - a.top + 4; else if (a.bottom > b.bottom) sd.scrollTop += a.bottom - b.bottom + 4;
+    }
     // 장을 바꾸면 step 차례로 나타난다. 동작 줄이기면 바로 다 보인다
     // 용어 보기 중에는 매 장면 이름표를 다시 붙여, 앞 장 이름표는 바로 지워지고 새 도형의 이름표는 나타날 때 붙는다
     function show(i, still) {
@@ -57,6 +64,7 @@
         t.setAttribute('aria-current', String(j === st.i));
         var cap = t.querySelector('span'); if (j === st.i) cap.setAttribute('data-term', 'slide-layout'); else cap.removeAttribute('data-term');
       });
+      reveal();
       if (still || mq.matches) { el.innerHTML = S.svg(b.prims); drawLabels(); return; }
       var start = performance.now();
       (function step() {
@@ -74,7 +82,9 @@
       var L = $('dk-labels');
       L.hidden = !st.labels;
       if (!st.labels) return;
-      var seen = UI.termLabels(scr, L, opt.termName, function (id) { return id === 'speaker-notes' || id === 'two-column-comparison' ? 'in-br' : ''; });
+      var sd = $('dk-side'), sb = sd.getBoundingClientRect();
+      var seen = UI.termLabels(scr, L, opt.termName, function (id) { return id === 'speaker-notes' || id === 'two-column-comparison' ? 'in-br' : ''; },
+        function (el) { if (!sd.contains(el)) return false; var a = el.getBoundingClientRect(); return a.bottom < sb.top + 1 || a.top > sb.bottom - 1; });
       if (opt.onLabels && !moving) opt.onLabels(seen);
     }
 
@@ -109,6 +119,7 @@
     });
     function onResize() { drawLabels(); }
     window.addEventListener('resize', onResize);
+    $('dk-side').addEventListener('scroll', function () { if (st.labels) drawLabels(); });
 
     S.ready(D, th).then(function () {
       if (!alive) return;
@@ -123,6 +134,7 @@
       setLabels: function (on) { st.labels = on; drawLabels(); },
       // 지금 장에 없는 용어: 그 용어가 처음 나오는 장으로 간다
       demo: function (id) {
+        if (id === 'slide-layout' || id === 'slide-master' || id === 'placeholder') { if (id === 'slide-layout') reveal(); else $('dk-side').scrollTop = 0; drawLabels(); return; }
         for (var i = 0; i < built.length; i++) if (built[i].prims.some(function (p) { return p.term === id; })) { show(i, true); return; }
         drawLabels();
       },
