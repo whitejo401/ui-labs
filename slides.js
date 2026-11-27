@@ -34,6 +34,7 @@
       head: 11,                   // 화살촉 길이(px). 없으면 선 굵기의 3배
       chart: '#8b93a1',           // 강조하지 않는 막대·선(회색)
       warn: '#b45309',            // 판 제목 tone: 'warn'(못 하는 것, 위험)
+      body: 13.5,                 // 표·판·층 칸의 본문 값 18px(블라인드 9회차: 글자 크기는 2판이 낫다). 없으면 12(16px)
       lh: 1.3, slack: 0.9
     }
   };
@@ -120,9 +121,11 @@
     if (sets.length < 2) return { prims: prims, errors: errors };
     var three = sets.length === 3;
     // 셋일 때 세 원을 합친 높이는 지름의 1.47배. 그 가운데가 상자 가운데에 오게 sy만큼 올린다
-    var D = three ? Math.min(box.h / 1.47, box.w / 1.9) : Math.min(box.h, box.w / 1.75);
-    var R = D / 2, cx = box.x + box.w / 2, cy = box.y + box.h / 2;
-    var off = three ? R * 0.62 : R * 0.68;     // 가운데에서 원 중심까지
+    // small(둘일 때): 겹침을 작게 그려 "겹치는 부분은 작다"는 주장과 맞춘다. 겹침 글은 원 위에 두고 선으로 가리킨다
+    var sm = !three && d.small, top0 = sm ? 44 : 0;
+    var D = three ? Math.min(box.h / 1.47, box.w / 1.9) : Math.min(box.h - top0, box.w / (sm ? 1.9 : 1.75));
+    var R = D / 2, cx = box.x + box.w / 2, cy = box.y + top0 + (box.h - top0) / 2;
+    var off = three ? R * 0.62 : R * (sm ? 0.9 : 0.68);     // 가운데에서 원 중심까지
     var sy = three ? -off * 0.25 : 0;
     var cs = three
       ? [[cx - off * 0.87, cy - off * 0.5 + sy], [cx + off * 0.87, cy - off * 0.5 + sy], [cx, cy + off + sy]]
@@ -140,8 +143,13 @@
       var top = py - (nh + oh) / 2;
       prims.push(S.textBox({ x: px - lw / 2, y: top, w: lw, text: s.name, size: nameSize, weight: 700, color: col, align: 'center', step: i }, th, errors, 'sets[' + i + '].name'));
       if (s.one) prims.push(S.textBox({ x: px - lw / 2, y: top + nh, w: lw, text: s.one, size: oneSize, color: th.ink, align: 'center', max: 2, step: i }, th, errors, 'sets[' + i + '].one'));
+      if (s.tag) prims.push(S.textBox({ x: px - lw / 2, y: top + nh + oh + 8, w: lw, text: s.tag, size: oneSize, weight: 700, color: th.accent, align: 'center', step: i }, th, errors, 'sets[' + i + '].tag'));
     });
-    if (d.overlap) {
+    if (d.overlap && sm) {
+      var ly = cy - Math.sqrt(Math.max(0, R * R - off * off));   // 겹침 맨 위
+      prims.push(S.textBox({ x: cx - box.w * 0.3, y: box.y, w: box.w * 0.6, h: 26, text: d.overlap, size: 12, color: th.ink, align: 'center', valign: 'middle', step: sets.length }, th, errors, 'overlap'));
+      prims.push({ k: 'line', x1: cx, y1: box.y + 28, x2: cx, y2: ly + 6, stroke: th.muted, sw: 1.5, arrow: 'end', head: th.head, step: sets.length });
+    } else if (d.overlap) {
       var ow = three ? R * 0.62 : (2 * R - 2 * off) * 0.86;
       var osz = (three ? 13 : 15) * (th.scale || 1);
       var ocy = cy + sy;
@@ -177,17 +185,20 @@
   // 층 구조 표: 층마다 한 줄, 칸은 head(첫 칸은 층 이름). 층 사이 화살표 옆에 call(부르는 방식). mark면 강조 줄
   // { head: ['층', '하는 일', ...], widths: [비율...], call, layers: [{ name, cells: [...], mark }] }
   function layerTable(d, layers, box, th, errors) {
-    var prims = [], n = Math.max(1, layers.length), hh = 30, gap = 28, pad = 20;
+    // card: 마지막 열을 줄 바탕 밖 따로 흰 카드로(강조 층은 강조 카드, 가운데 굵은 글)
+    var prims = [], n = Math.max(1, layers.length), hh = 30, gap = 28, pad = 20, cg = d.card ? 16 : 0, last = d.head.length - 1;
     var ws = d.widths || d.head.map(function () { return 1; }), tot = ws.reduce(function (a, b) { return a + b; }, 0), xs = [box.x];
     ws.forEach(function (v) { xs.push(xs[xs.length - 1] + box.w * v / tot); });
     var rh = (box.h - hh - gap * (n - 1)) / n;
     d.head.forEach(function (t, j) { prims.push(S.textBox({ x: xs[j] + pad, y: box.y, w: xs[j + 1] - xs[j] - 2 * pad, h: hh, text: t, size: 12, color: th.muted, valign: 'middle' }, th, errors, 'head[' + j + ']')); });
     layers.forEach(function (L, i) {
       var y = box.y + hh + i * (rh + gap), sl = 'layers[' + i + ']';
-      prims.push({ k: 'rect', x: box.x, y: y, w: box.w, h: rh, r: 6, fill: L.mark ? th.accentSoft : th.panel, stroke: L.mark ? th.accent : undefined, sw: 1.5, step: i, term: i ? undefined : 'layered-architecture-diagram' });
+      prims.push({ k: 'rect', x: box.x, y: y, w: (d.card ? xs[last] - cg : box.x + box.w) - box.x, h: rh, r: 6, fill: L.mark ? th.accentSoft : th.panel, stroke: L.mark ? th.accent : undefined, sw: 1.5, step: i, term: i ? undefined : 'layered-architecture-diagram' });
+      if (d.card) prims.push({ k: 'rect', x: xs[last], y: y, w: xs[last + 1] - xs[last], h: rh, r: 6, fill: L.mark ? th.accentSoft : th.bg, stroke: L.mark ? th.accent : th.line, sw: L.mark ? 1.5 : 1, step: i });
       [L.name].concat(L.cells || []).forEach(function (t, j) {
         if (j >= d.head.length) return;
-        prims.push(S.textBox({ x: xs[j] + pad, y: y, w: xs[j + 1] - xs[j] - 2 * pad, h: rh, text: t, size: j ? 12 : 13.5, weight: j ? 400 : 700, color: L.mark && j === d.head.length - 1 ? th.accent : th.ink, valign: 'middle', max: j ? 2 : 1, step: i }, th, errors, j ? sl + '.cells[' + (j - 1) + ']' : sl + '.name'));
+        var cd = d.card && j === last;
+        prims.push(S.textBox({ x: xs[j] + pad - (cd ? cg : 0), y: y, w: xs[j + 1] - xs[j] - 2 * pad + (cd ? cg : 0), h: rh, text: t, size: j ? th.body || 12 : 13.5, weight: !j || (cd && L.mark) ? 700 : 400, color: L.mark && j === last ? th.accent : cd ? th.muted : th.ink, align: cd ? 'center' : undefined, valign: 'middle', max: j ? 2 : 1, step: i }, th, errors, j ? sl + '.cells[' + (j - 1) + ']' : sl + '.name'));
       });
       if (i < n - 1) {
         var ax = box.x + 40;
@@ -274,10 +285,13 @@
     var prims = [], pos = {}, cols = 1, rows = 1;
     nodes.forEach(function (n) { cols = Math.max(cols, Math.ceil((n.col || 0) + 1)); rows = Math.max(rows, Math.ceil((n.row || 0) + (n.span || 1))); });
     var cw = box.w / cols, ch = box.h / rows;
+    // colw: 열마다 너비 비율(넓은 상자가 있는 열을 넓게). 없으면 같은 너비
+    var cx0 = null;
+    if (o.colw) { var ct = o.colw.reduce(function (a, b) { return a + b; }, 0), acc = 0; cx0 = o.colw.map(function (v) { var c = box.x + (acc + v / 2) / ct * box.w; acc += v; return c; }); }
     var w = Math.min(cw - (o.gapX || 90), o.w || 260), h = Math.min(ch - (o.gapY || 70), o.h || 110);
     nodes.forEach(function (n, i) {
       var nh = n.span ? n.span * ch - (o.gapY || 70) : h, nw = n.w || w;
-      var cx = box.x + ((n.col || 0) + 0.5) * cw, cy = box.y + ((n.row || 0) + (n.span || 1) / 2) * ch;
+      var cx = cx0 ? cx0[n.col || 0] : box.x + ((n.col || 0) + 0.5) * cw, cy = box.y + ((n.row || 0) + (n.span || 1) / 2) * ch;
       if (o.flush && !n.col) cx = box.x + nw / 2; else if (o.flush && n.col === cols - 1) cx = box.x + box.w - nw / 2;
       pos[n.name] = { cx: cx, cy: cy, i: i, x: cx - nw / 2, y: cy - nh / 2, w: nw, h: nh, look: n.look };
       prims = prims.concat(nodeBox(n, cx - nw / 2, cy - nh / 2, nw, nh, th, errors, o.slot + '[' + i + ']', i, i ? undefined : o.term));
@@ -411,7 +425,7 @@
     count(boxes, 2, 8, 'boxes', errors);
     var area = d.legend ? { x: box.x, y: box.y, w: box.w, h: box.h - 52 } : box, loop = (d.arrows || []).some(function (a) { return a.loop; });
     if (loop) area = { x: area.x, y: area.y, w: area.w, h: area.h - 44 };   // 아래로 도는 화살표 자리
-    var g = graph(boxes, d.arrows, area, th, errors, { slot: 'boxes', linkSlot: 'arrows', term: 'box-and-arrow-diagram', w: 220, h: 104, gapX: d.gapX || 80, gapY: loop ? 16 : undefined });
+    var g = graph(boxes, d.arrows, area, th, errors, { slot: 'boxes', linkSlot: 'arrows', term: 'box-and-arrow-diagram', w: 220, h: 104, gapX: d.gapX || 80, gapY: loop ? 16 : undefined, colw: d.colw });
     var prims = g.prims;
     if (d.legend) prims = prims.concat(legend(d.legend, box.x + box.w, box.y + box.h - 40, th, errors, 'legend', boxes.length));
     return { prims: prims, errors: errors };
@@ -835,7 +849,7 @@
       var y = box.y + hh + i * rh;
       r.forEach(function (t, j) {
         var b = j === d.bold, rt = (d.right || []).indexOf(j) >= 0;
-        prims.push(S.textBox({ x: xs[j] + 16, y: y, w: xs[j + 1] - xs[j] - (rt ? 32 : 24), h: rh, text: t, size: b ? 13.5 : 12, weight: b ? 700 : 400, color: b && i === d.hl ? th.accent : j ? th.ink : th.muted, align: rt ? 'right' : 'left', valign: 'middle', max: rh > 44 ? 2 : 1, step: i }, th, errors, 'rows[' + i + '][' + j + ']'));
+        prims.push(S.textBox({ x: xs[j] + 16, y: y, w: xs[j + 1] - xs[j] - (rt ? 32 : 24), h: rh, text: t, size: b ? 13.5 : j ? th.body || 12 : 12, weight: b ? 700 : 400, color: b && i === d.hl ? th.accent : j ? th.ink : th.muted, align: rt ? 'right' : 'left', valign: 'middle', max: rh > 44 ? 2 : 1, step: i }, th, errors, 'rows[' + i + '][' + j + ']'));
       });
       prims.push({ k: 'line', x1: box.x, y1: y + rh, x2: box.x + box.w, y2: y + rh, stroke: th.line, sw: 1 });
     });
@@ -1065,7 +1079,8 @@
       rows.forEach(function (r, i) {
         var ry = y + i * rh, sl = o.cols ? (i ? 'rows[' + (i - 1) + ']' : 'cols') : 'rows[' + i + ']', ch = rh, ci = 0, hd = o.cols && !i;
         // 밝은 테마는 줄마다 흰 칸(사이 8px), 아니면(plain 포함) 줄 위에 선
-        if (th.light && !plain) { ch = rh - 8; ci = 14; out.push({ k: 'rect', x: x, y: ry, w: ww, h: ch, r: 4, fill: th.bg, stroke: th.line, sw: 1 }); }
+        var mr = o.markRow === (o.cols ? i - 1 : i);   // markRow: 위 그림의 강조와 짝지을 줄(같은 강조 테두리)
+        if (th.light && !plain) { ch = rh - 8; ci = 14; out.push({ k: 'rect', x: x, y: ry, w: ww, h: ch, r: 4, fill: mr ? th.accentSoft : th.bg, stroke: mr ? th.accent : th.line, sw: mr ? 1.5 : 1 }); }
         else if (i || !plain) out.push({ k: 'line', x1: x, y1: ry, x2: x + ww, y2: ry, stroke: th.line, sw: 1 });
         out.push(S.textBox({ x: x + ci, y: ry, w: kw - 12 - ci, h: ch, text: r[0], size: o.boldKey ? 13.5 : 12, weight: o.boldKey ? 700 : 400, color: o.boldKey ? th.ink : th.muted, valign: 'middle' }, th, e, sl + '[0]'));
         var vals = o.from ? r.slice(1, -1) : r.slice(1), vw = (ww - kw - ci - (o.rightVal ? ci : 0)) / vals.length;
@@ -1073,7 +1088,7 @@
           out.push({ k: 'line', x1: x + ww + 40, y1: ry + ch / 2, x2: x + ww + 6, y2: ry + ch / 2, stroke: th.muted, sw: 1.5, arrow: 'end', head: th.head });
           out.push(S.textBox({ x: x + ww + 48, y: ry, w: fw - 48, h: ch, text: r[r.length - 1], size: 12, color: th.ink, valign: 'middle' }, th, e, sl + '[' + (r.length - 1) + ']'));
         }
-        vals.forEach(function (t, j) { out.push(S.textBox({ x: x + kw + j * vw, y: ry, w: vw - (vals.length > 1 ? 8 : 0), h: ch, align: o.rightVal ? 'right' : undefined, text: t, size: plain && !hd ? 13.5 : 12, weight: o.boldVal && !hd ? 700 : 400, color: hd ? th.muted : th.ink, valign: 'middle', max: ch > (plain ? 56 : 40) ? 2 : 1 }, th, e, sl + '[' + (j + 1) + ']')); });
+        vals.forEach(function (t, j) { out.push(S.textBox({ x: x + kw + j * vw, y: ry, w: vw - (vals.length > 1 ? 8 : 0), h: ch, align: o.rightVal ? 'right' : undefined, text: t, size: hd ? 12 : plain ? 13.5 : th.body || 12, weight: o.boldVal && !hd ? 700 : 400, color: hd ? th.muted : th.ink, valign: 'middle', max: ch > (plain ? 56 : 40) ? 2 : 1 }, th, e, sl + '[' + (j + 1) + ']')); });
       });
     }
     if (o.note) {
@@ -1092,6 +1107,7 @@
   S.build = function (slide, i, theme) {
     var L = S.layouts[slide.layout];
     if (!L) return { prims: [], errors: [{ slide: i + 1, slot: 'layout', msg: '없는 레이아웃 ' + slide.layout }] };
+    if (slide.body) theme = Object.assign({}, theme, { body: slide.body });   // 장마다 본문 값 크기를 덮어쓴다(pt)
     var r = L.build(slide, theme, i + 1);
     r.errors.forEach(function (e) { e.slide = i + 1; });
     return r;
