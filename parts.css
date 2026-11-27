@@ -1075,17 +1075,36 @@
 .gs-chk { flex: none; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--u-muted); background: none; padding: 0; cursor: pointer; }
 .gs-grp li.done .gs-chk { background: var(--u-ok); border-color: var(--u-ok); }
 .gs-chk:focus-visible { outline: 2px solid var(--u-accent); outline-offset: 2px; }
+/* 방식: 0 간격만 · 1 옅은 배경 · 2 테두리 상자 · 3 왼쪽 막대 · 4 상자+왼쪽 색 테두리 · 5 상자+위쪽 색 띠 · 6 제목 띠 · 7 그림자 카드 · 8 구분선 */
 .way-0 .gs-grp + .gs-grp { margin-top: 18px; }
-.way-1 { gap: 12px; padding-top: 10px; }
+.way-1, .way-2, .way-5, .way-6, .way-7 { gap: 12px; padding-top: 10px; }
 .way-1 .gs-grp { background: color-mix(in srgb, var(--g) 12%, transparent); border-radius: 12px; padding: 0 12px 12px; }
-.way-1 .gs-gh { background: none; position: static; }
-.way-2 { gap: 12px; padding-top: 10px; }
-.way-2 .gs-grp { border: 1px solid var(--u-line); border-radius: 12px; padding: 0 12px 12px; }
-.way-2 .gs-gh { background: none; position: static; }
+.way-2 .gs-grp, .way-5 .gs-grp, .way-6 .gs-grp { border: 1px solid var(--u-line); border-radius: 12px; padding: 0 12px 12px; background: var(--u-panel); }
+.way-5 .gs-grp { border-top: 4px solid var(--g); }
+.way-6 .gs-grp { overflow: hidden; }
+.way-6 .gs-gh { margin: 0 -12px 8px; padding: 10px 12px; background: color-mix(in srgb, var(--g) 14%, var(--u-panel)); }
+.way-7 .gs-grp { border-radius: 12px; padding: 0 12px 12px; background: var(--u-panel); box-shadow: var(--u-shadow-sm); }
+.way-1 .gs-gh, .way-2 .gs-gh, .way-5 .gs-gh, .way-6 .gs-gh, .way-7 .gs-gh { background: none; position: static; }
+.way-6 .gs-gh { background: color-mix(in srgb, var(--g) 14%, var(--u-panel)); }
 .way-3 { gap: 10px; }
 .way-3 .gs-grp { padding-left: 16px; }
 .gs-bar { position: absolute; left: 0; top: 42px; bottom: 0; width: 4px; border-radius: 2px; background: var(--g); }
-.way-4 .gs-grp + .gs-grp { margin-top: 12px; border-top: 1px solid var(--u-line); }
+.way-4 { gap: 8px; }
+.way-4 .gs-grp ul { border: 1px solid var(--u-line); border-left: 4px solid var(--g); border-radius: 12px; background: var(--u-panel); overflow: hidden; }
+.way-8 .gs-grp + .gs-grp { margin-top: 12px; border-top: 1px solid var(--u-line); }
+/* 항목 나눔: 0 카드 줄 · 1 가는 선 · 2 간격만 */
+.rows-1 .gs-grp ul, .rows-2 .gs-grp ul { gap: 0; }
+.rows-1 .gs-grp li, .rows-2 .gs-grp li { border: 0; border-radius: 0; background: none; }
+.rows-1 .gs-grp li + li { border-top: 1px solid var(--u-line); }
+.rows-2 .gs-grp ul { gap: 4px; }
+.way-4.rows-0 .gs-grp ul { padding: 6px; gap: 6px; }
+/* 개수: 0 회색 알약 · 1 묶음 색 알약 · 2 숫자만 · 3 없음 */
+.cnt-0 .gs-gh small, .cnt-1 .gs-gh small { padding: 0 8px; border-radius: 999px; line-height: 18px; font-weight: 700; font-size: 11px; }
+.cnt-0 .gs-gh small { background: var(--u-side); border: 1px solid var(--u-line); }
+.cnt-1 .gs-gh small { background: color-mix(in srgb, var(--g) 20%, var(--u-panel)); color: var(--g); }
+.cnt-3 .gs-gh small { display: none; }
+/* 색 신호 "아이콘만 색": 제목 글은 기본 글자색 */
+.ink .gs-nm { color: var(--u-ink); }
 .gs-lanes { display: grid; grid-template-columns: 72px repeat(3, minmax(0, 1fr)); margin-top: 12px; font-size: 12.5px; }
 .gs-col { padding: 4px 8px; color: var(--u-muted); font-size: 12px; }
 .gs-lh { display: grid; align-content: start; gap: 2px; padding: 10px 8px; border-top: 1px solid var(--u-line); }
@@ -1118,9 +1137,6 @@
   .gs-head, .gs-tools, .gs-pane { padding-left: 14px; padding-right: 14px; }
   .gs-lanes { grid-template-columns: 56px repeat(3, minmax(0, 1fr)); }
 }
-.way-2 .gs-grp ul { gap: 0; }
-.way-2 .gs-grp li { border: 0; border-radius: 0; background: none; padding: 0 4px; }
-.way-2 .gs-grp li + li { border-top: 1px solid var(--u-line); }
 
 /* ───── 조합 화면: 코드 열람기 (screen-code-viewer.js) ───── */
 .scr.cv-scr { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto; }

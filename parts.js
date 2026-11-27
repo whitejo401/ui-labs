@@ -2150,31 +2150,50 @@
   function taskRow(w) { return '<div style="display:flex;align-items:center;gap:8px;height:18px;padding:0 8px;border-radius:5px;background:var(--u-panel);border:1px solid var(--u-line)"><i style="width:9px;height:9px;border-radius:50%;border:1.5px solid var(--u-muted)"></i><div class="u-fake" style="width:' + w + '%"></div></div>'; }
 
   S['group-style'] = function (st, c) {
-    var way = c.way, sig = c.signal, MS = 4200, G3 = GRP.slice(0, 3);
+    var way = c.way, sig = c.signal, cnt = c.count, rows = c.rows, MS = 4200, G3 = GRP.slice(0, 3);
+    // 상자를 항목 묶음(.gi)에 거는 방식과 묶음 전체(.gp)에 거는 방식
+    var onItems = way === '상자+왼쪽 색 테두리', boxed = ['테두리 상자', '상자+위쪽 색 띠', '제목 띠', '그림자 카드'].indexOf(way) >= 0;
+    function row(w, k) {
+      var look = rows === '카드 줄' ? 'border:1px solid var(--u-line);border-radius:5px;background:var(--u-panel)' : rows === '가는 선' ? (k ? 'border-top:1px solid var(--u-line)' : '') : '';
+      return '<div style="display:flex;align-items:center;gap:8px;height:' + (rows === '카드 줄' ? 18 : 20) + 'px;padding:0 8px;' + look + '"><i style="width:9px;height:9px;border-radius:50%;border:1.5px solid var(--u-muted)"></i><div class="u-fake" style="width:' + w + '%"></div></div>';
+    }
+    function badge(g, n) {
+      if (cnt === '없음') return '';
+      if (cnt === '숫자만') return '<small style="font-weight:400;color:var(--u-muted)">' + n + '</small>';
+      var col = cnt === '묶음 색 알약';
+      return '<small style="font-weight:700;font-size:10px;padding:0 6px;border-radius:999px;line-height:15px;background:' + (col ? 'color-mix(in srgb, ' + g[1] + ' 20%, var(--u-panel))' : 'var(--u-side)') + ';border:1px solid ' + (col ? 'transparent' : 'var(--u-line)') + ';color:' + (col ? g[1] : 'var(--u-muted)') + '">' + n + '</small>';
+    }
     st.innerHTML = '<div class="u-pad" style="gap:0"><div class="gw" style="display:grid">' + G3.map(function (g, i) {
-      return '<section class="gp" style="position:relative;display:grid;gap:4px;border-radius:8px;border:1px solid transparent">' +
+      var head = sig === '색만' ? '<i style="width:9px;height:9px;border-radius:50%;background:' + g[1] + '"></i>' :
+        '<span style="color:' + g[1] + '">' + g[2] + '</span>' + (sig === '색+아이콘' ? '' : '<span style="color:' + (sig === '아이콘만 색' ? 'var(--u-ink)' : g[1]) + '">' + g[0] + '</span>');
+      return '<section class="gp" style="position:relative;display:grid;gap:4px;border-radius:8px;border:1px solid transparent;overflow:hidden">' +
         '<i class="gb" style="position:absolute;left:0;top:22px;bottom:0;width:4px;border-radius:2px;background:' + g[1] + ';transform-origin:top"></i>' +
-        '<h4 class="gh" style="margin:0;display:flex;align-items:center;gap:6px;height:16px;font-size:12px;color:' + g[1] + '">' +
-          (sig === '색만' ? '<i style="width:9px;height:9px;border-radius:50%;background:' + g[1] + '"></i>' : '<span>' + g[2] + '</span>' + (sig === '색+글자 이름' ? '<span>' + g[0] + '</span>' : '')) + '</h4>' +
-        '<div class="gi" style="display:grid;gap:4px">' + taskRow([70, 55, 80][i]) + taskRow([50, 75, 60][i]) + '</div></section>';
+        '<h4 class="gh" style="margin:0;display:flex;align-items:center;gap:6px;font-size:12px">' + head + badge(g, 2) + '</h4>' +
+        '<div class="gi" style="display:grid;gap:' + (rows === '카드 줄' ? 4 : rows === '간격만' ? 2 : 0) + 'px;border-radius:7px;border:1px solid transparent">' + row([70, 55, 80][i], 0) + row([50, 75, 60][i], 1) + '</div></section>';
     }).join('') + '</div></div>';
     var gw = st.querySelector('.gw'), gp = st.querySelectorAll('.gp'), gb = st.querySelectorAll('.gb'), gh = st.querySelectorAll('.gh'), gi = st.querySelectorAll('.gi');
     return { ms: MS, rest: 0.6, at: function (t) {
-      var ms = t * MS, p = ease.inOut(seg(ms, 700, 1600)), gray = seg(ms, 2700, 3100);
+      var ms = t * MS, p = ease.inOut(seg(ms, 700, 1600)), gray = seg(ms, 2700, 3100), line = 'color-mix(in srgb, var(--u-line) ' + Math.round(100 * p) + '%, transparent)';
       gw.style.filter = gray ? 'grayscale(' + gray + ')' : '';
       gp.forEach(function (g, i) {
-        var col = GRP[i][1];
+        var col = GRP[i][1], mix = function (pct) { return 'color-mix(in srgb, ' + col + ' ' + Math.round(pct * p) + '%, transparent)'; }, box = g, items = gi[i];
         g.style.marginTop = i ? lerp(4, way === '간격만' ? 20 : 10, p) + 'px' : '0';
-        g.style.padding = way === '옅은 배경' || way === '테두리 상자' ? lerp(0, 7, p) + 'px ' + lerp(0, 9, p) + 'px' : way === '왼쪽 막대' ? '0 0 0 ' + lerp(0, 12, p) + 'px' : way === '구분선' && i ? lerp(0, 8, p) + 'px 0 0' : '0';
-        g.style.background = way === '옅은 배경' ? 'color-mix(in srgb, ' + col + ' ' + Math.round(12 * p) + '%, transparent)' : 'transparent';
-        g.style.borderColor = way === '테두리 상자' ? 'color-mix(in srgb, var(--u-line) ' + Math.round(100 * p) + '%, transparent)' : 'transparent';
-        g.style.borderTopColor = way === '구분선' && i ? 'color-mix(in srgb, var(--u-line) ' + Math.round(100 * p) + '%, transparent)' : g.style.borderColor;
-        if (way === '구분선') { g.style.borderRadius = '0'; }
+        g.style.padding = way === '옅은 배경' || boxed ? lerp(0, 7, p) + 'px ' + lerp(0, 9, p) + 'px' : way === '왼쪽 막대' ? '0 0 0 ' + lerp(0, 12, p) + 'px' : way === '구분선' && i ? lerp(0, 8, p) + 'px 0 0' : '0';
+        g.style.background = way === '옅은 배경' ? mix(12) : way === '그림자 카드' ? 'var(--u-panel)' : 'transparent';
+        g.style.boxShadow = way === '그림자 카드' ? '0 ' + 2 * p + 'px ' + 8 * p + 'px rgb(20 22 25 / ' + (0.12 * p).toFixed(3) + ')' : 'none';
+        g.style.borderColor = way === '테두리 상자' || way === '상자+위쪽 색 띠' || way === '제목 띠' ? line : 'transparent';
+        g.style.borderTop = way === '상자+위쪽 색 띠' ? 4 * p + 'px solid ' + col : way === '구분선' && i ? '1px solid ' + line : '';
+        if (way === '구분선') g.style.borderRadius = '0';
+        items.style.borderColor = onItems ? line : 'transparent';
+        items.style.borderLeft = onItems ? lerp(1, 4, p) + 'px solid ' + mix(100) : '';
+        gh[i].style.background = way === '제목 띠' ? mix(14) : '';
+        gh[i].style.margin = way === '제목 띠' ? '-7px -9px 2px' : '0';
+        gh[i].style.padding = way === '제목 띠' ? '5px 9px' : '';
         gb[i].style.display = way === '왼쪽 막대' ? '' : 'none'; gb[i].style.transform = 'scaleY(' + p + ')';
-        gh[i].style.opacity = p; gh[i].style.height = 16 * p + 'px'; gh[i].style.overflow = 'hidden';
+        gh[i].style.opacity = p; gh[i].style.height = way === '제목 띠' ? '' : 16 * p + 'px'; gh[i].style.overflow = 'hidden';
       });
       if (ms < 700) return '구분 없음 · 어디서 끊기는지 모름';
-      if (ms < 2700) return way + (way === '간격만' ? ' · 선·색 없이 여백으로 묶임' : '으로 묶음을 가름');
+      if (ms < 2700) return way + (way === '간격만' ? ' · 선·색 없이 여백으로 묶임' : '으로 묶음을 가름') + (rows === '카드 줄' && (boxed || onItems) ? ' · 상자 안 카드는 테두리가 겹침' : '');
       return '흑백으로 보면 · ' + (sig === '색만' ? '묶음 이름이 사라짐(색만이라)' : sig === '색+아이콘' ? '아이콘 모양으로 구분됨' : '제목 글로 구분됨');
     } };
   };
