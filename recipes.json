@@ -213,6 +213,27 @@
     "prompt": "이슈 관리 도구 \"작업함\" 팀의 한 해를 돌아보는 데이터 이야기 페이지를 만들어줘. 숫자는 예시용 가상 데이터라고 화면에 밝혀줘. 맨 위 머리글에 글을 얼마나 읽었는지 보이는 Scroll Progress와 Reduced Motion 스위치, 첫 화면 제목과 소개는 Scroll Reveal로. 본문은 Sticky Scrollytelling: 왼쪽에 단계 글 8개, 오른쪽에 차트 하나를 고정하고, 글 단계가 틀 가운데를 지나면 IntersectionObserver로 감지해 Step Transition으로 차트를 그 단계 모습으로 바꾸고, 차트 위에는 단계마다 바뀌는 Chart Summary 한 줄. 단계는 1 한 해 합계 Bullet Chart(목표 1,400건 눈금, 나쁨·보통·좋음 구간, 합계 숫자는 Number Ticker), 2 달마다 닫은 이슈 Line Chart(Axis는 0부터, Line Draw로 그려짐), 3 9~10월만 남기고 나머지를 흐리는 Focus Dimming과 Annotation Reveal로 띠·지시선·설명을 차례로, 월 목표 Reference Line, 4 팀 6개 Small Multiples(모든 칸 같은 축, 앞 차트가 먼저 사라지고 칸이 차례로 들어오는 Enter / Update / Exit), 5 팀별 몫 Treemap(작은 차트에서 트리맵은 모양을 이을 수 없으니 Chart Type Morph 대신 교차 페이드), 6 열린 이슈 증감 Waterfall Chart, 7 팀별 닫은 건수·처리 일수·인원 Bubble Chart를 재생 단추와 달 슬라이더로 움직이는 Motion Chart(자동 재생 안 함, 재생 중에는 멈춤 단추), 8 팀별 합계 가로 Bar Chart에 팀 목표 눈금, 목표를 넘은 팀은 색 말고도 \"▲ 넘음\" 글자로 Non-color Encoding, \"표로 보기\" Data Table View. 동작 줄이기면 모든 전환을 바로 바꾸고 재생 단추를 숨겨줘."
   },
   {
+    "id": "help-doc",
+    "name": "도움말 문서",
+    "ready": true,
+    "terms": [
+      "table-of-contents",
+      "scroll-spy",
+      "scroll-margin",
+      "sticky-header",
+      "breadcrumb",
+      "scroll-progress",
+      "callout",
+      "divider",
+      "pull-quote",
+      "scroll-shadow",
+      "section-band",
+      "sticky-section-header",
+      "back-to-top"
+    ],
+    "prompt": "작업함 도움말 센터의 긴 문서 화면 \"결제 수단과 환불\"을 만들어줘. 맨 위는 Sticky Header로 Breadcrumb(도움말 › 결제 › 문서 이름)와 문서 제목, 머리 아래 가장자리에 Scroll Progress. 오른쪽에 \"이 페이지\" Table of Contents(작은 제목은 들여쓰기)를 두고, 읽는 동안 Scroll Spy로 지금 구역을 왼쪽 막대와 굵은 글로 표시해. 목차를 누르면 제목이 고정 머리에 가리지 않게 제목마다 Scroll Margin을 머리 높이 + 16px. 본문에는 정보 Callout과 주의 Callout, 큰 단락 사이 Divider, 핵심 문장 하나는 Pull Quote, 열이 많은 환불 기준 표는 가로 스크롤 상자에 넣고 남은 쪽 끝에 Scroll Shadow. \"자주 묻는 질문\"은 바탕이 화면 끝까지 가는 Section Band, 변경 기록은 날짜별 Sticky Section Header. 두 화면 넘게 내리면 오른쪽 아래에 Back to Top. 좁은 화면에서는 목차를 위쪽 가로 줄로."
+  },
+  {
     "id": "deck-explainer",
     "name": "설명·발표 덱",
     "ready": true,

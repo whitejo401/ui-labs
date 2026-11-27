@@ -55,11 +55,12 @@
   UI.pillHTML = pillHTML; UI.whoHTML = whoHTML; UI.ago = ago;
 
   // 조합 화면의 "용어 보기" 이름표. place(id)는 자리: 'in-bl' 안쪽 왼쪽 아래, 'in-br' 안쪽 오른쪽 아래, 'below' 아래, 'right' 오른쪽 위, 없으면 왼쪽 위
-  UI.termLabels = function (scr, L, termName, place) {
+  // skip(el)이 참이면 그 요소는 건너뛴다(고정 머리 밑에 가린 요소 등, 넘길 때만)
+  UI.termLabels = function (scr, L, termName, place, skip) {
     var a = scr.getBoundingClientRect(), html = '', seen = {};
     [scr].concat([].slice.call(scr.querySelectorAll('[data-term]'))).forEach(function (el) {
       var id = el.getAttribute('data-term');
-      if (!id || seen[id] || el.closest('.off') || el.closest('[hidden]')) return;
+      if (!id || seen[id] || el.closest('.off') || el.closest('[hidden]') || (skip && skip(el))) return;
       var r = el.getBoundingClientRect();
       if (!r.width || !r.height) return;
       // 틀 밖으로 스크롤된 요소는 건너뛰고, 걸친 요소는 보이는 부분만 감싼다
@@ -1490,6 +1491,211 @@
       var end = body ? ar.offsetTop + ar.offsetHeight - vh : maxS, p = clamp(y / Math.max(1, end));
       pb.style.transform = 'scaleX(' + p + ')';
       return '읽은 만큼 ' + Math.round(p * 100) + '%' + (body && p >= 1 && y < maxS - 1 ? ' · 본문 끝에서 다 참(바닥글은 빼고)' : '');
+    } };
+  };
+
+  /* ───── 구조 › 묶기와 스크롤 (도움말 문서 묶음) ───── */
+  var CO = { '정보': ['var(--u-info)', 'var(--u-info-soft)', 'i', '참고'], '주의': ['var(--u-warn)', 'var(--u-warn-soft)', '!', '되돌릴 수 없어요'], '경고': ['var(--u-danger)', 'var(--u-danger-soft)', '!', '데이터가 지워져요'] };
+  // 콜아웃 상자. head가 true면 종류의 기본 제목, 글이면 그 제목, 없으면 제목 줄 없음
+  function calloutHTML(kind, head, text, attr) {
+    var k = CO[kind];
+    return '<div role="note"' + (attr || '') + ' style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 10px;align-items:start;padding:10px 12px;border-left:4px solid ' + k[0] + ';background:' + k[1] + ';border-radius:6px;font-size:12px;line-height:1.5;color:var(--u-ink)">' +
+      '<span aria-hidden="true" style="grid-row:span 2;width:18px;height:18px;border-radius:50%;display:inline-grid;place-items:center;font-size:11px;font-weight:800;background:' + k[0] + ';color:var(--u-panel)">' + k[2] + '</span>' +
+      (head ? '<b>' + esc(head === true ? k[3] : head) + '</b>' : '') + '<span>' + esc(text) + '</span></div>';
+  }
+  UI.calloutHTML = calloutHTML;
+  function bars(n, color) { var s = ''; for (var i = 0; i < n; i++) s += '<div style="height:9px;border-radius:4px;background:' + color + ';width:' + [90, 70, 82, 55, 76, 64][i % 6] + '%"></div>'; return s; }
+
+  S['callout'] = function (st, c) {
+    var MS = 2400;
+    st.innerHTML = '<div class="u-pad" style="gap:9px"><b style="font-size:14px">결제 수단 삭제</b>' + fakes(3) +
+      calloutHTML(c.kind, c.head === '제목 있음', '삭제한 결제 수단은 다시 살릴 수 없습니다. 정기 결제에 쓰이면 먼저 바꾸세요.', ' class="co"') + fakes(3) + '</div>';
+    var co = st.querySelector('.co');
+    return { ms: MS, rest: 0.6, at: function (t) {
+      var ms = t * MS, p = ease.out(seg(ms, 400, 900));
+      show(co, p, 8);
+      return p < 0.01 ? '본문' : p < 1 ? '나타나는 중' : c.kind + ' · 본문 흐름 안에 늘 보임';
+    } };
+  };
+
+  S['section-band'] = function (st, c) {
+    var dark = c.tone === '짙은 바탕', full = c.inner === '화면 끝까지', MS = 2600, col = 'width:68%;margin:0 auto;display:grid;gap:7px';
+    st.innerHTML = '<div style="position:absolute;inset:0;display:grid;align-content:start;gap:14px;padding-top:14px">' +
+      '<div style="' + col + '"><b style="font-size:14px">결제 수단 관리</b>' + fakes(2) + '</div>' +
+      '<div class="bd" style="padding:16px 0;background:' + (dark ? 'var(--u-ink)' : 'var(--u-side)') + ';color:' + (dark ? 'var(--u-panel)' : 'var(--u-ink)') + '">' +
+        '<div style="' + (full ? 'padding:0 14px;display:grid;gap:7px' : col) + '"><b style="font-size:13px">자주 묻는 질문</b>' + bars(3, dark ? 'rgb(255 255 255 / 28%)' : 'var(--u-line)') + '</div></div>' +
+      '<div style="' + col + '">' + fakes(2) + '</div>' +
+      '<i class="g" style="position:absolute;top:0;bottom:0;left:16%;border-left:1px dashed var(--u-accent)"></i><i class="g" style="position:absolute;top:0;bottom:0;right:16%;border-left:1px dashed var(--u-accent)"></i></div>';
+    var bd = st.querySelector('.bd'), gs = st.querySelectorAll('.g');
+    return { ms: MS, rest: 0.7, at: function (t) {
+      var ms = t * MS, p = ease.inOut(seg(ms, 400, 1200)), g = full ? 0 : seg(ms, 1400, 1800);
+      bd.style.clipPath = 'inset(0 ' + (16 * (1 - p)) + '% 0 ' + (16 * (1 - p)) + '%)';
+      gs.forEach(function (x) { x.style.opacity = g * 0.8; });
+      return p < 0.01 ? '본문 폭' : p < 1 ? '바탕이 화면 끝까지 넓어짐' : full ? '바탕과 글 모두 화면 끝까지' : '바탕은 끝까지 · 글은 본문 폭(점선)';
+    } };
+  };
+
+  S['divider'] = function (st, c) {
+    var line = c.kind === '가는 선', lab = c.label === '가운데 글', MS = 2200;
+    function row(n, v) { return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:5px 0"><span>' + n + '</span><span style="color:var(--u-muted)">' + v + '</span></div>'; }
+    function dv() {
+      var ln = '<i class="ln" style="flex:1;height:1px;background:' + (line ? 'var(--u-line)' : 'transparent') + ';transform-origin:left"></i>';
+      return '<div class="dv" role="separator" style="display:flex;align-items:center;gap:8px;height:1px;font-size:11px;color:var(--u-muted)">' + ln + (lab ? '<span class="lb">고급 설정</span>' + ln : '') + '</div>';
+    }
+    st.innerHTML = '<div class="u-pad"><div style="background:var(--u-panel);border:1px solid var(--u-line);border-radius:10px;padding:8px 14px">' +
+      '<b style="font-size:11px;color:var(--u-muted)">계정</b>' + row('이름', '김민지') + row('이메일', 'minji@example.com') + dv() +
+      '<b style="font-size:11px;color:var(--u-muted)">알림</b>' + row('메일 알림', '켬') + row('앱 알림', '끔') + dv() + row('계정 삭제', '›') + '</div></div>';
+    var dvs = st.querySelectorAll('.dv'), lns = st.querySelectorAll('.ln'), lbs = st.querySelectorAll('.lb');
+    return { ms: MS, rest: 0.6, at: function (t) {
+      var ms = t * MS, p = ease.out(seg(ms, 400, 1000));
+      dvs.forEach(function (d) { d.style.margin = lerp(2, line ? 9 : 16, p) + 'px 0'; });
+      lns.forEach(function (l) { l.style.transform = 'scaleX(' + p + ')'; });
+      lbs.forEach(function (l) { l.style.opacity = p; });
+      return p < 0.01 ? '묶음이 붙어 있음' : p < 1 ? '나누는 중' : line ? (lab ? '선 가운데 글' : '가는 선') : '선 없이 간격만';
+    } };
+  };
+
+  S['pull-quote'] = function (st, c) {
+    var mid = c.style === '가운데 큰 글', src = c.source === '출처 있음', MS = 2400, q = '<span aria-hidden="true" style="color:var(--u-accent);font-size:28px;line-height:0;vertical-align:-10px">';
+    st.innerHTML = '<div class="u-pad" style="gap:9px;padding:14px 22px">' + fakes(4) +
+      '<figure class="pq" style="margin:4px 0;' + (mid ? 'text-align:center;padding:4px 18px' : 'border-left:4px solid var(--u-accent);padding:2px 0 2px 14px') + '">' +
+        '<blockquote style="margin:0;font-size:' + (mid ? 17 : 15) + 'px;font-weight:700;line-height:1.45;color:var(--u-ink)">' + (mid ? q + '“</span>' : '') + '환불은 결제한 수단으로만 돌려드려요.' + (mid ? q + '”</span>' : '') + '</blockquote>' +
+        (src ? '<figcaption style="margin-top:4px;font-size:11px;color:var(--u-muted)">고객지원팀 민지</figcaption>' : '') + '</figure>' + fakes(4) + '</div>';
+    var pq = st.querySelector('.pq');
+    return { ms: MS, rest: 0.6, at: function (t) {
+      var ms = t * MS, p = ease.out(seg(ms, 400, 1000));
+      show(pq, p, 0, 0.94);
+      return p < 0.01 ? '본문만' : p < 1 ? '나타나는 중' : '본문 속 한 문장을 크게';
+    } };
+  };
+
+  S['sticky-section-header'] = function (st, c) {
+    var push = c.swap === '다음 제목이 밀어냄', line = c.look === '붙으면 아래 선', MS = 3800, H = 26;
+    var G = [['오늘', ISSUES.slice(0, 3)], ['어제', ISSUES.slice(3, 6)], ['11월 24일', ISSUES.slice(6, 9)], ['11월 20일', ISSUES.slice(9, 12)]];
+    var hs = 'height:' + H + 'px;display:flex;align-items:center;padding:0 14px;font-size:11.5px;font-weight:700;color:var(--u-muted);background:var(--u-side)';
+    st.innerHTML = '<div class="ct" style="position:absolute;left:0;right:0;top:0">' + G.map(function (g) {
+      return '<div class="gh" style="' + hs + '">' + g[0] + '</div>' + g[1].map(function (it) {
+        return '<div style="display:flex;gap:8px;align-items:center;padding:0 14px;height:36px;border-bottom:1px solid var(--u-line);font-size:12px;background:var(--u-panel)"><span style="color:var(--u-muted)">#' + it.n + '</span><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(it.t) + '</span></div>';
+      }).join('');
+    }).join('') + '</div><div class="pin" style="position:absolute;left:0;right:0;top:0;z-index:2;overflow:hidden;height:' + H + 'px"><div class="pt" style="' + hs + '"></div><i class="pl" style="position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--u-line)"></i></div>' + SBAR;
+    var ct = st.querySelector('.ct'), ghs = st.querySelectorAll('.gh'), pin = st.querySelector('.pin'), pt = st.querySelector('.pt'), pl = st.querySelector('.pl');
+    return { ms: MS, rest: 0.42, at: function (t) {
+      var ms = t * MS, vh = st.clientHeight, maxS = Math.max(0, ct.scrollHeight - vh), y = maxS * scrollAlong([[300, 0], [3300, 1]], ms);
+      ct.style.transform = 'translateY(' + (-y) + 'px)';
+      scrollbar(st, y, vh, ct.scrollHeight);
+      var cur = 0; ghs.forEach(function (g, i) { if (g.offsetTop - y <= 0) cur = i; });
+      var next = ghs[cur + 1], off = push && next ? Math.min(0, next.offsetTop - y - H) : 0, stuck = y > 1;
+      pt.textContent = G[cur][0]; pt.style.transform = 'translateY(' + off + 'px)';
+      pin.style.visibility = stuck ? 'visible' : 'hidden';
+      pl.style.display = line && stuck && off === 0 ? 'block' : 'none';
+      return !stuck ? '맨 위' : off < 0 ? '"' + G[cur + 1][0] + '"가 "' + G[cur][0] + '"를 밀어내는 중' : '"' + G[cur][0] + '" 붙음';
+    } };
+  };
+
+  S['back-to-top'] = function (st, c) {
+    var always = c.show === '늘 보임', smooth = c.move === '부드럽게', MS = 4000;
+    st.innerHTML = '<div class="ct" style="position:absolute;left:0;right:0;top:0;padding:14px 18px;display:grid;gap:9px"><b style="font-size:15px">결제 도움말</b>' + fakes(34) + '</div>' + SBAR +
+      '<button type="button" class="bt" aria-label="맨 위로" style="position:absolute;right:14px;bottom:14px;z-index:4;width:34px;height:34px;border-radius:50%;border:1px solid var(--u-line);background:var(--u-panel);box-shadow:var(--u-shadow-sm);font-size:16px;color:var(--u-ink)">↑</button>';
+    var ct = st.querySelector('.ct'), bt = st.querySelector('.bt'), cur = cursor(st);
+    return { ms: MS, rest: 0.55, at: function (t) {
+      var ms = t * MS, vh = st.clientHeight, W = st.clientWidth, maxS = Math.max(0, ct.scrollHeight - vh);
+      var y = ms < 2600 ? maxS * scrollAlong([[300, 0], [1700, 1]], ms) : maxS * (smooth ? 1 - ease.inOut(seg(ms, 2600, 3300)) : 0);
+      ct.style.transform = 'translateY(' + (-y) + 'px)';
+      scrollbar(st, y, vh, ct.scrollHeight);
+      var lim = Math.min(vh * 2, maxS * 0.5), vis = always ? 1 : clamp((y - lim) / 40);
+      bt.style.opacity = vis; bt.style.visibility = vis < 0.01 ? 'hidden' : 'visible';
+      var m = ease.inOut(seg(ms, 1800, 2400));
+      put(cur, lerp(W * 0.55, W - 31, m), lerp(vh * 0.5, vh - 31, m), ms > 2450 && ms < 2650);
+      cur.style.opacity = ms > 1700 && ms < 3500 ? 1 : 0;
+      return ms < 1800 ? (vis > 0.5 ? '내리는 중 · 단추 나타남' : '내리는 중') : ms < 2600 ? '맨 위로 누름' : y > 1 ? '올라가는 중' : '맨 위 · ' + (always ? '단추 그대로' : '단추 숨음');
+    } };
+  };
+
+  S['scroll-margin'] = function (st, c) {
+    var gap = c.gap !== '없음', HD = 38, MS = 2800, secs = ['결제 수단 등록', '환불 기준', '정산 일정'];
+    st.innerHTML = '<div class="ct" style="position:absolute;left:0;right:0;top:0;padding:' + (HD + 12) + 'px 18px 12px;display:grid;gap:9px">' + secs.map(function (s, i) {
+      return '<h4 class="sh" style="margin:6px 0 0;font-size:14px' + (gap ? ';scroll-margin-top:' + (HD + 16) + 'px' : '') + '">' + (i + 1) + '. ' + s + '</h4>' + fakes(6);
+    }).join('') + fakes(4) + '</div>' +
+      '<div style="position:absolute;left:0;right:0;top:0;height:' + HD + 'px;z-index:3;display:flex;align-items:center;gap:12px;padding:0 14px;white-space:nowrap;overflow:hidden;background:color-mix(in srgb, var(--u-panel) 86%, transparent);border-bottom:1px solid var(--u-line);font-size:12px"><b>도움말</b>' +
+        secs.map(function (s) { return '<a class="lk" style="color:var(--u-muted);text-decoration:none">' + s + '</a>'; }).join('') + '</div>' +
+      '<div class="mk" style="position:absolute;left:0;right:0;top:' + HD + 'px;height:16px;z-index:2;background:repeating-linear-gradient(45deg, var(--u-accent-soft) 0 4px, transparent 4px 8px);opacity:0"></div>';
+    var ct = st.querySelector('.ct'), sh = st.querySelectorAll('.sh'), lk = st.querySelectorAll('.lk')[1], mk = st.querySelector('.mk'), cur = cursor(st);
+    return { ms: MS, rest: 0.7, at: function (t) {
+      var ms = t * MS, h = sh[1], target = h.offsetTop - (gap ? HD + 16 : 0), y = target * ease.inOut(seg(ms, 900, 1500));
+      ct.style.transform = 'translateY(' + (-y) + 'px)';
+      var r = rel(st, lk), m = ease.inOut(seg(ms, 200, 700));
+      put(cur, lerp(r.x + r.w + 40, r.x + r.w / 2, m), lerp(150, r.y + r.h / 2, m), ms > 700 && ms < 900);
+      cur.style.opacity = ms < 1300 ? 1 : 0;
+      lk.style.color = ms > 700 ? 'var(--u-accent)' : 'var(--u-muted)';
+      mk.style.opacity = gap ? seg(ms, 1600, 1900) * 0.9 : 0;
+      h.style.outline = ms > 1500 ? '2px ' + (gap ? 'solid var(--u-accent)' : 'dashed var(--u-danger)') : ''; h.style.outlineOffset = '2px';
+      return ms < 900 ? '머리의 "환불 기준" 누름' : ms < 1500 ? '이동 중' : gap ? '제목이 머리 아래 16px에 멈춤' : '제목이 고정 머리 밑에 가려짐';
+    } };
+  };
+
+  S['scroll-spy'] = function (st, c) {
+    var bar = c.mark === '왼쪽 막대와 굵은 글', top = c.at === '제목이 맨 위에 닿을 때', MS = 4200, secs = ['시작하기', '결제 수단', '환불', '정산', '문의'];
+    st.innerHTML = '<div style="position:absolute;left:0;top:0;bottom:0;right:34%;overflow:hidden"><div class="ct" style="position:absolute;left:0;right:0;top:0;padding:12px 16px;display:grid;gap:8px">' + secs.map(function (s, i) {
+      return '<h4 class="sh" style="margin:8px 0 0;font-size:13.5px">' + s + '</h4>' + fakes(i === secs.length - 1 ? 2 : 6);
+    }).join('') + '</div></div>' +
+      '<nav style="position:absolute;right:0;top:0;bottom:0;width:34%;border-left:1px solid var(--u-line);padding:12px 10px;display:grid;gap:2px;align-content:start;font-size:12px"><span style="font-size:10.5px;color:var(--u-muted);margin-bottom:4px">이 페이지</span>' +
+        secs.map(function (s) { return '<span class="ti" style="padding:3px 8px;border-left:3px solid transparent;color:var(--u-muted)">' + s + '</span>'; }).join('') + '</nav>' +
+      '<i class="ln" style="position:absolute;left:0;right:34%;border-top:1px dashed var(--u-accent);opacity:.7;z-index:2"></i>';
+    var ct = st.querySelector('.ct'), sh = st.querySelectorAll('.sh'), ti = st.querySelectorAll('.ti'), ln = st.querySelector('.ln');
+    return { ms: MS, rest: 0.5, at: function (t) {
+      var ms = t * MS, vh = st.clientHeight, maxS = Math.max(0, ct.scrollHeight - vh), y = maxS * scrollAlong([[300, 0], [3600, 1]], ms);
+      ct.style.transform = 'translateY(' + (-y) + 'px)';
+      var lineY = top ? 4 : vh / 3, cur = 0, end = y >= maxS - 1;
+      sh.forEach(function (h, i) { if (h.offsetTop - y <= lineY) cur = i; });
+      if (end) cur = sh.length - 1;
+      ln.style.top = lineY + 'px';
+      ti.forEach(function (x, i) {
+        var on = i === cur;
+        x.style.color = on ? (bar ? 'var(--u-ink)' : 'var(--u-accent)') : 'var(--u-muted)';
+        x.style.fontWeight = on && bar ? '700' : '400';
+        x.style.borderLeftColor = on && bar ? 'var(--u-accent)' : 'transparent';
+      });
+      return '지금 구역: ' + secs[cur] + (end ? ' (맨 끝이라 마지막 항목)' : '');
+    } };
+  };
+
+  S['table-of-contents'] = function (st, c) {
+    var right = c.place === '오른쪽에 고정', deep = c.depth === '제목 2단계까지', MS = 3000, pick = 5;
+    var H = [['시작하기', 1], ['계정 만들기', 2], ['결제 수단', 1], ['카드 등록', 2], ['계좌 등록', 2], ['환불', 1], ['정산', 1]];
+    var toc = '<span style="font-size:10.5px;color:var(--u-muted)">이 페이지</span>' + H.map(function (h, i) {
+      return deep || h[1] === 1 ? '<a class="ti" data-i="' + i + '" style="display:block;padding:2px 0 2px ' + (h[1] === 2 ? 14 : 0) + 'px;color:var(--u-ink);text-decoration:none;font-size:' + (h[1] === 2 ? 11.5 : 12) + 'px">' + h[0] + '</a>' : '';
+    }).join('');
+    var body = H.map(function (h) { return '<h4 class="sh" style="margin:8px 0 0;font-size:' + (h[1] === 1 ? 14 : 12.5) + 'px">' + h[0] + '</h4>' + fakes(h[1] === 1 ? 3 : 2); }).join('');
+    st.innerHTML = '<div style="position:absolute;left:0;top:0;bottom:0;right:' + (right ? '36%' : '0') + ';overflow:hidden"><div class="ct" style="position:absolute;left:0;right:0;top:0;padding:12px 16px;display:grid;gap:7px">' +
+      (right ? '' : '<nav style="display:grid;gap:1px;padding:8px 10px;border:1px solid var(--u-line);border-radius:8px;background:var(--u-panel)">' + toc + '</nav>') + body + fakes(6) + '</div></div>' +
+      (right ? '<nav style="position:absolute;right:0;top:0;bottom:0;width:36%;border-left:1px solid var(--u-line);padding:12px 10px;display:grid;gap:1px;align-content:start">' + toc + '</nav>' : '');
+    var ct = st.querySelector('.ct'), sh = st.querySelectorAll('.sh'), a = st.querySelector('.ti[data-i="' + pick + '"]'), cur = cursor(st);
+    return { ms: MS, rest: 0.75, at: function (t) {
+      var ms = t * MS, vh = st.clientHeight, maxS = Math.max(0, ct.scrollHeight - vh), target = Math.min(maxS, sh[pick].offsetTop - 12);
+      ct.style.transform = 'translateY(' + (-target * ease.inOut(seg(ms, 1100, 1800))) + 'px)';
+      if (ms < 1100) { var r = rel(st, a), m = ease.inOut(seg(ms, 200, 800)); put(cur, lerp(r.x + r.w / 2 + 30, r.x + 20, m), lerp(r.y + r.h / 2 + 60, r.y + r.h / 2, m), ms > 850 && ms < 1050); }
+      cur.style.opacity = ms < 1100 ? 1 : 0;
+      a.style.color = ms > 850 ? 'var(--u-accent)' : 'var(--u-ink)';
+      sh[pick].style.outline = ms > 1800 ? '2px solid var(--u-accent)' : ''; sh[pick].style.outlineOffset = '2px';
+      return ms < 1100 ? '목차에서 "환불" 누름' : ms < 1800 ? '그 제목으로 이동' : '"환불" 도착 · 주소에 #환불';
+    } };
+  };
+
+  S['scroll-shadow'] = function (st, c) {
+    var fade = c.look === '흐려지는 끝', MS = 3600, CW = 84, g = fade ? 'var(--u-panel), transparent' : 'rgb(0 0 0 / 22%), transparent';
+    var cols = ['주문 번호', '결제일', '금액', '수단', '상태', '환불액', '정산일', '담당'];
+    var rows = [['#3101', '11.24', '42,000', '카드', '완료', '0', '11.26', '민지'], ['#3097', '11.23', '18,500', '계좌', '환불', '18,500', '11.25', '준호'], ['#3090', '11.21', '7,900', '카드', '완료', '0', '11.23', '서연'], ['#3088', '11.20', '120,000', '카드', '부분 환불', '30,000', '11.22', '도윤']];
+    function line(r, hd) { return '<div style="display:flex;border-bottom:1px solid var(--u-line)">' + r.map(function (v) { return '<span style="flex:none;width:' + CW + 'px;padding:7px 10px;white-space:nowrap;font-size:' + (hd ? '11px;font-weight:700;color:var(--u-muted)' : '12px') + '">' + v + '</span>'; }).join('') + '</div>'; }
+    st.innerHTML = '<div class="u-pad"><b style="font-size:13px">환불 내역</b><div class="bx" style="position:relative;border:1px solid var(--u-line);border-radius:8px;background:var(--u-panel);overflow:hidden">' +
+      '<div class="tb" style="width:max-content">' + line(cols, 1) + rows.map(function (r) { return line(r); }).join('') + '</div>' +
+      '<i class="el" style="position:absolute;top:0;bottom:0;left:0;width:28px;pointer-events:none;background:linear-gradient(to right, ' + g + ')"></i>' +
+      '<i class="er" style="position:absolute;top:0;bottom:0;right:0;width:28px;pointer-events:none;background:linear-gradient(to left, ' + g + ')"></i></div></div>';
+    var bx = st.querySelector('.bx'), tb = st.querySelector('.tb'), el = st.querySelector('.el'), er = st.querySelector('.er');
+    return { ms: MS, rest: 0.4, at: function (t) {
+      var ms = t * MS, maxX = Math.max(0, tb.offsetWidth - bx.clientWidth), x = maxX * scrollAlong([[300, 0], [1300, 0.5], [2200, 1], [3200, 0]], ms);
+      tb.style.transform = 'translateX(' + (-x) + 'px)';
+      el.style.opacity = clamp(x / 24); er.style.opacity = clamp((maxX - x) / 24);
+      return x < 1 ? '맨 왼쪽 · 오른쪽 끝에만' : x > maxX - 1 ? '맨 오른쪽 · 왼쪽 끝에만' : '가운데 · 양 끝 모두';
     } };
   };
 
