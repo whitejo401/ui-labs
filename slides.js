@@ -1119,7 +1119,8 @@
      t(0~1)가 있으면 step이 붙은 도형이 차례로 나타난다. 없으면 다 보인다 */
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function n2(v) { return Math.round(v * 100) / 100; }
-  S.svg = function (prims, t) {
+  // alt: 문자열이면 그림 이름(aria-label), ''이면 꾸밈으로 숨김(aria-hidden), 없으면 예전 그대로 role="img"만
+  S.svg = function (prims, t, alt) {
     var steps = 0;
     prims.forEach(function (p) { if (p.step != null) steps = Math.max(steps, p.step + 1); });
     function vis(p) {
@@ -1161,7 +1162,8 @@
           lines.map(function (ln, i) { return '<tspan x="' + n2(tx) + '" y="' + n2(top + (i + 0.5) * lhpx) + '" dominant-baseline="central">' + esc(ln) + '</tspan>'; }).join('') + '</text>');
       }
     });
-    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + S.W + ' ' + S.H + '" role="img">' + out.join('') + '</svg>';
+    var a = alt == null ? ' role="img"' : alt === '' ? ' aria-hidden="true"' : ' role="img" aria-label="' + esc(alt) + '"';
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + S.W + ' ' + S.H + '"' + a + '>' + out.join('') + '</svg>';
   };
 
   /* ───── 용어 예시 장면 ─────

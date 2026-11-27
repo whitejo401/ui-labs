@@ -30,7 +30,7 @@
 /* 2단계 페이지 틀: terms.json을 읽어 격자 보기 / 목록 + 큰 미리보기, 검색과 태그 필터. 색 값은 시범과 같다 */
 :root {
   --bg: #f4f5f2; --panel: #ffffff; --ink: #16181b; --muted: #5d636b; --line: #dfe2dc;
-  --accent: #0b7a63; --accent-soft: #e0f1ec; --mark: #e2553f; --mark-soft: #fbe6e1;
+  --accent: #0b7a63; --accent-soft: #e0f1ec; --mark: #e2553f; --mark-soft: #fbe6e1; --mark-ink: #b04231;
   --when: #8a5a00; --when-soft: #fbf0d8; --stage: #eceee9; --shade: rgb(16 18 20 / 45%);
   --font-body: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
@@ -38,14 +38,14 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #121416; --panel: #1a1d20; --ink: #eceee9; --muted: #9aa19a; --line: #2c3033;
-    --accent: #3cc3a2; --accent-soft: #15312b; --mark: #ff7a64; --mark-soft: #3a1f1a;
+    --accent: #3cc3a2; --accent-soft: #15312b; --mark: #ff7a64; --mark-soft: #3a1f1a; --mark-ink: #ff7a64;
     --when: #f0bd5a; --when-soft: #352a14; --stage: #202427; --shade: rgb(0 0 0 / 60%);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #121416; --panel: #1a1d20; --ink: #eceee9; --muted: #9aa19a; --line: #2c3033;
-  --accent: #3cc3a2; --accent-soft: #15312b; --mark: #ff7a64; --mark-soft: #3a1f1a;
+  --accent: #3cc3a2; --accent-soft: #15312b; --mark: #ff7a64; --mark-soft: #3a1f1a; --mark-ink: #ff7a64;
   --when: #f0bd5a; --when-soft: #352a14; --stage: #202427; --shade: rgb(0 0 0 / 60%);
   color-scheme: dark;
 }
@@ -147,7 +147,7 @@ a { color: inherit; }
 .secnav { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; border-top: 1px solid var(--line); padding-top: 8px; mask-image: linear-gradient(90deg, #000 92%, transparent); }
 .secnav::-webkit-scrollbar { display: none; }
 .secnav button { flex: none; font: inherit; font-size: 12.5px; padding: 3px 10px; border: 0; border-radius: 999px; background: none; color: var(--muted); cursor: pointer; white-space: nowrap; }
-.secnav button small { font-family: var(--font-mono); font-size: 10.5px; margin-left: 4px; opacity: 0.8; }
+.secnav button small { font-family: var(--font-mono); font-size: 10.5px; margin-left: 4px; }
 .secnav button:hover { color: var(--ink); background: var(--stage); }
 .secnav button[aria-current="true"] { background: var(--ink); color: var(--bg); }
 @media (max-width: 599px) { .bar-row .search { flex-basis: 100%; } .bar-row .grouprow { flex: 1; } .grouprow .fopt { flex: 1; padding-inline: 4px; white-space: nowrap; font-size: 13px; } .secnav { display: none; } .ans q { font-size: 13px; } }
@@ -264,7 +264,7 @@ a { color: inherit; }
 .slot { border-radius: 4px; padding: 1px 4px; }
 .slot.when { background: var(--when-soft); color: var(--when); }
 .slot.what { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
-.slot.how { background: var(--mark-soft); color: var(--mark); }
+.slot.how { background: var(--mark-soft); color: var(--mark-ink); }
 .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .legend { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; }
 .btn { font: inherit; font-size: 13px; padding: 7px 14px; border-radius: 8px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; font-weight: 500; }
@@ -590,8 +590,8 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
   function demoStart() {
     // 제목 "다른 화면"을 글자로 쪼갠다(애니메이션은 CSS, 동작 줄이기면 CSS가 끈다)
     var em = $('h1em'), txt = em.textContent;
-    em.setAttribute('aria-label', txt);
-    em.innerHTML = txt.split('').map(function (c, i) { return '<span aria-hidden="true" style="--i:' + i + '">' + (c === ' ' ? '&nbsp;' : esc(c)) + '</span>'; }).join('');
+    // 읽기 프로그램에는 쪼개지 않은 글을 숨은 글로(em에는 aria-label을 달 수 없다)
+    em.innerHTML = txt.split('').map(function (c, i) { return '<span aria-hidden="true" style="--i:' + i + '">' + (c === ' ' ? '&nbsp;' : esc(c)) + '</span>'; }).join('') + '<span class="sr">' + esc(txt) + '</span>';
     new IntersectionObserver(function (es) { D.seen = es[0].isIntersecting; if (D.seen) demoKick(); }).observe($('demo'));
     demoBuild(0);
   }

@@ -34,7 +34,7 @@
           '<header class="pl-top"><b class="pl-logo">겨울 상점</b><nav aria-label="분류">' + ['아우터', '니트', '신발', '소품'].map(function (n, i) { return '<a href="#"' + (i ? '' : ' aria-current="page"') + '>' + n + '</a>'; }).join('') + '</nav><span class="pl-cart">장바구니 2</span></header>' +
           '<div class="pl-wrap">' +
             '<section class="pl-car" data-term="carousel" aria-roledescription="carousel" aria-label="기획전">' +
-              '<div class="pl-slides" id="pl-slides">' + SLIDES.map(function (s, i) {
+              '<div class="pl-slides" id="pl-slides" tabindex="0" aria-label="기획전, 옆으로 넘기기">' + SLIDES.map(function (s, i) {
                 return '<div class="pl-slide" role="group" aria-roledescription="slide" aria-label="' + (i + 1) + ' / ' + SLIDES.length + '" style="background:' + ph(i, 34) + '"><b>' + s[0] + '</b><span>' + s[1] + '</span></div>';
               }).join('') + '</div>' +
               '<button type="button" class="pl-arr prev" id="pl-prev" aria-label="이전 기획전">‹</button><button type="button" class="pl-arr next" id="pl-next" aria-label="다음 기획전">›</button>' +

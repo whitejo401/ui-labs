@@ -26,6 +26,7 @@
       '</div>';
     var $ = function (id) { return root.querySelector('#' + id); }, scr = root.querySelector('.dk');
     function status(msg, bad) { var e = $('dk-st'); e.textContent = msg; e.classList.toggle('bad', !!bad); }
+    function slideAlt() { var s = r.slides[st.i]; return (st.i + 1) + '장' + (s.title ? ': ' + s.title : ''); }
     function noTerm(svg) { return svg.replace(/ data-term="[^"]*"/g, ''); }
 
     // 마스터: 이 덱의 장이 물려받는 바탕과 제목 자리 표시자(slides-pptx.js의 defineSlideMaster와 같은 자리)
@@ -34,13 +35,13 @@
       var P = [{ k: 'rect', x: 0, y: 0, w: S.W, h: S.H, fill: th.bg }];
       if (t) P.push({ k: 'rect', x: t.x - 10, y: t.y - 8, w: t.w + 20, h: t.h + 16, stroke: th.muted, sw: 4, dash: true, term: 'placeholder' },
         { k: 'text', x: t.x + 14, y: t.y, w: 600, h: t.h, text: '제목', size: 30, weight: 400, color: th.muted, align: 'left', valign: 'middle', lh: th.lh, lines: ['제목'] });
-      return S.svg(P);
+      return S.svg(P, undefined, '');   // 아래 글이 설명하므로 꾸밈
     }
     function side() {
       $('dk-side').innerHTML = '<div class="dk-master" data-term="slide-master"><h4>슬라이드 마스터</h4>' + masterSVG() +
         '<p>모든 장이 물려받는 바탕과 제목 자리. 제목은 이 자리 표시자에 들어갑니다.</p></div><h4>장 ' + built.length + '개</h4>' +
         built.map(function (b, i) {
-          return '<button type="button" class="dk-th" data-i="' + i + '" aria-current="' + (i === st.i) + '">' + noTerm(S.svg(b.prims)) +
+          return '<button type="button" class="dk-th" data-i="' + i + '" aria-current="' + (i === st.i) + '">' + noTerm(S.svg(b.prims, undefined, '')) +
             '<span' + (i === st.i ? ' data-term="slide-layout"' : '') + '>' + (i + 1) + ' · 레이아웃 ' + esc(r.slides[i].layout) + '</span></button>';
         }).join('');
     }
@@ -65,13 +66,13 @@
         var cap = t.querySelector('span'); if (j === st.i) cap.setAttribute('data-term', 'slide-layout'); else cap.removeAttribute('data-term');
       });
       reveal();
-      if (still || mq.matches) { el.innerHTML = S.svg(b.prims); drawLabels(); return; }
+      if (still || mq.matches) { el.innerHTML = S.svg(b.prims, undefined, slideAlt()); drawLabels(); return; }
       var start = performance.now();
       (function step() {
         stop();
         if (!alive) return;
         var p = Math.min(1, (performance.now() - start) / 1400);
-        el.innerHTML = S.svg(b.prims, p < 1 ? p : undefined);
+        el.innerHTML = S.svg(b.prims, p < 1 ? p : undefined, slideAlt());
         if (p < 1) { if (st.labels) drawLabels(true); raf = requestAnimationFrame(step); tm = setTimeout(step, 50); } else drawLabels();
       })();
     }

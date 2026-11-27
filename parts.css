@@ -2,10 +2,10 @@
 :root {
   --u-bg: #fafaf8; --u-side: #f1f1ee; --u-panel: #ffffff; --u-ink: #1d1f22; --u-muted: #6a6e74; --u-line: #e4e4df;
   --u-accent: #2f5d8a; --u-accent-ink: #ffffff; --u-accent-soft: #e5edf5; --u-hover: #f2f2ee; --u-flash: #ffeb99; --u-sel: #eef3f9;
-  --u-danger: #c4321f; --u-ok: #2f9e5b;
+  --u-danger: #c4321f; --u-ok: #27854c;   /* 흰 바탕 글자 대비 4.5 이상 */
   --u-warn: #9a5b00; --u-info: #1f6aa5; --u-ok-soft: #e2f2e6; --u-warn-soft: #fdf0d6; --u-danger-soft: #fbe4e0; --u-info-soft: #e2eef8;
   --p-todo-bg: #ececea; --p-todo: #55585d; --p-prog-bg: #e3edf9; --p-prog: #1f5fa8; --p-rev-bg: #eee7f8; --p-rev: #6b3fb0;
-  --p-done-bg: #e2f2e6; --p-done: #23804a; --p-hold-bg: #fbecdc; --p-hold: #b4600f;
+  --p-done-bg: #e2f2e6; --p-done: #217846; --p-hold-bg: #fbecdc; --p-hold: #a2560d;
   --u-toast-bg: #1d1f22; --u-toast-fg: #f5f5f2; --u-badge: #d64534; --u-skel: #ebebe7; --u-skel-hi: #f7f7f4;
   --u-shade: rgb(20 22 25 / 32%); --u-shadow: 0 10px 28px rgb(20 22 25 / 16%); --u-shadow-sm: 0 2px 8px rgb(20 22 25 / 10%);
   --u-font: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;   /* 두 테마 같은 글꼴(글꼴 한 벌, 슬라이드 생성기 측정 글꼴과 같음) */
@@ -85,7 +85,7 @@
 .u-seg { position: relative; display: inline-flex; padding: 3px; gap: 2px; border-radius: calc(var(--u-r) + 3px); background: var(--u-hover); }
 .u-seg button { position: relative; z-index: 1; border: 0; background: none; padding: 4px 11px; border-radius: var(--u-r); cursor: pointer; font-size: 13px; color: var(--u-muted); white-space: nowrap; }
 .u-seg button[aria-pressed="true"] { color: var(--u-ink); font-weight: 600; }
-.u-seg b { font-family: var(--u-mono); font-weight: 500; font-size: 11.5px; opacity: 0.7; margin-left: 4px; }
+.u-seg b { font-family: var(--u-mono); font-weight: 500; font-size: 11.5px; margin-left: 4px; }
 .u-seg-ind { position: absolute; top: 3px; bottom: 3px; left: 0; border-radius: var(--u-r); background: var(--u-panel); box-shadow: 0 1px 2px rgb(0 0 0 / 14%); }
 
 /* 표 (div 격자로 그린다. 행 높이와 정렬을 장면에서 바꾸기 쉽다) */
@@ -975,7 +975,7 @@
 .pl-slides::-webkit-scrollbar { display: none; }
 .pl-slide { flex: 0 0 100%; height: 170px; scroll-snap-align: start; display: grid; align-content: end; gap: 2px; padding: 18px 22px; box-sizing: border-box; }
 .pl-slide b { font-size: 19px; letter-spacing: -0.02em; }
-.pl-slide span { font-size: 12.5px; color: var(--u-muted); }
+.pl-slide span { font-size: 12.5px; color: var(--u-ink); }   /* 색 바탕 위라 흐린 글색은 대비가 모자란다 */
 .pl-arr { position: absolute; top: 70px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--u-line); background: var(--u-panel); box-shadow: var(--u-shadow-sm); color: var(--u-ink); font-size: 16px; cursor: pointer; }
 .pl-arr.prev { left: 10px; } .pl-arr.next { right: 10px; }
 .pl-arr:disabled { opacity: 0.35; cursor: default; }
@@ -984,7 +984,7 @@
 .pl-dots button[aria-current] { width: 20px; background: var(--u-accent); }
 .pl-bento { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 84px; gap: 8px; }
 .pl-tile { display: grid; align-content: end; gap: 1px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--u-line); color: var(--u-ink); text-decoration: none; min-width: 0; }
-.pl-tile b { font-size: 13px; } .pl-tile span { font-size: 11.5px; color: var(--u-muted); }
+.pl-tile b { font-size: 13px; } .pl-tile span { font-size: 11.5px; color: var(--u-ink); }
 .pl-tile.big { grid-column: span 2; grid-row: span 2; padding: 16px; }
 .pl-tile.big b { font-size: 18px; }
 .pl-tile:focus-visible, .pl-good:focus-visible { outline: 2px solid var(--u-accent); outline-offset: 2px; }

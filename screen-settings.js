@@ -69,10 +69,15 @@
       if (split.clientWidth < 2 * MIN + 8) return;   // 좁은 화면은 위아래로 쌓여 가름대가 없다
       st.w = Math.round(Math.max(MIN, Math.min(maxW(), w)));
       split.style.gridTemplateColumns = st.w + 'px 8px minmax(0, 1fr)';
-      sep.setAttribute('aria-valuemin', MIN); sep.setAttribute('aria-valuemax', Math.round(maxW())); sep.setAttribute('aria-valuenow', st.w);
-      sep.setAttribute('aria-valuetext', '설정 칸 ' + st.w + 'px');
+      sepVals(st.w);
       if (st.labels) drawLabels();
     }
+    // 가름대 값(초점을 받는 separator는 aria-valuenow가 있어야 한다). 끌기 전에도 지금 폭으로
+    function sepVals(w) {
+      sep.setAttribute('aria-valuemin', MIN); sep.setAttribute('aria-valuemax', Math.round(maxW())); sep.setAttribute('aria-valuenow', Math.round(w));
+      sep.setAttribute('aria-valuetext', '설정 칸 ' + Math.round(w) + 'px');
+    }
+    sepVals(left.offsetWidth);
     var drag = null;
     sep.addEventListener('pointerdown', function (e) { drag = { x: e.clientX, w: left.offsetWidth }; sep.setPointerCapture(e.pointerId); sep.classList.add('on'); e.preventDefault(); });
     sep.addEventListener('pointermove', function (e) { if (drag) setW(drag.w + e.clientX - drag.x); });
@@ -136,7 +141,7 @@
       }, function (el) { return left.contains(el) && el !== left && el.getBoundingClientRect().top < top - 1; });
       if (opt.onLabels) opt.onLabels(seen);
     }
-    function onResize() { if (st.w) setW(st.w); else drawLabels(); }
+    function onResize() { if (st.w) setW(st.w); else { sepVals(left.offsetWidth); drawLabels(); } }
     window.addEventListener('resize', onResize);
     preview();
 
