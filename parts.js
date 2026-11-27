@@ -1868,6 +1868,280 @@
     } };
   };
 
+  /* ───── 구조 › 격자와 스크롤 불러오기 (상품 목록 묶음) ───── */
+  var GOODS = ['겨울 패딩', '울 코트', '니트 가디건', '머플러', '첼시 부츠', '가죽 장갑', '비니', '후드티', '기모 바지', '플리스'];
+  // 상품 사진 자리 색: 강조·상태색을 옅게 섞어 밝은·어두운 테마 모두에서 보인다
+  function ph(i, pct) { return 'color-mix(in srgb, ' + ['var(--u-accent)', 'var(--u-ok)', 'var(--u-warn)', 'var(--u-info)', 'var(--u-danger)'][i % 5] + ' ' + (pct || 24) + '%, var(--u-panel))'; }
+  function num(n) { return '<i style="position:absolute;left:6px;top:6px;min-width:16px;height:16px;border-radius:8px;background:var(--u-ink);color:var(--u-panel);font:700 10px/16px var(--u-mono);text-align:center;font-style:normal">' + n + '</i>'; }
+
+  S['bento-grid'] = function (st, c) {
+    var one = c.big === '큰 칸 하나(2×2)', stack = c.narrow === '중요한 순서로 한 줄', MS = 3600;
+    var L = ['기획전', '신상품', '할인', '무료배송', '쿠폰', '후기'].slice(0, one ? 5 : 6);   // 빈칸 없이: 2×2 하나 + 1×1 넷, 2×1 둘 + 1×1 넷
+    st.innerHTML = '<div class="u-pad"><div class="bg" style="display:grid;gap:6px;border:1px dashed var(--u-line);border-radius:8px;padding:6px;box-sizing:border-box">' +
+      L.map(function (n, i) { return '<div class="bt" style="position:relative;border-radius:8px;border:1px solid var(--u-line);background:' + ph(i, i < (one ? 1 : 2) ? 34 : 16) + ';display:grid;place-items:center;padding:0 6px 0 26px;font-size:12px;font-weight:' + (i < (one ? 1 : 2) ? 700 : 500) + ';min-width:0;overflow:hidden;white-space:nowrap">' + num(i + 1) + n + '</div>'; }).join('') + '</div></div>';
+    var bg = st.querySelector('.bg'), bt = st.querySelectorAll('.bt');
+    return { ms: MS, rest: 0.12, at: function (t) {
+      var ms = t * MS, full = st.clientWidth - 28, w = lerp(full, Math.min(full, 170), ease.inOut(seg(ms, 600, 1500)) - ease.inOut(seg(ms, 2700, 3400)));
+      var narrow = w < 260, cols = narrow ? (stack ? 1 : 2) : 4, H = 196, rows;
+      bg.style.width = w + 'px'; bg.style.gridTemplateColumns = 'repeat(' + cols + ', minmax(0, 1fr))';
+      bt.forEach(function (b, i) {
+        var big = one ? i === 0 : i < 2;
+        b.style.gridColumn = narrow ? (stack ? 'auto' : big ? 'span 2' : 'auto') : big ? 'span 2' : 'auto';
+        b.style.gridRow = !narrow && one && big ? 'span 2' : 'auto';
+      });
+      rows = narrow ? (stack ? L.length : (one ? 1 + 2 : 2 + 2)) : 2;
+      bg.style.gridAutoRows = Math.floor((H - (rows - 1) * 6) / rows) + 'px';
+      return !narrow ? '4열 · ' + (one ? '큰 칸 하나가 기획전' : '넓은 칸 둘이 기획전·신상품') : stack ? '좁은 폭 · 중요한 순서대로 한 줄(번호 = 읽는 순서)' : '좁은 폭 · 2열, 큰 칸은 두 칸 차지';
+    } };
+  };
+
+  S['masonry-grid'] = function (st, c) {
+    var rowsFirst = c.order === '왼쪽부터 가로로', MS = 4200, HS = [62, 38, 86, 48, 72, 42, 58, 78, 46], G = 6;
+    st.innerHTML = '<div class="u-pad" style="padding:12px 14px"><div class="mw" style="position:relative;height:226px;overflow:hidden">' +
+      HS.map(function (h, i) { return '<div class="mc" style="position:absolute;left:0;top:0;height:' + h + 'px;border-radius:8px;border:1px solid var(--u-line);background:' + ph(i, 20) + ';box-sizing:border-box;transition:none">' + num(i + 1) + '</div>'; }).join('') + '</div></div>';
+    var mw = st.querySelector('.mw'), mc = st.querySelectorAll('.mc');
+    return { ms: MS, rest: 0.95, at: function (t) {
+      var ms = t * MS, W = mw.clientWidth, n = c.cols === '늘 2열' ? 2 : W > 480 ? 4 : 3, cw = (W - G * (n - 1)) / n, col = [], pos = [], k, i;
+      for (k = 0; k < n; k++) col.push(0);
+      if (rowsFirst) for (i = 0; i < HS.length; i++) { k = col.indexOf(Math.min.apply(null, col)); pos.push([k, col[k]]); col[k] += HS[i] + G; }
+      else { var tot = 0; HS.forEach(function (h) { tot += h + G; }); var per = tot / n; k = 0; for (i = 0; i < HS.length; i++) { if (col[k] > 0 && col[k] + HS[i] / 2 > per && k < n - 1) k++; pos.push([k, col[k]]); col[k] += HS[i] + G; } }
+      var shown = Math.floor(seg(ms, 200, 1900) * HS.length + 0.001), foc = ms < 2200 ? -1 : Math.min(HS.length - 1, Math.floor((ms - 2200) / 210));
+      mc.forEach(function (m, i) {
+        m.style.width = cw + 'px'; m.style.transform = 'translate(' + pos[i][0] * (cw + G) + 'px,' + pos[i][1] + 'px)';
+        m.style.opacity = i < shown ? 1 : 0;
+        m.style.outline = i === foc ? '2px solid var(--u-accent)' : ''; m.style.outlineOffset = '1px';
+      });
+      return ms < 2200 ? '카드 ' + shown + '장 쌓는 중 · ' + (rowsFirst ? '가장 짧은 열 밑에' : '열마다 위에서 아래로') : 'Tab 순서 ' + (foc + 1) + '번 · ' + (rowsFirst ? '왼쪽부터 가로로 읽힘' : '열을 따라 아래로 내려감');
+    } };
+  };
+
+  S['scroll-snap'] = function (st, c) {
+    var hard = c.type === 'mandatory', mid = c.align === 'center', MS = 4400, CW = 150, G = 10, P = 14;
+    st.innerHTML = '<div class="u-pad" style="padding:14px 0;gap:10px"><b style="font-size:13px;padding:0 14px">함께 보면 좋은 상품</b>' +
+      '<div class="vp" style="position:relative;height:150px;overflow:hidden"><div class="row" style="position:absolute;left:0;top:0;display:flex;gap:' + G + 'px;padding:0 ' + P + 'px">' +
+        GOODS.slice(0, 7).map(function (g, i) { return '<div style="flex:0 0 ' + CW + 'px;height:150px;border-radius:10px;border:1px solid var(--u-line);background:var(--u-panel);display:grid;grid-template-rows:96px auto auto;gap:4px;padding:6px;box-sizing:border-box;overflow:hidden"><div style="border-radius:6px;background:' + ph(i) + '"></div><b style="font-size:12px">' + g + '</b><span style="font-size:11px;color:var(--u-muted)">' + (39 + i * 7) + ',000원</span></div>'; }).join('') + '</div>' +
+        '<i class="sl" style="position:absolute;top:-4px;bottom:-4px;width:0;border-left:2px dashed var(--u-accent);opacity:.7"></i></div>' +
+      '<div class="nt" style="font-size:11.5px;color:var(--u-muted);padding:0 14px"></div></div>';
+    var row = st.querySelector('.row'), sl = st.querySelector('.sl'), nt = st.querySelector('.nt'), cur = cursor(st);
+    return { ms: MS, rest: 0.92, at: function (t) {
+      var ms = t * MS, W = st.clientWidth, line = mid ? W / 2 : P, step = CW + G;
+      function snapOf(x) { var best = 0, d = 1e9; for (var i = 0; i < 7; i++) { var at = (P + i * step + (mid ? CW / 2 : 0)) - line; if (Math.abs(at - x) < d) { d = Math.abs(at - x); best = at; } } return Math.max(0, best); }
+      // 두 번 밀기: 한 번은 붙을 자리 가까이(0.85장), 한 번은 두 자리 사이(0.5장)에서 손을 뗀다
+      var x1 = step * 0.85, s1 = snapOf(x1), x2 = s1 + step * 1.5, near2 = Math.abs(snapOf(x2) - x2) < step * 0.3, s2 = hard || near2 ? snapOf(x2) : x2, x;
+      var p1 = Math.abs(s1 - x1) < step * 0.3 || hard ? s1 : x1;
+      if (ms < 1300) x = x1 * ease.inOut(seg(ms, 400, 1300));
+      else if (ms < 2200) x = lerp(x1, p1, ease.out(seg(ms, 1300, 1700)));
+      else if (ms < 3100) x = lerp(p1, x2, ease.inOut(seg(ms, 2200, 3100)));
+      else x = lerp(x2, s2, ease.out(seg(ms, 3100, 3500)));
+      row.style.transform = 'translateX(' + (-x) + 'px)';
+      sl.style.left = (line - 1) + 'px';
+      var drag = (ms > 400 && ms < 1300) || (ms > 2200 && ms < 3100);
+      put(cur, ms < 2200 ? W * 0.75 - x * 0.6 * seg(ms, 400, 1300) : W * 0.75 - (x - p1) * 0.6 * seg(ms, 2200, 3100), 110, drag); cur.style.opacity = ms > 250 && ms < 3300 ? 1 : 0;
+      nt.textContent = '점선 = 붙는 곳(scroll-snap-align: ' + c.align + ')';
+      return ms < 1300 ? '민다' : ms < 2200 ? '자리 가까이에서 놓음 · 붙음' : ms < 3100 ? '다시 민다' : (hard ? '두 자리 사이에서 놓아도 가까운 자리에 붙음' : '두 자리 사이에서 놓음 · 멀어서 그대로');
+    } };
+  };
+
+  S['carousel'] = function (st, c) {
+    var auto = c.auto === '자동 넘김(5초)', dots = c.mark === '점과 화살표', MS = auto ? 5200 : 4400, N = 5;
+    var SL = ['겨울 패딩 기획전', '니트 30% 할인', '부츠 새로 들어옴', '무료배송 주간', '장갑·비니 묶음'];
+    function arrow(cls, ch, lb) { return '<button type="button" class="' + cls + '" aria-label="' + lb + '" style="position:absolute;top:50%;margin-top:-15px;width:30px;height:30px;border-radius:50%;border:1px solid var(--u-line);background:var(--u-panel);box-shadow:var(--u-shadow-sm);font-size:14px;color:var(--u-ink);z-index:2">' + ch + '</button>'; }
+    st.innerHTML = '<div class="u-pad" style="gap:8px"><div class="vp" style="position:relative;height:168px;border-radius:10px;overflow:hidden">' +
+      '<div class="tr" style="display:flex;height:100%">' + SL.map(function (s, i) { return '<div style="flex:0 0 100%;height:100%;background:' + ph(i, 32) + ';display:grid;align-content:end;padding:14px 18px;box-sizing:border-box"><b style="font-size:16px">' + s + '</b><span style="font-size:11.5px;color:var(--u-muted)">12월 1일까지</span></div>'; }).join('') + '</div>' +
+      arrow('pv', '‹', '이전 기획전').replace('position:absolute;', 'position:absolute;left:8px;') + arrow('nx', '›', '다음 기획전').replace('position:absolute;', 'position:absolute;right:8px;') +
+      (auto ? '<button type="button" class="pa" aria-label="자동 넘김 멈춤" style="position:absolute;right:8px;top:8px;height:24px;padding:0 9px;border-radius:12px;border:0;background:var(--u-ink);color:var(--u-panel);font-size:11px;z-index:2"></button>' : '') + '</div>' +
+      '<div class="mk" style="display:flex;justify-content:center;align-items:center;gap:6px;height:16px;font:600 12px var(--u-mono);color:var(--u-muted)">' +
+        (dots ? SL.map(function () { return '<i class="dt" style="display:block;height:7px;border-radius:4px;background:var(--u-line)"></i>'; }).join('') : '<span class="no"></span>') + '</div>' +
+      '<div class="ky" style="display:flex;justify-content:center;gap:6px;min-height:20px;font-size:11.5px;color:var(--u-muted)"></div></div>';
+    var tr = st.querySelector('.tr'), pv = st.querySelector('.pv'), nx = st.querySelector('.nx'), pa = st.querySelector('.pa'), dt = st.querySelectorAll('.dt'), no = st.querySelector('.no'), ky = st.querySelector('.ky'), cur = cursor(st);
+    // 손으로 넘김: 다음 → 다음 → ← 키 / 자동: 1.1초마다 넘기다 멈춤을 누름
+    var STEPS = auto ? [[1100, 1], [2200, 2], [3300, 3]] : [[1000, 1], [2000, 2], [3200, 1]], PAUSE = 3900;
+    return { ms: MS, rest: auto ? 0.9 : 0.86, at: function (t) {
+      var ms = t * MS, idx = 0, from = 0, k0 = 0;
+      STEPS.forEach(function (s) { if (ms >= s[0]) { from = idx; idx = s[1]; k0 = s[0]; } });
+      var p = ease.inOut(seg(ms, k0, k0 + 450)), pos = lerp(from, idx, p);
+      tr.style.transform = 'translateX(' + (-pos * 100) + '%)';
+      pv.disabled = idx === 0; pv.style.opacity = idx === 0 ? 0.35 : 1; nx.disabled = idx === N - 1; nx.style.opacity = idx === N - 1 ? 0.35 : 1;
+      dt.forEach(function (d, i) { d.style.width = (i === idx ? 18 : 7) + 'px'; d.style.background = i === idx ? 'var(--u-accent)' : 'var(--u-line)'; });
+      if (no) no.textContent = (idx + 1) + ' / ' + N;
+      var stopped = auto && ms >= PAUSE;
+      if (pa) pa.textContent = stopped ? '▶ 다시 재생' : '❚❚ 멈춤';
+      ky.innerHTML = !auto && ms >= 3000 && ms < 3700 ? kbd('←') + ' 키로 앞 장' : auto ? (stopped ? '멈춤 · 더는 넘어가지 않음' : '5초마다 넘어감(예시는 빠르게)') : '';
+      var W = st.clientWidth;
+      if (auto) { var r = rel(st, pa); put(cur, lerp(W * 0.5, r.x + r.w / 2, ease.inOut(seg(ms, 3300, PAUSE - 100))), lerp(150, r.y + r.h / 2, ease.inOut(seg(ms, 3300, PAUSE - 100))), ms > PAUSE - 100 && ms < PAUSE + 120); cur.style.opacity = ms > 3200 && ms < 4600 ? 1 : 0; }
+      else clickPath(st, cur, [[1000, nx], [2000, nx]], ms, [W * 0.5, 200]);
+      return auto ? (stopped ? '멈춤을 눌러 ' + (idx + 1) + '번째에 멈춤' : (idx + 1) + '번째 · 저절로 넘어감') : ms < 3000 ? (idx + 1) + '번째 · 화살표로 넘김' + (idx === 0 ? ' · 첫 장이라 ‹ 꺼짐' : '') : (idx + 1) + '번째 · 키보드로도 넘김';
+    } };
+  };
+
+  S['peek'] = function (st, c) {
+    var px = +c.peek_px || 0, both = c.edge === '양쪽(가운데 카드)', MS = 3800, G = 10, P = 14;
+    st.innerHTML = '<div class="u-pad" style="padding:14px 0;gap:10px"><b style="font-size:13px;padding:0 14px">최근 본 상품</b>' +
+      '<div class="vp" style="position:relative;height:150px;overflow:hidden"><div class="row" style="position:absolute;left:0;top:0;display:flex;gap:' + G + 'px">' +
+        GOODS.slice(0, 6).map(function (g, i) { return '<div class="pc" style="flex:0 0 auto;height:150px;border-radius:10px;border:1px solid var(--u-line);background:var(--u-panel);display:grid;grid-template-rows:96px auto auto;gap:4px;padding:6px;box-sizing:border-box;overflow:hidden"><div style="border-radius:6px;background:' + ph(i + 2) + '"></div><b style="font-size:12px;white-space:nowrap">' + g + '</b><span style="font-size:11px;color:var(--u-muted)">' + (52 + i * 6) + ',000원</span></div>'; }).join('') + '</div>' +
+        '<i class="hl" style="position:absolute;top:0;height:150px;border:2px dashed var(--u-accent);border-radius:10px;box-sizing:border-box;pointer-events:none"></i></div>' +
+      '<div class="nt" style="font-size:11.5px;color:var(--u-muted);padding:0 14px"></div></div>';
+    var row = st.querySelector('.row'), pc = st.querySelectorAll('.pc'), hl = st.querySelector('.hl'), nt = st.querySelector('.nt'), cur = cursor(st);
+    return { ms: MS, rest: 0.3, at: function (t) {
+      var ms = t * MS, W = st.clientWidth, cw = both ? W - 2 * (px + G) : W - P - px - G, step = cw + G, start = both ? px + G : P;
+      pc.forEach(function (p) { p.style.width = cw + 'px'; });
+      var x = step * ease.inOut(seg(ms, 2000, 2700));
+      row.style.transform = 'translateX(' + (start - x) + 'px)';
+      var on = px > 0 && ms > 500 && ms < 1900;
+      hl.style.opacity = on ? 1 : 0; hl.style.width = Math.max(px, 4) + 'px'; hl.style.left = (W - px) + 'px';
+      put(cur, W * 0.7 - x * 0.5, 110, ms > 2000 && ms < 2700); cur.style.opacity = ms > 1850 && ms < 3000 ? 1 : 0;
+      nt.textContent = px > 0 ? '걸친 폭 ' + px + 'px' + (both ? ' · 앞뒤 양쪽' : ' · 오른쪽') : '걸친 카드 없음';
+      return ms < 2000 ? (px > 0 ? '다음 카드가 ' + px + 'px 보임 · 더 있다는 단서' : '카드가 딱 맞아 더 있는지 모름') : ms < 2700 ? '민다' : '다음 카드로 넘어옴';
+    } };
+  };
+
+  // 불러오기 장면 공용: 상품 줄
+  function goodRow(i, extra, attr) { return '<div class="gr"' + (attr || '') + ' style="display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:8px;height:34px;padding:0 8px;border-radius:8px;border:1px solid var(--u-line);background:var(--u-panel);box-sizing:border-box;' + (extra || '') + '"><i style="width:34px;height:24px;border-radius:5px;background:' + ph(i) + '"></i><span style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + GOODS[i % GOODS.length] + ' ' + (i + 1) + '</span><span style="font:11px var(--u-mono);color:var(--u-muted)">' + (29 + (i * 13) % 60) + ',000</span></div>'; }
+  function skelRow() { return '<div class="sk" style="display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;gap:8px;height:34px;padding:0 8px;border-radius:8px;border:1px solid var(--u-line);box-sizing:border-box"><i class="u-skel" style="height:24px"></i><i class="u-skel" style="width:60%"></i></div>'; }
+
+  S['infinite-scroll'] = function (st, c) {
+    var stopBtn = c.stop === '세 번 뒤 더 보기 단추', keep = c.keep === '주소에 위치 남김', MS = 6000, PER = 4, RH = 40;
+    var LOADS = [1100, 2000, 2900, 3800];   // 끝에 닿는 때. 세 번 불러온 뒤 네 번째는 단추를 쓸지 정한다
+    st.innerHTML = '<div class="ad" style="position:absolute;left:10px;right:10px;top:8px;height:22px;z-index:3;border-radius:11px;background:var(--u-panel);border:1px solid var(--u-line);font:11px/20px var(--u-mono);color:var(--u-muted);padding:0 10px;white-space:nowrap;overflow:hidden"></div>' +
+      '<div class="vp" style="position:absolute;left:0;right:0;top:36px;bottom:0;overflow:hidden"><div class="ct" style="position:absolute;left:0;right:0;top:0;padding:4px 14px;display:grid;gap:6px">' +
+        (function () { var s = ''; for (var i = 0; i < PER * 5; i++) s += goodRow(i); return s; })() +
+        '<div class="sks" style="display:grid;gap:6px">' + skelRow() + skelRow() + '</div>' +
+        '<button type="button" class="mb" style="height:30px;border-radius:8px;border:1px solid var(--u-line);background:var(--u-panel);font-size:12px;color:var(--u-ink)">더 보기 · 16 / 120</button>' +
+        '<div class="ft" style="padding:10px;border-radius:8px;background:var(--u-side);font-size:11.5px;color:var(--u-muted)">푸터 · 고객센터 1588-0000 · 배송 안내 · 교환·환불</div></div>' + SBAR + '</div>' +
+      '<div class="bk" style="position:absolute;left:50%;top:44%;transform:translateX(-50%);z-index:4;padding:6px 12px;border-radius:8px;background:var(--u-toast-bg);color:var(--u-toast-fg);font-size:12px;white-space:nowrap"></div>';
+    var vp = st.querySelector('.vp'), ct = st.querySelector('.ct'), gr = st.querySelectorAll('.gr'), sks = st.querySelector('.sks'), mb = st.querySelector('.mb'), ft = st.querySelector('.ft'), ad = st.querySelector('.ad'), bk = st.querySelector('.bk');
+    return { ms: MS, rest: 0.78, at: function (t) {
+      var ms = t * MS, loaded = 1, loading = false, i;
+      for (i = 0; i < LOADS.length; i++) {
+        if (i === 3 && stopBtn) break;
+        if (ms >= LOADS[i] + 500) loaded = i + 2; else if (ms >= LOADS[i]) loading = true;
+      }
+      var n = loaded * PER, atBtn = stopBtn && loaded >= 4, vh = vp.clientHeight;
+      var fresh = loaded > 1 && ms < LOADS[loaded - 2] + 900;
+      gr.forEach(function (g, k) { g.style.display = k < n ? 'grid' : 'none'; g.style.background = fresh && k >= n - PER ? 'var(--u-sel)' : 'var(--u-panel)'; });
+      sks.style.display = loading ? '' : 'none';
+      mb.style.display = atBtn ? '' : 'none'; ft.style.display = atBtn ? '' : 'none';
+      var total = ct.scrollHeight, maxS = Math.max(0, total - vh), back = ms >= 4800, y;
+      // 끝까지 따라 내려가며 읽는다. 상세에 갔다가 돌아오면 위치를 남겼는지에 따라 달라진다
+      y = Math.min(maxS, Math.max(0, (ms / 4600) * (PER * 4 * RH + 120) - vh * 0.55));
+      if (back) y = keep ? Math.min(maxS, y) : 0;
+      ct.style.transform = 'translateY(' + (-y) + 'px)';
+      scrollbar(st, y, vh, total);
+      var page = Math.min(loaded, 4);
+      ad.textContent = 'shop.example/winter' + (keep ? '?page=' + page : '');
+      bk.style.opacity = ms > 4300 && ms < 4800 ? 1 : 0; bk.textContent = '상품 상세 → 뒤로';
+      if (ms < 4300) return loading ? '끝에 닿음 · 다음 ' + PER + '개 불러오는 중' : atBtn ? '세 번 불러온 뒤 더 보기 단추 · 푸터에 닿음' : n + '개 · 내리는 중' + (stopBtn ? '' : (loaded >= 3 ? ' · 푸터는 계속 밀려남' : ''));
+      return ms < 4800 ? '상세에 갔다가 돌아옴' : keep ? '보던 자리(' + page + '쪽)로 돌아옴' : '맨 위로 돌아옴 · 다시 내려야 함';
+    } };
+  };
+
+  S['load-more'] = function (st, c) {
+    var showN = c.count === '본 수와 전체(24 / 120)', toNew = c.focus === '새로 붙은 첫 항목으로', MS = 4600, PER = 4, CL = [1200, 3000];
+    st.innerHTML = '<div class="vp" style="position:absolute;inset:0;overflow:hidden"><div class="ct" style="position:absolute;left:0;right:0;top:0;padding:14px;display:grid;gap:6px"><b style="font-size:13px">겨울 아우터 · 120개</b>' +
+      (function () { var s = ''; for (var i = 0; i < PER * 3; i++) s += goodRow(i); return s; })() +
+      '<div class="sks" style="display:grid;gap:6px">' + skelRow() + skelRow() + '</div>' +
+      '<div class="cn" style="font-size:11.5px;color:var(--u-muted);text-align:center"></div>' +
+      '<button type="button" class="mb" style="height:32px;border-radius:8px;border:1px solid var(--u-line);background:var(--u-panel);font-size:12.5px;color:var(--u-ink)"></button></div>' + SBAR + '</div>' +
+      '<div class="lv" style="position:absolute;left:50%;top:8px;transform:translateX(-50%);z-index:4;padding:6px 12px;border-radius:8px;background:var(--u-toast-bg);color:var(--u-toast-fg);font-size:12px;white-space:nowrap"></div>';
+    var vp = st.querySelector('.vp'), ct = st.querySelector('.ct'), gr = st.querySelectorAll('.gr'), sks = st.querySelector('.sks'), cn = st.querySelector('.cn'), mb = st.querySelector('.mb'), lv = st.querySelector('.lv'), cur = cursor(st);
+    return { ms: MS, rest: 0.92, at: function (t) {
+      var ms = t * MS, done = 0, busy = false;
+      CL.forEach(function (x) { if (ms >= x + 600) done++; else if (ms >= x) busy = true; });
+      var n = PER * (1 + done), vh = vp.clientHeight;
+      gr.forEach(function (g, k) { g.style.display = k < n ? 'grid' : 'none'; g.style.outline = ''; });
+      sks.style.display = busy ? '' : 'none';
+      cn.textContent = showN ? '120개 중 ' + n + '개를 봤어요' : '';
+      cn.style.display = showN ? '' : 'none';
+      mb.textContent = busy ? '불러오는 중…' : '더 보기'; mb.disabled = busy; mb.style.opacity = busy ? 0.6 : 1;
+      var last = done ? CL[done - 1] + 600 : -1, newFirst = gr[PER * done];
+      var focEl = !done ? (ms > 900 ? mb : null) : toNew && ms < (CL[done] || 1e9) - 200 ? newFirst : mb;
+      if (busy) focEl = mb;
+      mb.style.outline = focEl === mb ? '2px solid var(--u-accent)' : ''; mb.style.outlineOffset = '2px';
+      if (focEl && focEl !== mb) { focEl.style.outline = '2px solid var(--u-accent)'; focEl.style.outlineOffset = '1px'; }
+      // 초점이 보이게 굴린다
+      var total = ct.scrollHeight, maxS = Math.max(0, total - vh), want = focEl && focEl !== mb ? focEl.offsetTop - 40 : maxS;
+      var y = Math.max(0, Math.min(maxS, want));
+      ct.style.transform = 'translateY(' + (-y) + 'px)';
+      scrollbar(st, y, vh, total);
+      lv.style.opacity = done && ms < last + 900 ? 1 : 0; lv.textContent = PER + '개를 더 불러왔어요';
+      var r = rel(st, mb); put(cur, r.x + r.w * 0.6, r.y + r.h / 2, CL.some(function (x) { return ms > x - 80 && ms < x + 100; }));
+      cur.style.opacity = CL.some(function (x) { return ms > x - 500 && ms < x + 300; }) ? 1 : 0;
+      return busy ? '누름 · 불러오는 동안 단추 막힘' : !done ? '더 보기 단추에 초점' : (toNew && focEl !== mb ? '새로 붙은 첫 상품으로 초점' : '초점은 단추에 · 붙은 수를 알려 줌');
+    } };
+  };
+
+  S['virtualized-list'] = function (st, c) {
+    var same = c.row === '같은 줄 높이', buf = c.buffer === '위아래 5줄 여유' ? 5 : 0, MS = 4200, N = 12480, VH = 120;
+    function rh(i) { return same ? 30 : 26 + (i * 7 % 3) * 10; }
+    // 줄 시작 위치. 다른 높이일 때는 앞 줄들을 더해 둔 표로 찾는다
+    var top = null;
+    if (!same) { top = new Float64Array(N + 1); for (var i = 0; i < N; i++) top[i + 1] = top[i] + rh(i); }
+    function y0(i) { return same ? i * 30 : top[i]; }
+    function at(y) { if (same) return Math.floor(y / 30); var lo = 0, hi = N - 1; while (lo < hi) { var m = (lo + hi + 1) >> 1; if (top[m] <= y) lo = m; else hi = m - 1; } return lo; }
+    var TOTAL = y0(N);
+    st.innerHTML = '<div class="u-pad" style="grid-template-columns:minmax(0,1fr) 112px;gap:12px;align-items:start"><div style="display:grid;gap:6px"><b style="font-size:13px">후기 12,480개</b>' +
+      '<div class="vw" style="position:relative;margin:26px 0;height:' + VH + 'px;border:2px solid var(--u-accent);border-radius:8px;background:var(--u-panel)"><div class="rs" style="position:absolute;left:0;right:0;top:0;bottom:0;clip-path:inset(-26px -2px -26px -2px)"></div>' + SBAR + '</div>' +
+      '<span style="font-size:11px;color:var(--u-muted)">파란 틀 = 화면, 흐린 줄 = 미리 그린 줄</span></div>' +
+      '<div style="display:grid;gap:4px;font-size:11.5px;color:var(--u-muted);padding-top:44px"><span>그린 줄</span><b class="dn" style="font:700 20px var(--u-mono);color:var(--u-ink)"></b><span>전체 12,480줄</span><span class="ps" style="margin-top:8px;font-family:var(--u-mono)"></span></div></div>';
+    var vw = st.querySelector('.vw'), rs = st.querySelector('.rs'), dn = st.querySelector('.dn'), ps = st.querySelector('.ps'), pool = [];
+    for (var k = 0; k < 24; k++) { var d = document.createElement('div'); d.style.cssText = 'position:absolute;left:6px;right:12px;display:flex;align-items:center;gap:6px;font-size:11.5px;border-bottom:1px solid var(--u-line);white-space:nowrap;overflow:hidden;box-sizing:border-box'; rs.appendChild(d); pool.push(d); }
+    var PATH = [[300, 0], [1500, 0.004], [2600, 0.62], [3300, 0.62]];
+    return { ms: MS, rest: 0.95, at: function (t) {
+      var ms = t * MS, y = scrollAlong(PATH, ms) * (TOTAL - VH);
+      var fast = ms > 1600 && ms < 2500, base = fast ? y - VH / 2 : y;   // 빨리 굴릴 때 그리기가 화면 반 칸 늦는다. 미리 그린 줄이 있으면 메워진다
+      var a = Math.max(0, at(base) - buf), b = Math.min(N - 1, at(base + VH) + buf), used = 0;
+      for (var i = a; i <= b && used < pool.length; i++, used++) {
+        var r = pool[used], ry = y0(i) - y, inView = ry + rh(i) > 0 && ry < VH;
+        r.style.display = 'flex'; r.style.top = ry + 'px'; r.style.height = rh(i) + 'px'; r.style.opacity = inView ? 1 : 0.35;
+        r.innerHTML = '<span style="font-family:var(--u-mono);color:var(--u-muted);min-width:42px">' + (i + 1) + '</span>★★★★' + (i % 3 ? '★' : '☆') + ' <span style="color:var(--u-muted)">' + GOODS[i % GOODS.length] + ' 후기</span>';
+      }
+      for (; used < pool.length; used++) pool[used].style.display = 'none';
+      var blank = !buf && fast;
+      scrollbar(vw, y, VH, TOTAL);
+      dn.textContent = (b - a + 1); ps.textContent = (at(y) + 1).toLocaleString('ko-KR') + '번째 줄';
+      return blank ? '빨리 굴림 · 미리 그린 줄이 없어 빈칸이 보임' : fast ? '빨리 굴림 · 미리 그린 줄로 빈칸 없음' : '보이는 줄만 그림 · 12,480줄 중 ' + (b - a + 1) + '줄';
+    } };
+  };
+
+  S['pull-to-refresh'] = function (st, c) {
+    var need = +c.pull_px || 72, btn = c.alt === '새로고침 단추도', MS = 5200, K = 0.55;
+    st.innerHTML = '<div style="position:absolute;left:0;right:0;top:0;height:38px;z-index:3;display:flex;align-items:center;gap:8px;padding:0 14px;background:var(--u-panel);border-bottom:1px solid var(--u-line)"><b style="font-size:13px;flex:1">후기</b>' +
+        (btn ? '<button type="button" class="rb" aria-label="새로고침" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--u-line);background:var(--u-panel);font-size:14px;color:var(--u-ink)">↻</button>' : '') + '</div>' +
+      '<div class="ind" style="position:absolute;left:0;right:0;top:38px;height:0;display:flex;align-items:end;justify-content:center;gap:6px;overflow:hidden;font-size:11.5px;color:var(--u-muted)"><span class="ar" style="display:inline-block;font-size:16px;color:var(--u-accent)">↓</span><span class="it"></span></div>' +
+      '<div class="ct" style="position:absolute;left:0;right:0;top:38px;padding:8px 14px;display:grid;gap:6px">' + goodRow(9, ';display:none', ' data-new') + goodRow(8, ';display:none', ' data-new') + [0, 1, 2, 3, 4].map(function (i) { return goodRow(i); }).join('') + '</div>' +
+      '<div class="lv" style="position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:4;padding:6px 12px;border-radius:8px;background:var(--u-toast-bg);color:var(--u-toast-fg);font-size:12px;white-space:nowrap"></div>';
+    var ind = st.querySelector('.ind'), ar = st.querySelector('.ar'), it = st.querySelector('.it'), ct = st.querySelector('.ct'), nw = st.querySelectorAll('[data-new]'), lv = st.querySelector('.lv'), rb = st.querySelector('.rb'), cur = cursor(st);
+    // 첫 번째는 모자라게 당겨 그대로 돌아오고, 두 번째는 넘게 당겨 새로고침
+    var D1 = need * 0.55, D2 = need * 1.35;
+    return { ms: MS, rest: btn ? 0.97 : 0.7, at: function (t) {
+      var ms = t * MS, d, phase, W = st.clientWidth;
+      if (ms < 600) d = 0;
+      else if (ms < 1200) d = D1 * ease.out(seg(ms, 600, 1200));
+      else if (ms < 1500) d = D1 * (1 - ease.out(seg(ms, 1200, 1500)));
+      else if (ms < 2300) d = D2 * ease.out(seg(ms, 1700, 2300));
+      else if (ms < 3000) d = lerp(D2, 40 / K, ease.out(seg(ms, 2300, 2500)));
+      else d = 40 / K * (1 - ease.out(seg(ms, 3000, 3300)));
+      var loading = ms >= 2300 && ms < 3000, over = ms < 2300 && d >= need, off = d * K, got = ms >= 3000;
+      ind.style.height = off + 'px'; ct.style.transform = 'translateY(' + off + 'px)';
+      ar.style.transform = loading ? 'rotate(' + (ms * 0.6) + 'deg)' : 'rotate(' + Math.min(180, d / need * 180) + 'deg)';
+      ar.textContent = loading ? '◌' : '↓';
+      it.textContent = loading ? '불러오는 중' : over ? '놓으면 새로고침' : d > 4 ? '당겨서 새로고침' : '';
+      nw.forEach(function (n) { n.style.display = got ? 'grid' : 'none'; n.style.background = got && ms < 3900 ? 'var(--u-sel)' : 'var(--u-panel)'; });
+      var btnPress = btn && ms > 4300 && ms < 4450, btnBusy = btn && ms >= 4400 && ms < 4900;
+      if (rb) { rb.textContent = btnBusy ? '◌' : '↻'; rb.style.outline = ms > 4000 && ms < 5000 ? '2px solid var(--u-accent)' : ''; }
+      lv.style.opacity = (ms >= 3000 && ms < 3900) || (btn && ms >= 4900) ? 1 : 0; lv.textContent = ms >= 4900 ? '새 후기가 없어요' : '새 후기 2개';
+      if (ms < 3300) { put(cur, W * 0.5, 60 + off, ms > 600 && ms < 2300 && !(ms > 1200 && ms < 1700)); cur.style.opacity = ms > 400 && ms < 2500 ? 1 : 0; }
+      else if (btn) { var r = rel(st, rb); put(cur, lerp(W * 0.5, r.x + r.w / 2, ease.inOut(seg(ms, 3700, 4250))), lerp(120, r.y + r.h / 2, ease.inOut(seg(ms, 3700, 4250))), btnPress); cur.style.opacity = ms > 3600 && ms < 5000 ? 1 : 0; }
+      else cur.style.opacity = 0;
+      if (ms < 1200) return d > 0 ? '당김 · ' + Math.round(d) + ' / ' + need + 'px' : '맨 위';
+      if (ms < 1700) return '모자라게 놓음 · 그대로 돌아감';
+      if (ms < 2300) return over ? need + 'px 넘음 · 놓으면 새로고침' : '다시 당김 · ' + Math.round(d) + 'px';
+      if (loading) return '놓음 · 불러오는 중';
+      if (ms < 3700 || !btn) return btn ? '새 후기 2개가 위에 붙음' : '새 후기 2개 · 마우스·키보드로는 새로고침할 길이 없음';
+      return ms < 4400 ? '새로고침 단추로도 됨' : btnBusy ? '단추로 불러오는 중' : '단추로 새로고침 끝';
+    } };
+  };
+
   /* ───── 움직임 › 화면 전환 (뷰 전환) ───── */
   function centerOf(st, el) { var r = rel(st, el); return [r.x + r.w / 2, r.y + r.h / 2]; }
 

@@ -253,6 +253,25 @@
     "prompt": "작업함의 알림 설정 화면을 만들어줘. 왼쪽 설정과 오른쪽 미리보기를 Split View로 나누고 가름대는 끌거나 화살표 키로 움직이되 양쪽 최소 240px. 왼쪽은 Grouped List로 \"받는 곳\"(메일·앱 푸시·문자, 줄마다 Toggle Switch)과 \"방해 금지\"(시간은 Select) 구역을 둥근 상자로 묶고, 그 아래 Fieldset \"받을 알림\" 안에 Chip Group(결제·환불·정산·보안·소식, 여러 개 켜기)과 \"보안 알림은 끌 수 없어요\" 주의 Callout. Divider 아래에는 알림을 받는 계정을 Description List(이름·메일·휴대폰·마지막 변경, 메일 옆 복사 단추)로. 오른쪽 미리보기 위에는 휴대폰·태블릿·PC Button Group(하나만 켜짐, 안에서는 화살표 키)으로 폭을 바꾸고, 왼쪽에서 바꾼 값이 미리보기에 바로 보이게. 왼쪽 칸은 따로 스크롤되고 끝에 닿아도 페이지가 같이 움직이지 않게 Overscroll Behavior: contain. 좁은 화면에서는 설정과 미리보기를 위아래로."
   },
   {
+    "id": "product-list",
+    "name": "상품 목록",
+    "ready": true,
+    "terms": [
+      "carousel",
+      "bento-grid",
+      "scroll-snap",
+      "peek",
+      "card-grid",
+      "infinite-scroll",
+      "load-more",
+      "masonry-grid",
+      "virtualized-list",
+      "pull-to-refresh",
+      "overscroll-behavior"
+    ],
+    "prompt": "겨울 옷 가게의 상품 목록 페이지를 만들어줘. 맨 위 기획전 다섯 장은 Carousel로 한 장씩 넘기되 자동으로 넘기지 말고 좌우 화살표·아래 점·←→ 키로만, 첫 장과 끝 장에서는 그쪽 화살표를 끄기. 그 아래 \"이번 주 추천\"은 Bento Grid 4열에 기획전 한 칸을 2×2로 크게, 나머지 네 칸은 1×1로 빈칸 없이, 좁은 폭에서는 중요한 순서대로 한 줄. \"최근 본 상품\"은 가로 줄에 Scroll Snap(x mandatory, 카드 앞머리)을 걸고 Peek으로 다음 카드가 32px 보이게, 제목 옆에 좌우 단추. 상품 120개는 Card Grid로 8개씩 보이고 끝에 Load More 단추(\"120개 중 8개를 봤어요\", 누르면 초점은 새로 붙은 첫 상품, 불러오는 동안 Skeleton). 견주기용으로 Infinite Scroll로 바꾸는 단추도 두되 세 번 불러온 뒤에는 더 보기 단추로 바꿔 푸터에 닿게. 사진 후기는 Masonry Grid로 가장 짧은 열 밑에 다음 카드를 넣어 읽기 순서가 왼쪽부터 가로로. 오른쪽 앱 미리보기에는 후기 12,480개를 Virtualized List(줄 높이 56px 고정, 위아래 5줄 여유, aria-setsize·aria-posinset)로, 맨 위에서 72px 넘게 당겼다 놓으면 Pull to Refresh로 새 후기를 위에 붙이고 ↻ 단추로도 되게, 목록에는 Overscroll Behavior: contain."
+  },
+  {
     "id": "deck-explainer",
     "name": "설명·발표 덱",
     "ready": true,
