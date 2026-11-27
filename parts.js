@@ -1495,7 +1495,8 @@
   };
 
   /* ───── 구조 › 묶기와 스크롤 (도움말 문서 묶음) ───── */
-  var CO = { '정보': ['var(--u-info)', 'var(--u-info-soft)', 'i', '참고'], '주의': ['var(--u-warn)', 'var(--u-warn-soft)', '!', '되돌릴 수 없어요'], '경고': ['var(--u-danger)', 'var(--u-danger-soft)', '!', '데이터가 지워져요'] };
+  // 종류: [띠·아이콘 색, 바탕, 아이콘, 기본 제목]. 색을 못 봐도 아이콘 모양으로 종류가 갈리게 한다
+  var CO = { '정보': ['var(--u-info)', 'var(--u-info-soft)', 'i', '참고'], '팁': ['var(--u-ok)', 'var(--u-ok-soft)', '★', '이렇게 하면 빨라요'], '주의': ['var(--u-warn)', 'var(--u-warn-soft)', '!', '되돌릴 수 없어요'], '경고': ['var(--u-danger)', 'var(--u-danger-soft)', '×', '데이터가 지워져요'] };
   // 콜아웃 상자. head가 true면 종류의 기본 제목, 글이면 그 제목, 없으면 제목 줄 없음
   function calloutHTML(kind, head, text, attr) {
     var k = CO[kind];
@@ -1509,7 +1510,7 @@
   S['callout'] = function (st, c) {
     var MS = 2400;
     st.innerHTML = '<div class="u-pad" style="gap:9px"><b style="font-size:14px">결제 수단 삭제</b>' + fakes(3) +
-      calloutHTML(c.kind, c.head === '제목 있음', '삭제한 결제 수단은 다시 살릴 수 없습니다. 정기 결제에 쓰이면 먼저 바꾸세요.', ' class="co"') + fakes(3) + '</div>';
+      calloutHTML(c.kind, c.head === '제목 있음', { '정보': '결제 수단은 팀 관리자만 바꿀 수 있습니다.', '팁': '정기 결제에 쓰는 수단은 결제 내역에서 바로 바꿀 수 있습니다.' }[c.kind] || '삭제한 결제 수단은 다시 살릴 수 없습니다. 정기 결제에 쓰이면 먼저 바꾸세요.', ' class="co"') + fakes(3) + '</div>';
     var co = st.querySelector('.co');
     return { ms: MS, rest: 0.6, at: function (t) {
       var ms = t * MS, p = ease.out(seg(ms, 400, 900));
@@ -2273,6 +2274,105 @@
       if (ms < 700) return '할 일·진행·완료 열 × ' + (who ? '담당자' : '우선순위') + ' 줄';
       if (ms < 2100) return '같은 줄 안에서 열을 옮김';
       return ms < 2900 ? '다른 줄로 옮김 · ' + (who ? '담당자가 바뀜' : '우선순위가 바뀜') : (cnt ? '줄 머리 카드 수가 바뀜' : '옮김 끝');
+    } };
+  };
+
+  /* ───── 구조 › 스크롤 막대 (코드 열람기 묶음) ───── */
+  // 예시 코드 줄. 조합 화면 "코드 열람기"도 같이 쓴다
+  var CODE_T = ['import { ledger, notify, log } from "./pay.js";', '', 'export async function refund(order) {', '  if (!order.paid) return null;', '  // 부분 환불이면 남은 금액만 돌려준다', '  const amount = order.total - order.refunded;', '  await notify(order.user, "refund", amount);', '  return { id: order.id, amount };', '}', '',
+    'export function settle(day) {', '  const rows = ledger.filter(r => r.day === day);', '  rows.forEach(r => refund(r.order));', '  log("settle", day, rows.length);', '}', '', 'function fee(order) {', '  return Math.round(order.total * 0.032);', '}', ''];
+  function codeLines(n) { var a = []; for (var i = 0; i < n; i++) a.push(CODE_T[i % CODE_T.length]); return a; }
+  UI.codeLines = codeLines;
+  function codeHTML(lines, mark) {
+    return lines.map(function (l, i) { var t = esc(l); if (mark) t = t.split(esc(mark)).join('<mark style="background:color-mix(in srgb, var(--u-warn) 35%, transparent);color:inherit;border-radius:2px">' + esc(mark) + '</mark>'); return '<div class="ln" style="display:flex;gap:10px;height:16px;white-space:pre"><i style="width:22px;text-align:right;color:var(--u-muted);font-style:normal;flex:none">' + (i + 1) + '</i><span>' + t + '</span></div>'; }).join('');
+  }
+  var CODEBOX = 'font:11px/16px var(--u-mono);background:var(--u-side);border:1px solid var(--u-line);border-radius:8px;padding:6px 8px;color:var(--u-ink)';
+
+  S['custom-scrollbar'] = function (st, c) {
+    var mine = c.color === '화면 색에 맞춤', thin = c.width === '얇게(thin)', MS = 3600, L = codeLines(48);
+    function pane(lab, style) { return '<div style="display:grid;gap:5px;min-width:0"><b style="font-size:12px">' + lab + '</b><div class="cp" style="height:184px;overflow:auto;' + CODEBOX + ';' + style + '">' + codeHTML(L) + '</div></div>'; }
+    st.innerHTML = '<div class="u-pad" style="grid-template-columns:1fr 1fr;gap:12px">' + pane('브라우저 기본', '') +
+      pane('꾸민 막대', (mine ? 'scrollbar-color:color-mix(in srgb, var(--u-muted) 85%, var(--u-side)) var(--u-side);' : '') + (thin ? 'scrollbar-width:thin;' : '')) + '</div>';
+    var cp = st.querySelectorAll('.cp');
+    return { ms: MS, rest: 0.45, at: function (t) {
+      var ms = t * MS, p = scrollAlong([[300, 0], [1700, 0.55], [2600, 0.55], [3300, 0.2]], ms);
+      cp.forEach(function (x) { x.scrollTop = p * (x.scrollHeight - x.clientHeight); });
+      return !mine && !thin ? '둘 다 브라우저 기본' : (mine ? '손잡이·트랙 색을 칸 바탕에 맞춤' : '색은 기본') + (thin ? ' · 얇게(잡기 어려워짐)' : ' · 두께는 기본');
+    } };
+  };
+
+  S['scrollbar-gutter'] = function (st, c) {
+    var stable = c.gutter === 'stable', both = c.edge === '양쪽(both-edges)', MS = 3800;
+    var P = [['refund.js', '세미콜론이 없어요', 12], ['refund.js', '쓰지 않는 변수 fee', 17], ['settle.js', '비동기 함수에 await가 없어요', 4], ['pay.js', 'log 인자가 하나 남아요', 30], ['settle.js', '같은 이름을 두 번 가져와요', 1], ['refund.js', '반환 꼴이 달라요', 8], ['pay.js', '쓰지 않는 import', 2]];
+    st.innerHTML = '<div class="u-pad" style="gap:8px"><b style="font-size:13px">문제 <span class="n" style="color:var(--u-muted);font-weight:400"></span></b>' +
+      '<div class="bx" style="position:relative;height:168px;overflow-y:auto;border:1px solid var(--u-line);border-radius:8px;background:var(--u-panel);' + (stable ? 'scrollbar-gutter:stable' + (both ? ' both-edges' : '') + ';' : '') + '">' +
+        '<div class="in" style="display:grid">' + P.map(function (x) { return '<div class="pr" style="display:flex;gap:8px;align-items:center;height:28px;padding:0 10px;border-bottom:1px solid var(--u-line);font-size:11.5px;white-space:nowrap"><i style="color:var(--u-danger);font-style:normal">●</i><span style="flex:1;overflow:hidden;text-overflow:ellipsis">' + x[1] + '</span><span style="font-family:var(--u-mono);color:var(--u-muted)">' + x[0] + ':' + x[2] + '</span></div>'; }).join('') + '</div></div>' +
+      '<i class="gd" style="position:absolute;top:30px;bottom:22px;width:0;border-left:1.5px dashed var(--u-accent)"></i></div>';
+    var bx = st.querySelector('.bx'), inn = st.querySelector('.in'), pr = st.querySelectorAll('.pr'), n = st.querySelector('.n'), gd = st.querySelector('.gd'), w0 = null;
+    // 막대가 없을 때(문제 3개)의 글 오른쪽 끝을 기준으로 잰다
+    function edge() { var a = st.getBoundingClientRect(), b = inn.getBoundingClientRect(), sc = st.offsetWidth ? a.width / st.offsetWidth : 1; return (b.right - a.left) / sc; }
+    return { ms: MS, rest: 0.9, at: function (t) {
+      var ms = t * MS, k = Math.min(P.length, 3 + Math.floor(seg(ms, 600, 2400) * (P.length - 3) + 0.001));
+      pr.forEach(function (r, i) { r.style.display = i < k ? 'flex' : 'none'; });
+      n.textContent = k + '개';
+      if (w0 === null) { pr.forEach(function (r, i) { r.style.display = i < 3 ? 'flex' : 'none'; }); w0 = edge(); pr.forEach(function (r, i) { r.style.display = i < k ? 'flex' : 'none'; }); }
+      var right = edge();
+      gd.style.left = w0 + 'px';
+      var over = bx.scrollHeight > bx.clientHeight + 1, shift = Math.round(w0 - right);
+      return !over ? '문제 ' + k + '개 · 막대 없음' + (stable ? ' · 자리는 비어 있음' : '') : shift > 0 ? '막대가 생기며 글이 ' + shift + 'px 밀림(점선이 처음 끝)' : !stable ? '막대가 내용 위에 겹쳐 떠서 글이 밀리지 않음(이 환경)' : '막대가 생겨도 글이 그대로' + (both ? ' · 양쪽을 같이 비움' : '');
+    } };
+  };
+
+  S['scrollbar-markers'] = function (st, c) {
+    var all = c.kind === '찾은 곳·오류·바뀐 줄', go = c.click === '눌러 이동', MS = 4200, L = codeLines(80), Q = 'refund';
+    var ERR = [14, 47], CHG = [5, 6, 33, 61];
+    function hits(q) { var h = []; if (q.length >= 3) L.forEach(function (l, i) { if (l.indexOf(q) >= 0) h.push(i); }); return h; }
+    st.innerHTML = '<div class="u-pad" style="grid-template-rows:auto auto minmax(0,1fr);gap:6px">' +
+      '<div style="display:flex;align-items:center;gap:8px;font-size:11.5px"><span class="q" style="flex:0 0 120px;height:22px;border:1px solid var(--u-line);border-radius:6px;background:var(--u-panel);font:11px/20px var(--u-mono);padding:0 6px"></span><span class="hc" style="color:var(--u-muted)"></span></div>' +
+      '<div style="display:flex;gap:10px;font-size:10.5px;color:var(--u-muted)"><span><i style="display:inline-block;width:10px;height:3px;background:var(--u-warn);vertical-align:middle"></i> 찾은 곳</span>' + (all ? '<span><i style="display:inline-block;width:5px;height:3px;background:var(--u-danger);vertical-align:middle"></i> 오류(왼쪽)</span><span><i style="display:inline-block;width:5px;height:3px;background:var(--u-ok);vertical-align:middle"></i> 바뀐 줄(오른쪽)</span>' : '') + '</div>' +
+      '<div style="position:relative;display:grid;grid-template-columns:minmax(0,1fr) 12px;gap:3px;min-height:0"><div class="vp" style="position:relative;overflow:hidden;' + CODEBOX + '"><div class="ct"></div></div>' +
+        '<div class="rl" style="position:relative;border-radius:3px;background:var(--u-side);border:1px solid var(--u-line)"></div></div></div>';
+    var q = st.querySelector('.q'), hc = st.querySelector('.hc'), vp = st.querySelector('.vp'), ct = st.querySelector('.ct'), rl = st.querySelector('.rl'), cur = cursor(st), last = null;
+    return { ms: MS, rest: 0.95, at: function (t) {
+      var ms = t * MS, typed = Q.slice(0, Math.floor(seg(ms, 300, 1500) * Q.length + 0.001)), H = hits(typed), key = typed;
+      q.textContent = typed + (ms < 1600 ? '|' : '');
+      hc.textContent = typed.length < 3 ? '세 글자부터 찾음' : H.length + '곳';
+      if (key !== last) { ct.innerHTML = codeHTML(L, typed.length >= 3 ? typed : ''); last = key; }
+      var Hh = rl.clientHeight, tick = function (i, col, side) { return '<i style="position:absolute;' + (side === 'l' ? 'left:0;width:5px' : side === 'r' ? 'right:0;width:5px' : 'left:2px;right:2px') + ';top:' + (i / L.length * (Hh - 3)) + 'px;height:3px;border-radius:1px;background:' + col + '"></i>'; };
+      rl.innerHTML = H.map(function (i) { return tick(i, 'var(--u-warn)'); }).join('') + (all ? ERR.map(function (i) { return tick(i, 'var(--u-danger)', 'l'); }).join('') + CHG.map(function (i) { return tick(i, 'var(--u-ok)', 'r'); }).join('') : '');
+      // 넷째 찾은 곳 눈금을 누른다
+      var target = H[3], vh = vp.clientHeight, maxS = L.length * 16 + 12 - vh, y = 0, r = rel(st, rl), ty = target != null ? r.y + target / L.length * (Hh - 3) + 1 : r.y;
+      if (go && target != null) y = Math.max(0, Math.min(maxS, target * 16 - vh / 2)) * ease.inOut(seg(ms, 2700, 3200));
+      ct.style.transform = 'translateY(' + (-y) + 'px)';
+      var lns = ct.children; if (target != null && lns[target]) lns[target].style.background = go && ms > 3200 ? 'color-mix(in srgb, var(--u-warn) 22%, transparent)' : '';
+      put(cur, lerp(r.x - 60, r.x + 6, ease.inOut(seg(ms, 1900, 2600))), lerp(r.y + Hh * 0.8, ty, ease.inOut(seg(ms, 1900, 2600))), ms > 2600 && ms < 2750);
+      cur.style.opacity = ms > 1800 && ms < 3500 ? 1 : 0;
+      if (ms < 1500) return typed.length < 3 ? '찾을 말을 치는 중' : '치는 동안 눈금이 바뀜';
+      if (ms < 2600) return H.length + '곳을 눈금으로' + (all ? ' · 오류·바뀐 줄은 자리를 나눔' : '');
+      return go ? (ms < 3200 ? '눈금을 누름 · 그 줄로 감' : (target + 1) + '번째 줄에 닿음') : '보기만 · 눌러도 움직이지 않음';
+    } };
+  };
+
+  S['minimap'] = function (st, c) {
+    var paint = c.show === '찾은 곳도 칠함', drag = c.move === '틀을 끌어 이동', MS = 4000, L = codeLines(90), N = L.length;
+    st.innerHTML = '<div class="u-pad" style="grid-template-columns:minmax(0,1fr) 64px;gap:8px">' +
+      '<div class="vp" style="position:relative;height:218px;overflow:hidden;' + CODEBOX + '"><div class="ct">' + codeHTML(L, paint ? 'refund' : '') + '</div></div>' +
+      '<div class="mm" style="position:relative;height:218px;border-radius:6px;background:var(--u-side);border:1px solid var(--u-line);overflow:hidden">' +
+        L.map(function (l, i) { var h = paint && l.indexOf('refund') >= 0; return '<i style="position:absolute;left:4px;top:' + (3 + i * 2.3) + 'px;height:1.6px;width:' + Math.min(54, l.length * 1.1) + 'px;background:' + (h ? 'var(--u-warn)' : 'color-mix(in srgb, var(--u-muted) 55%, transparent)') + '"></i>'; }).join('') +
+        '<b class="bx" style="position:absolute;left:0;right:0;border:1px solid var(--u-accent);background:color-mix(in srgb, var(--u-accent) 14%, transparent);border-radius:3px"></b></div></div>';
+    var vp = st.querySelector('.vp'), ct = st.querySelector('.ct'), bx = st.querySelector('.bx'), mm = st.querySelector('.mm'), cur = cursor(st);
+    return { ms: MS, rest: 0.9, at: function (t) {
+      var ms = t * MS, vh = vp.clientHeight, total = N * 16 + 12, maxS = total - vh, p;
+      p = drag ? 0.7 * ease.inOut(seg(ms, 900, 2300)) : (ms < 1700 ? 0 : 0.7 * ease.out(seg(ms, 1700, 2000)));
+      var y = p * maxS, H = N * 2.3, boxH = vh / total * H, boxY = 3 + y / total * H;
+      ct.style.transform = 'translateY(' + (-y) + 'px)';
+      bx.style.top = boxY + 'px'; bx.style.height = boxH + 'px';
+      var r = rel(st, mm), cx = r.x + r.w / 2;
+      if (drag) put(cur, cx, r.y + boxY + boxH / 2, ms > 900 && ms < 2300);
+      else put(cur, lerp(cx, cx, 1), lerp(r.y + 30, r.y + 3 + 0.7 * (H - boxH) + boxH / 2, ease.inOut(seg(ms, 700, 1600))), ms > 1650 && ms < 1800);
+      cur.style.opacity = ms > 500 && ms < 3000 ? 1 : 0;
+      if (ms < 900) return '전체 ' + N + '줄을 오른쪽에 작게' + (paint ? ' · 찾은 줄은 노랑' : '');
+      return drag ? (ms < 2300 ? '보이는 부분 틀을 끌어 내림' : '틀 자리만큼 코드가 따라옴') : (ms < 1700 ? '가고 싶은 곳을 누름' : '누른 자리로 옮겨 감');
     } };
   };
 

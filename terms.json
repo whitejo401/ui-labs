@@ -4101,6 +4101,7 @@
     "controls": {
       "kind": [
         "정보",
+        "팁",
         "주의",
         "경고"
       ],
@@ -4119,9 +4120,10 @@
     },
     "phrases": {
       "kind": {
-        "정보": "파란 정보",
-        "주의": "노란 주의",
-        "경고": "빨간 경고"
+        "정보": "파란 정보(i 아이콘)",
+        "팁": "초록 팁(★ 아이콘)",
+        "주의": "노란 주의(! 아이콘)",
+        "경고": "빨간 경고(× 아이콘)"
       },
       "head": {
         "제목 있음": "굵은 제목 한 줄과 설명",
@@ -4130,7 +4132,7 @@
     },
     "states": [
       "정보",
-      "도움말",
+      "팁",
       "주의",
       "경고"
     ],
@@ -4158,7 +4160,7 @@
         "risk": "색만 바뀌고 아이콘·제목이 없어 색을 구분하기 어려운 사람은 종류를 모른다"
       }
     ],
-    "right": "\"Callout: 노란 주의, 왼쪽 굵은 띠와 ! 아이콘, 제목 한 줄\"처럼 종류와 자리를 함께 말한다",
+    "right": "\"Callout: 노란 주의, 왼쪽 굵은 띠와 ! 아이콘, 제목 한 줄\"처럼 종류와 자리를 함께 말한다. 팁은 도움이 되는 말이라 경고처럼 빨갛게 하지 않는다",
     "prompt": {
       "when": "도움말 문서에서 되돌릴 수 없는 일을 설명할 때",
       "what": "Callout",
@@ -5508,6 +5510,172 @@
     }
   },
   {
+    "id": "scrollbar-markers",
+    "name": "Scrollbar Markers",
+    "ko": "스크롤바 위 표시",
+    "path": [
+      "구조",
+      "스크롤",
+      "위치 알림"
+    ],
+    "one": "찾은 곳·오류·바뀐 줄의 위치를 스크롤바 옆 가는 칸에 눈금으로 찍어, 긴 내용 어디에 있는지 한눈에 보인다",
+    "aka": [
+      "Overview Ruler",
+      "Scrollbar Annotations",
+      "Search Hit Markers",
+      "스크롤바 눈금"
+    ],
+    "tags": {
+      "purpose": [
+        "길찾기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "입력 중"
+      ],
+      "build": "JS 많이"
+    },
+    "controls": {
+      "kind": [
+        "찾은 곳",
+        "찾은 곳·오류·바뀐 줄"
+      ],
+      "click": [
+        "눌러 이동",
+        "보기만"
+      ]
+    },
+    "control_ko": {
+      "kind": "표시할 것",
+      "click": "누르면"
+    },
+    "defaults": {
+      "kind": "찾은 곳·오류·바뀐 줄",
+      "click": "눌러 이동"
+    },
+    "phrases": {
+      "kind": {
+        "찾은 곳": "찾은 곳만 노란 눈금으로",
+        "찾은 곳·오류·바뀐 줄": "찾은 곳은 칸 가운데 노란 눈금, 오류는 왼쪽 빨간 눈금, 바뀐 줄은 오른쪽 초록 눈금으로 자리까지 나눠"
+      },
+      "click": {
+        "눌러 이동": "눈금을 누르면 그 줄로 스크롤되게",
+        "보기만": "누르는 동작은 두지 말고"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Minimap",
+        "diff": "내용 전체를 작게 줄여 그린다. 눈금은 위치만 찍는다"
+      },
+      {
+        "name": "Scroll Progress",
+        "diff": "얼마나 읽었는지 막대 하나로 보인다"
+      },
+      {
+        "name": "Scroll Spy",
+        "diff": "목차에서 지금 읽는 구역을 칠한다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "찾은 단어 위치를 스크롤바에 표시해줘",
+        "risk": "눈금 색만 있어 무엇의 표시인지 모르고, 오류와 찾은 곳이 같은 색이라 섞이며, 줄 번호를 막대 높이로 환산하지 않아 눈금이 엉뚱한 자리에 찍힌다"
+      }
+    ],
+    "right": "\"Scrollbar Markers: 스크롤바 옆 12px 칸, 찾은 곳 노랑 가운데·오류 빨강 왼쪽·바뀐 줄 초록 오른쪽, 위에 범례 글, 누르면 그 줄로\"처럼 종류마다 색과 자리, 범례를 말한다",
+    "prompt": {
+      "when": "긴 코드에서 단어를 찾을 때",
+      "what": "Scrollbar Markers",
+      "how": "스크롤바 옆 12px 칸에 줄 위치를 칸 높이로 환산해 {kind} 찍고, {click}. 칸 위에 종류를 글로 적은 범례, 눈금 칸은 aria-hidden으로 두고 찾은 수는 글로 알리기"
+    }
+  },
+  {
+    "id": "minimap",
+    "name": "Minimap",
+    "ko": "미니맵",
+    "path": [
+      "구조",
+      "스크롤",
+      "위치 알림"
+    ],
+    "one": "긴 코드나 문서 전체를 옆에 아주 작게 그려 두고, 지금 보이는 부분을 틀로 표시해 끌거나 눌러 옮긴다",
+    "aka": [
+      "Code Minimap",
+      "Code Overview",
+      "Document Map",
+      "코드 지도"
+    ],
+    "tags": {
+      "purpose": [
+        "길찾기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "JS 많이"
+    },
+    "controls": {
+      "show": [
+        "찾은 곳도 칠함",
+        "줄 모양만"
+      ],
+      "move": [
+        "틀을 끌어 이동",
+        "눌러서만 이동"
+      ]
+    },
+    "control_ko": {
+      "show": "그릴 것",
+      "move": "옮기기"
+    },
+    "defaults": {
+      "show": "찾은 곳도 칠함",
+      "move": "틀을 끌어 이동"
+    },
+    "phrases": {
+      "show": {
+        "찾은 곳도 칠함": "줄마다 글 길이만큼 가는 막대로 그리고 찾은 줄·오류 줄은 색을 칠해",
+        "줄 모양만": "줄마다 글 길이만큼 가는 막대로만 그려"
+      },
+      "move": {
+        "틀을 끌어 이동": "지금 보이는 부분 틀을 끌면 코드가 따라 스크롤되고 빈 곳을 누르면 그 자리로",
+        "눌러서만 이동": "누른 자리로 스크롤되게(끌기는 없이)"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Scrollbar Markers",
+        "diff": "위치만 눈금으로 찍는다. 미니맵은 내용 모양까지 그린다"
+      },
+      {
+        "name": "Table of Contents",
+        "diff": "제목 글 링크로 옮긴다"
+      },
+      {
+        "name": "Virtualized List",
+        "diff": "보이는 줄만 그린다. 미니맵은 전체를 작게 그린다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "코드 옆에 미니맵 넣어줘",
+        "risk": "코드 글자를 작게 한 벌 더 복제해 DOM이 두 배가 되고, 읽기 프로그램이 코드를 두 번 읽는다"
+      }
+    ],
+    "right": "\"Minimap: 오른쪽 80px에 canvas로 줄마다 가는 막대, 보이는 부분 틀을 끌어 이동, 찾은 줄은 노랑, aria-hidden\"처럼 그리는 법과 옮기는 법을 말한다. 일반 문서나 휴대폰에는 넣지 않는다",
+    "prompt": {
+      "when": "코드 열람기 오른쪽에",
+      "what": "Minimap",
+      "how": "80px 폭 canvas에 {show}, {move}. 미니맵은 aria-hidden으로 두고 키보드 사용자는 코드 칸 스크롤로 다니게"
+    }
+  },
+  {
     "id": "infinite-scroll",
     "name": "Infinite Scroll",
     "ko": "무한 스크롤",
@@ -5845,6 +6013,172 @@
       "when": "휴대폰 후기 목록 맨 위에서",
       "what": "Pull to Refresh",
       "how": "맨 위에서 아래로 {pull_px}px 넘게 당겼다 놓으면 새 후기를 불러오고, 당기는 동안 화살표가 돌다 넘으면 \"놓으면 새로고침\", 불러오는 동안 Spinner, 끝나면 새 항목 수를 aria-live로. {alt}, 목록에 overscroll-behavior: contain"
+    }
+  },
+  {
+    "id": "custom-scrollbar",
+    "name": "Custom Scrollbar",
+    "ko": "스크롤바 꾸미기",
+    "path": [
+      "구조",
+      "스크롤",
+      "막대·손잡이"
+    ],
+    "one": "스크롤바의 색과 두께를 화면 분위기에 맞춰 바꾼다. 막대는 없애지 않는다",
+    "aka": [
+      "Styled Scrollbar",
+      "Themed Scrollbar",
+      "scrollbar-color",
+      "::-webkit-scrollbar"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "color": [
+        "화면 색에 맞춤",
+        "브라우저 기본"
+      ],
+      "width": [
+        "보통",
+        "얇게(thin)"
+      ]
+    },
+    "control_ko": {
+      "color": "색",
+      "width": "두께"
+    },
+    "defaults": {
+      "color": "화면 색에 맞춤",
+      "width": "보통"
+    },
+    "phrases": {
+      "color": {
+        "화면 색에 맞춤": "scrollbar-color로 손잡이는 흐린 글자색, 트랙은 칸 바탕색에 맞추고",
+        "브라우저 기본": "색은 브라우저 기본(auto)으로 두고"
+      },
+      "width": {
+        "보통": "scrollbar-width는 auto로 둬서 손으로 잡기 쉽게",
+        "얇게(thin)": "scrollbar-width: thin으로 가늘게(손잡이가 작아지니 마우스 화면에서만)"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Hidden Scrollbar",
+        "diff": "막대를 아예 감춘다. 꾸미기는 막대를 남긴 채 모양만 바꾼다"
+      },
+      {
+        "name": "Scrollbar Gutter",
+        "diff": "막대 자리를 미리 비워 화면이 밀리지 않게 한다. 모양은 그대로"
+      },
+      {
+        "name": "Scroll Shadow",
+        "diff": "더 볼 내용이 있는 쪽 끝에 그림자를 깐다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "스크롤바 예쁘게 얇게 해줘",
+        "risk": "::-webkit-scrollbar로 4px짜리 연회색 막대를 만들어 바탕과 구분이 안 되고 손으로 잡기 어렵다. 이 방식은 표준이 아니라 Firefox에서는 먹지 않는다"
+      }
+    ],
+    "right": "\"Custom Scrollbar: scrollbar-color로 손잡이·트랙 색만 맞추고, 손잡이와 트랙 대비 3:1 이상, 두께는 기본\"처럼 표준 속성으로 말한다. ::-webkit-scrollbar는 표준 속성이 안 먹는 브라우저용으로만 덧붙인다",
+    "prompt": {
+      "when": "어두운 코드 열람기의 코드 칸에",
+      "what": "Custom Scrollbar",
+      "how": "{color}, {width}. 손잡이와 트랙은 3:1 이상 차이 나게, 강제 색 모드에서는 브라우저 기본으로 돌아가게 두기"
+    }
+  },
+  {
+    "id": "scrollbar-gutter",
+    "name": "Scrollbar Gutter",
+    "ko": "스크롤바 자리",
+    "path": [
+      "구조",
+      "스크롤",
+      "막대·손잡이"
+    ],
+    "one": "스크롤바 자리를 미리 비워 두어, 내용이 늘어 막대가 생겨도 글이 옆으로 밀리지 않게 한다",
+    "aka": [
+      "scrollbar-gutter: stable",
+      "Stable Scrollbar Gutter",
+      "Reserved Scrollbar Space",
+      "스크롤바 홈"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "값이 바뀔 때"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "gutter": [
+        "stable",
+        "auto"
+      ],
+      "edge": [
+        "한쪽",
+        "양쪽(both-edges)"
+      ]
+    },
+    "control_ko": {
+      "gutter": "값",
+      "edge": "비울 쪽"
+    },
+    "defaults": {
+      "gutter": "stable",
+      "edge": "한쪽"
+    },
+    "phrases": {
+      "gutter": {
+        "stable": "scrollbar-gutter: stable로 막대 자리를 늘 비워 막대가 생겨도 글이 밀리지 않게",
+        "auto": "기본값 auto로 둬서(막대가 생기는 순간 글이 밀리는지 보려고)"
+      },
+      "edge": {
+        "한쪽": "",
+        "양쪽(both-edges)": ", 가운데 정렬이 한쪽으로 쏠리지 않게 both-edges로 양쪽을 같이 비우게"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Custom Scrollbar",
+        "diff": "막대의 색과 두께를 바꾼다. 자리는 그대로"
+      },
+      {
+        "name": "Overlay Scrollbar",
+        "diff": "내용 위에 겹쳐 뜨는 막대. 이때는 자리를 차지하지 않아 Scrollbar Gutter가 효과 없다"
+      },
+      {
+        "name": "Overscroll Behavior",
+        "diff": "끝에 닿았을 때 바깥 스크롤로 번지는 것을 막는다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "목록이 늘면 화면이 옆으로 밀려요, 고쳐줘",
+        "risk": "overflow-y: scroll로 막대를 늘 띄워 짧은 목록에도 빈 막대가 생기거나, 막대 폭을 JS로 재서 padding-right를 붙였다 뗐다 한다"
+      }
+    ],
+    "right": "\"Scrollbar Gutter: 문제 칸에 scrollbar-gutter: stable\"처럼 CSS 한 줄로 말한다. macOS 기본 같은 겹쳐 뜨는 막대에서는 효과가 없다는 것도 안다",
+    "prompt": {
+      "when": "항목이 늘었다 줄었다 하는 아래 문제 칸에",
+      "what": "Scrollbar Gutter",
+      "how": "{gutter}{edge}. 겹쳐 뜨는 막대 환경에서는 바뀌는 게 없어도 되게"
     }
   },
   {

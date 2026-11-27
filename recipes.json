@@ -288,6 +288,21 @@
     "prompt": "할 일 앱 화면을 만들어줘. 할 일을 오늘 할 일(보라)·지연(빨강)·빠른 메모(주황)·오늘 일정(노랑)·요청(파랑) 다섯 묶음의 Grouped List로 보이고, 목록 위 도구에서 Group Style을 바꿔 볼 수 있게: 방식은 간격만·옅은 배경·테두리 상자·왼쪽 막대·구분선, 색 신호는 색+글자 이름·색+아이콘·색만, 흑백 보기 스위치. 처음은 왼쪽 막대로, 묶음 높이만큼 4px 둥근 Accent Bar를 세우고 묶음 제목 아이콘과 글자도 같은 색. 묶음 제목은 Sticky Section Header로 목록을 내리는 동안 위에 붙게. 위쪽 Tabs로 목록·담당자별 보드·완료 기록을 바꾸고, 보드는 할 일·진행·완료 열에 담당자별 Swimlane 가로 줄(줄 머리에 이름과 카드 수, 줄 바탕 번갈아), 완료 기록 표는 Zebra Striping(짝수 행 옅은 바탕, 올린 줄 강조). 오른쪽에는 요청 하나의 댓글을 Indent Guide로: 단계마다 들여쓰고 부모 아래 세로 선, 선을 누르면 그 답글 묶음이 접히고 \"답글 n개 펼치기\"가 남게."
   },
   {
+    "id": "code-viewer",
+    "name": "코드 열람기",
+    "ready": true,
+    "terms": [
+      "breadcrumb",
+      "search-bar",
+      "callout",
+      "custom-scrollbar",
+      "scrollbar-markers",
+      "minimap",
+      "scrollbar-gutter"
+    ],
+    "prompt": "400줄짜리 refund.js를 읽는 코드 열람기 화면을 만들어줘. 위에 파일 위치 Breadcrumb(결제 › src › refund.js)와 Search Bar 찾기 칸(두 글자부터 찾고 \"3 / 16\"처럼 개수, Enter와 ↑↓로 다음·앞), 그 아래 초록 팁 Callout으로 찾은 곳이 눈금과 미니맵에 같이 표시된다고 알리고 눈금 범례를 글로. 코드 칸은 줄 번호와 함께 따로 스크롤되고 Custom Scrollbar(scrollbar-color로 손잡이·트랙을 칸 바탕에 맞춤, 두께는 기본). 코드 칸 옆 14px 칸에 Scrollbar Markers: 찾은 곳은 가운데 노랑, 오류는 왼쪽 빨강, 바뀐 줄은 오른쪽 초록, 누르면 그 자리로. 오른쪽 90px에는 canvas Minimap(줄마다 가는 막대, 찾은 줄 노랑·오류 줄 빨강, 보이는 부분 틀을 끌거나 빈 곳을 눌러 이동, aria-hidden). 아래 문제 칸은 경고도 보기 스위치로 항목이 늘면 막대가 생기는데 Scrollbar Gutter: stable로 글이 옆으로 밀리지 않게, 견주기용으로 끄는 스위치도. 좁은 화면에서는 미니맵을 숨겨."
+  },
+  {
     "id": "deck-explainer",
     "name": "설명·발표 덱",
     "ready": true,
