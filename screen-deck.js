@@ -45,7 +45,7 @@
         }).join('');
     }
     function stop() { cancelAnimationFrame(raf); clearTimeout(tm); raf = tm = null; }
-    // 장을 바꾸면 step 차례로 나타난다. 동작 줄이기면 바로 다 보인다
+    // 장을 바꾸면 step 차례로 나타난다. 동작 줄이기거나 용어 보기를 켰으면 바로 다 보이고 이름표도 바로 다시 붙는다
     function show(i, still) {
       stop();
       st.i = Math.max(0, Math.min(built.length - 1, i));
@@ -56,7 +56,7 @@
         t.setAttribute('aria-current', String(j === st.i));
         var cap = t.querySelector('span'); if (j === st.i) cap.setAttribute('data-term', 'slide-layout'); else cap.removeAttribute('data-term');
       });
-      if (still || mq.matches) { el.innerHTML = S.svg(b.prims); drawLabels(); return; }
+      if (still || mq.matches || st.labels) { el.innerHTML = S.svg(b.prims); drawLabels(); return; }
       var start = performance.now();
       (function step() {
         stop();
