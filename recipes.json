@@ -234,6 +234,25 @@
     "prompt": "작업함 도움말 센터의 긴 문서 화면 \"결제 수단과 환불\"을 만들어줘. 맨 위는 Sticky Header로 Breadcrumb(도움말 › 결제 › 문서 이름)와 문서 제목, 머리 아래 가장자리에 Scroll Progress. 오른쪽에 \"이 페이지\" Table of Contents(작은 제목은 들여쓰기)를 두고, 읽는 동안 Scroll Spy로 지금 구역을 왼쪽 막대와 굵은 글로 표시해. 목차를 누르면 제목이 고정 머리에 가리지 않게 제목마다 Scroll Margin을 머리 높이 + 16px. 본문에는 정보 Callout과 주의 Callout, 큰 단락 사이 Divider, 핵심 문장 하나는 Pull Quote, 열이 많은 환불 기준 표는 가로 스크롤 상자에 넣고 남은 쪽 끝에 Scroll Shadow. \"자주 묻는 질문\"은 바탕이 화면 끝까지 가는 Section Band, 변경 기록은 날짜별 Sticky Section Header. 두 화면 넘게 내리면 오른쪽 아래에 Back to Top. 좁은 화면에서는 목차를 위쪽 가로 줄로."
   },
   {
+    "id": "settings",
+    "name": "설정 페이지",
+    "ready": true,
+    "terms": [
+      "split-view",
+      "grouped-list",
+      "toggle-switch",
+      "select",
+      "fieldset",
+      "chip-group",
+      "callout",
+      "divider",
+      "description-list",
+      "button-group",
+      "overscroll-behavior"
+    ],
+    "prompt": "작업함의 알림 설정 화면을 만들어줘. 왼쪽 설정과 오른쪽 미리보기를 Split View로 나누고 가름대는 끌거나 화살표 키로 움직이되 양쪽 최소 240px. 왼쪽은 Grouped List로 \"받는 곳\"(메일·앱 푸시·문자, 줄마다 Toggle Switch)과 \"방해 금지\"(시간은 Select) 구역을 둥근 상자로 묶고, 그 아래 Fieldset \"받을 알림\" 안에 Chip Group(결제·환불·정산·보안·소식, 여러 개 켜기)과 \"보안 알림은 끌 수 없어요\" 주의 Callout. Divider 아래에는 알림을 받는 계정을 Description List(이름·메일·휴대폰·마지막 변경, 메일 옆 복사 단추)로. 오른쪽 미리보기 위에는 휴대폰·태블릿·PC Button Group(하나만 켜짐, 안에서는 화살표 키)으로 폭을 바꾸고, 왼쪽에서 바꾼 값이 미리보기에 바로 보이게. 왼쪽 칸은 따로 스크롤되고 끝에 닿아도 페이지가 같이 움직이지 않게 Overscroll Behavior: contain. 좁은 화면에서는 설정과 미리보기를 위아래로."
+  },
+  {
     "id": "deck-explainer",
     "name": "설명·발표 덱",
     "ready": true,

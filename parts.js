@@ -1699,6 +1699,175 @@
     } };
   };
 
+  /* ───── 구조 › 묶기와 스크롤 (설정 페이지 묶음) ───── */
+  function kbd(k) { return '<kbd style="border:1px solid var(--u-line);border-bottom-width:2px;border-radius:4px;padding:0 6px;background:var(--u-panel);color:var(--u-ink);font:600 11px var(--u-mono)">' + k + '</kbd>'; }
+  // 순서대로 누르는 곳 [[누르는 ms, 요소], ...]: 앞 요소에서 다음 요소로 움직여 누른다. 다 누른 뒤에는 숨긴다
+  function clickPath(st, cur, list, ms, start) {
+    var i = 0; while (i < list.length && ms > list[i][0] + 150) i++;
+    if (i >= list.length) { cur.style.opacity = 0; return; }
+    var to = rel(st, list[i][1]), from = i ? rel(st, list[i - 1][1]) : { x: start[0], y: start[1], w: 0, h: 0 }, m = ease.inOut(seg(ms, list[i][0] - 600, list[i][0] - 100));
+    put(cur, lerp(from.x + from.w / 2, to.x + to.w / 2, m), lerp(from.y + from.h / 2, to.y + to.h / 2, m), ms > list[i][0] - 100 && ms < list[i][0] + 100);
+    cur.style.opacity = ms > list[0][0] - 800 ? 1 : 0;
+  }
+
+  S['fieldset'] = function (st, c) {
+    var box = c.frame === '테두리 상자', bold = c.legend === '굵은 제목', MS = 3000;
+    function fs(name, fields) {
+      return '<fieldset class="fs" style="margin:0;min-width:0;display:grid;gap:7px;' + (box ? 'border:1px solid var(--u-line);border-radius:10px;padding:6px 12px 12px' : 'border:0;padding:0') + '">' +
+        '<legend style="' + (box ? 'padding:0 4px;' : 'padding:0 0 2px;') + (bold ? 'font-weight:700;font-size:13px;color:var(--u-ink)' : 'font-size:11.5px;color:var(--u-muted)') + '">' + name + '</legend>' +
+        fields.map(function (f) { return '<label style="display:grid;grid-template-columns:60px minmax(0,1fr);align-items:center;gap:8px;font-size:12px;color:var(--u-muted)">' + f + '<span class="in" style="height:24px;border:1px solid var(--u-line);border-radius:6px;background:var(--u-panel)"></span></label>'; }).join('') + '</fieldset>';
+    }
+    st.innerHTML = '<div class="u-pad" style="gap:12px">' + fs('배송지 주소', ['주소']) + fs('청구지 주소', ['우편번호', '주소']) + '</div>' +
+      '<div class="sr" style="position:absolute;left:12px;right:12px;bottom:10px;padding:6px 10px;border-radius:8px;background:var(--u-ink);color:var(--u-panel);font-size:11.5px">읽기 프로그램: "청구지 주소, 묶음. 우편번호, 입력칸"</div>';
+    var fss = st.querySelectorAll('.fs'), lgs = st.querySelectorAll('legend'), k = st.querySelectorAll('.in')[1], sr = st.querySelector('.sr');
+    return { ms: MS, rest: 0.75, at: function (t) {
+      var ms = t * MS, p = ease.out(seg(ms, 300, 900)), foc = ms > 1300;
+      lgs.forEach(function (l) { l.style.opacity = p; });
+      if (box) fss.forEach(function (f) { f.style.borderColor = 'color-mix(in srgb, var(--u-line) ' + Math.round(p * 100) + '%, transparent)'; });
+      k.style.outline = foc ? '2px solid var(--u-accent)' : ''; k.style.outlineOffset = '1px';
+      sr.style.opacity = seg(ms, 1400, 1700);
+      return p < 0.01 ? '칸만 늘어섬' : !foc ? '묶음 이름이 붙음' : '청구지 우편번호에 초점 · 묶음 이름을 함께 읽음';
+    } };
+  };
+
+  S['button-group'] = function (st, c) {
+    var one = c.kind === '하나만 켜짐', arrows = c.keys === '화살표 키로 이동', MS = 3600, B = one ? ['휴대폰', '태블릿', 'PC'] : ['되돌리기', '다시 하기', '초기화'];
+    st.innerHTML = '<div class="u-pad" style="gap:12px"><div style="display:flex;align-items:center;gap:10px"><b style="font-size:13px">미리보기</b><span style="flex:1"></span>' +
+      '<div role="toolbar" aria-label="미리보기 도구" style="display:inline-flex;border:1px solid var(--u-line);border-radius:8px;overflow:hidden;background:var(--u-panel)">' +
+        B.map(function (b, i) { return '<button type="button" class="bb" style="border:0;' + (i ? 'border-left:1px solid var(--u-line);' : '') + 'background:transparent;padding:6px 12px;font-size:12px;color:var(--u-ink)">' + b + '</button>'; }).join('') + '</div></div>' +
+      '<div class="pv" style="justify-self:center;width:90px;height:120px;border:1px solid var(--u-line);border-radius:10px;background:var(--u-panel);display:grid;gap:6px;padding:12px;align-content:start;box-sizing:border-box">' + fakes(4) + '</div>' +
+      '<div class="ky" style="justify-self:center;display:flex;align-items:center;gap:6px;min-height:20px;font-size:11.5px;color:var(--u-muted)"></div></div>';
+    var bb = st.querySelectorAll('.bb'), pv = st.querySelector('.pv'), ky = st.querySelector('.ky');
+    var KEYS = [[400, 'Tab', 0], [1100, arrows ? '→' : 'Tab', 1], [1800, arrows ? '→' : 'Tab', 2], [2400, 'Space', 2]];
+    return { ms: MS, rest: 0.8, at: function (t) {
+      var ms = t * MS, k = null;
+      KEYS.forEach(function (x) { if (ms >= x[0]) k = x; });
+      var foc = k ? k[2] : -1, sel = one ? (ms >= 2400 ? 2 : 0) : -1, done = !one && ms >= 2400;
+      bb.forEach(function (b, i) {
+        b.style.outline = i === foc ? '2px solid var(--u-accent)' : ''; b.style.outlineOffset = '-3px';
+        b.style.background = i === sel ? 'var(--u-accent-soft)' : 'transparent'; b.style.fontWeight = i === sel ? '700' : '400';
+        b.setAttribute('aria-pressed', String(i === sel));
+      });
+      pv.style.width = (one ? lerp(90, Math.min(250, st.clientWidth - 40), ease.inOut(seg(ms, 2400, 2900))) : 220) + 'px';
+      pv.style.background = done && ms < 3000 ? 'var(--u-flash)' : 'var(--u-panel)';
+      ky.innerHTML = k ? kbd(k[1]) + (k[1] === 'Tab' && arrows ? ' 묶음으로 들어옴 · 안에서는 화살표' : k[1] === 'Space' ? (one ? ' PC 켬' : ' 초기화') : '') : '';
+      return !k ? '단추 셋이 한 덩어리' : ms < 2400 ? (arrows ? '묶음 안을 화살표로 옮겨 다님' : 'Tab으로 단추마다 멈춤') : one ? 'PC 하나만 켜짐 · 미리보기 넓어짐' : '"초기화" 누름';
+    } };
+  };
+
+  S['chip-group'] = function (st, c) {
+    var multi = c.pick === '여러 개', wrap = c.wrap === '넘치면 다음 줄', MS = 3400, C = ['결제', '환불', '정산', '보안', '소식', '이벤트', '점검'];
+    st.innerHTML = '<div class="u-pad" style="gap:10px"><b style="font-size:13px">받을 알림</b>' +
+      '<div class="vp" style="position:relative;' + (wrap ? '' : 'overflow:hidden') + '"><div class="row" role="group" aria-label="받을 알림" style="display:flex;gap:6px;' + (wrap ? 'flex-wrap:wrap' : 'width:max-content') + '">' +
+        C.map(function (x) { return '<button type="button" class="ch" style="display:inline-flex;align-items:center;gap:4px;border:1px solid var(--u-line);border-radius:999px;padding:5px 12px;font-size:12px;background:var(--u-panel);color:var(--u-ink)"><span style="display:none">✓</span>' + x + '</button>'; }).join('') + '</div>' +
+        (wrap ? '' : '<i style="position:absolute;right:0;top:0;bottom:0;width:30px;background:linear-gradient(to left, var(--u-bg), transparent)"></i>') + '</div>' +
+      '<div class="sm" style="font-size:12px;color:var(--u-muted)"></div>' + fakes(3) + '</div>';
+    var chs = st.querySelectorAll('.ch'), row = st.querySelector('.row'), vp = st.querySelector('.vp'), sm = st.querySelector('.sm'), cur = cursor(st);
+    var CL = [[800, 1], [1500, 3], [wrap ? 2300 : 2700, 6]];
+    return { ms: MS, rest: 0.85, at: function (t) {
+      var ms = t * MS, on = [0];
+      CL.forEach(function (x) { if (ms >= x[0]) { if (multi) on.push(x[1]); else on = [x[1]]; } });
+      row.style.transform = 'translateX(' + (wrap ? 0 : -Math.max(0, row.scrollWidth - vp.clientWidth) * ease.inOut(seg(ms, 1800, 2300))) + 'px)';
+      chs.forEach(function (ch, i) {
+        var o = on.indexOf(i) >= 0;
+        ch.setAttribute('aria-pressed', String(o));
+        ch.style.background = o ? 'var(--u-accent)' : 'var(--u-panel)'; ch.style.color = o ? 'var(--u-accent-ink)' : 'var(--u-ink)'; ch.style.borderColor = o ? 'var(--u-accent)' : 'var(--u-line)';
+        ch.firstChild.style.display = o ? 'inline' : 'none';
+      });
+      clickPath(st, cur, CL.map(function (x) { return [x[0], chs[x[1]]]; }), ms, [st.clientWidth * 0.6, st.clientHeight - 20]);
+      sm.textContent = '켠 알림 ' + on.length + '개: ' + on.map(function (i) { return C[i]; }).join(', ');
+      return ms < 800 ? '결제만 켜짐' : !wrap && ms > 1800 && ms < 2300 ? '한 줄을 가로로 넘겨 남은 칩 보기' : multi ? '여러 개 켬' : '하나만 켜짐(앞의 것은 꺼짐)';
+    } };
+  };
+
+  S['description-list'] = function (st, c) {
+    var side = c.layout === '이름 왼쪽 · 값 오른쪽', copy = c.copy === '값 복사 단추', MS = 2800, line = ';padding:7px 0;border-bottom:1px solid var(--u-line)';
+    var D = [['이름', '김민지'], ['메일', 'minji@example.com'], ['휴대폰', '010-****-1234'], ['마지막 변경', '11월 26일']];
+    st.innerHTML = '<div class="u-pad"><div style="background:var(--u-panel);border:1px solid var(--u-line);border-radius:10px;padding:10px 14px"><b style="font-size:13px">알림을 받는 계정</b>' +
+      '<dl style="margin:6px 0 0;display:grid;' + (side ? 'grid-template-columns:86px minmax(0,1fr)' : 'grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px') + '">' + D.map(function (d, i) {
+        var dt = '<dt class="it" style="font-size:' + (side ? 12 : 11) + 'px;color:var(--u-muted)' + (side ? line : '') + '">' + d[0] + '</dt>';
+        var dd = '<dd class="it" style="margin:0;font-size:12.5px;display:flex;align-items:center;gap:6px;min-width:0' + (side ? line : '') + '"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + d[1] + '</span>' + (copy && i === 1 ? '<button type="button" class="cp u-btn" style="padding:1px 7px;font-size:11px">복사</button>' : '') + '</dd>';
+        return side ? dt + dd : '<div class="it" style="display:grid;gap:2px;min-width:0">' + dt.replace('class="it" ', '') + dd.replace('class="it" ', '') + '</div>';
+      }).join('') + '</dl></div><div class="tc" style="font-size:12px;color:var(--u-ok)"></div></div>';
+    var its = st.querySelectorAll('.it'), cp = st.querySelector('.cp'), tc = st.querySelector('.tc'), cur = cursor(st), per = side ? 2 : 1;
+    return { ms: MS, rest: 0.8, at: function (t) {
+      var ms = t * MS;
+      its.forEach(function (el, i) { var r = Math.floor(i / per); show(el, ease.out(seg(ms, 200 + r * 160, 500 + r * 160)), 6); });
+      if (cp) { clickPath(st, cur, [[1800, cp]], ms, [st.clientWidth * 0.5, st.clientHeight - 20]); cp.style.background = ms > 1800 && ms < 2000 ? 'var(--u-hover)' : ''; }
+      else cur.style.opacity = 0;
+      tc.textContent = cp && ms > 1850 ? '메일 주소를 복사했어요' : '';
+      return ms < 1000 ? '이름·값 짝이 줄마다' : cp ? (ms < 1850 ? '메일 옆 복사 단추로' : '값만 복사함') : '대상 하나의 정보';
+    } };
+  };
+
+  S['grouped-list'] = function (st, c) {
+    var inset = c.style === '둥근 상자 묶음', val = c.extra === '오른쪽에 지금 값', MS = 3000;
+    var G = [['받는 곳', [['메일', 'sw1'], ['앱 푸시', 'sw0'], ['문자', 'sw0']]], ['방해 금지', [['시간', '22:00~08:00'], ['주말', '끔']]]];
+    function right(v) {
+      if (!val) return '<span style="color:var(--u-muted)">›</span>';
+      if (v.indexOf('sw') === 0) return '<span class="u-switch" role="switch" aria-checked="' + (v === 'sw1') + '" style="display:inline-block;width:34px;height:20px"><i style="width:14px;height:14px"></i></span>';
+      return '<span style="color:var(--u-muted);font-size:12px">' + v + ' ›</span>';
+    }
+    st.innerHTML = '<div style="position:absolute;inset:0;padding:' + (inset ? '10px 14px' : '6px 0') + ';display:grid;gap:' + (inset ? 8 : 2) + 'px;align-content:start">' + G.map(function (g) {
+      return '<div class="gp" style="display:grid;gap:4px"><span style="font-size:11px;color:var(--u-muted);padding:' + (inset ? '0 4px' : '6px 14px 0') + '">' + g[0] + '</span>' +
+        '<div style="background:var(--u-panel);overflow:hidden;' + (inset ? 'border:1px solid var(--u-line);border-radius:10px' : 'border-top:1px solid var(--u-line);border-bottom:1px solid var(--u-line)') + '">' + g[1].map(function (r, i) {
+          return '<div class="rw" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 14px;min-height:20px;font-size:12.5px' + (i ? ';border-top:1px solid var(--u-line)' : '') + '"><span>' + r[0] + '</span>' + right(r[1]) + '</div>';
+        }).join('') + '</div></div>';
+    }).join('') + '</div>';
+    var gp = st.querySelectorAll('.gp'), rw = st.querySelectorAll('.rw')[1], sw = st.querySelectorAll('.u-switch')[1], cur = cursor(st);
+    return { ms: MS, rest: 0.8, at: function (t) {
+      var ms = t * MS;
+      gp.forEach(function (g, i) { show(g, ease.out(seg(ms, 200 + i * 250, 650 + i * 250)), 8); });
+      clickPath(st, cur, [[1750, val ? sw : rw]], ms, [st.clientWidth * 0.5, st.clientHeight - 20]);
+      if (sw) sw.setAttribute('aria-checked', String(ms > 1750));
+      rw.style.background = !val && ms > 1700 && ms < 2300 ? 'var(--u-hover)' : '';
+      return ms < 900 ? '구역별로 묶여 나타남' : ms < 1750 ? '"앱 푸시" 줄로' : val ? '앱 푸시 켬 · 구역은 늘 펼쳐 둠' : '"앱 푸시" 줄을 누르면 다음 화면으로';
+    } };
+  };
+
+  S['split-view'] = function (st, c) {
+    var min = c.limit === '최소 폭 있음', kb = c.keys === '화살표 키로도', MS = 4200;
+    function pane(name, n, bg) { return '<div style="padding:12px;display:grid;gap:7px;align-content:start;overflow:hidden;min-width:0' + (bg ? ';background:var(--u-panel)' : '') + '"><b style="font-size:12.5px;white-space:nowrap">' + name + '</b>' + fakes(n) + '</div>'; }
+    st.innerHTML = '<div class="sp" style="position:absolute;inset:0;display:grid;grid-template-columns:50% 8px minmax(0,1fr)">' + pane('알림 설정', 7) +
+      '<div class="dv" role="separator" aria-orientation="vertical" style="display:grid;place-items:center;background:var(--u-bg);border-left:1px solid var(--u-line);border-right:1px solid var(--u-line)"><i style="width:2px;height:22px;border-radius:2px;background:var(--u-muted);opacity:.6"></i></div>' +
+      pane('미리보기', 5, 1) + '</div>' +
+      '<div class="wd" style="position:absolute;top:8px;transform:translateX(-50%);font:600 11px var(--u-mono);padding:1px 6px;border-radius:4px;background:var(--u-ink);color:var(--u-panel);opacity:0;z-index:3"></div>' +
+      '<div class="ky" style="position:absolute;left:0;right:0;bottom:10px;display:flex;justify-content:center;gap:6px;font-size:11.5px;color:var(--u-muted)"></div>';
+    var sp = st.querySelector('.sp'), dv = st.querySelector('.dv'), wd = st.querySelector('.wd'), ky = st.querySelector('.ky'), cur = cursor(st);
+    return { ms: MS, rest: 0.9, at: function (t) {
+      var ms = t * MS, W = st.clientWidth, lo = min ? Math.min(W * 0.3, 120) : 0, hi = W - 8 - lo;
+      var x = Math.max(lo, Math.min(hi, W * (ms < 2600 ? scrollAlong([[500, 0.5], [1400, min ? 0.12 : 0], [2300, 0.72]], ms) : 0.72)));
+      var steps = kb && ms >= 2800 ? Math.min(3, Math.floor((ms - 2800) / 300) + 1) : 0;
+      x = Math.max(lo, x - 24 * steps);
+      sp.style.gridTemplateColumns = x + 'px 8px minmax(0,1fr)';
+      var dragging = ms > 500 && ms < 2400, kf = kb && ms >= 2600;
+      put(cur, x + 4, st.clientHeight / 2, dragging); cur.style.opacity = ms > 300 && ms < 2500 ? 1 : 0;
+      dv.style.background = dragging || kf ? 'var(--u-accent-soft)' : 'var(--u-bg)';
+      dv.style.outline = kf ? '2px solid var(--u-accent)' : ''; dv.style.outlineOffset = '-2px';
+      wd.style.opacity = dragging || kf ? 1 : 0; wd.style.left = (x + 4) + 'px'; wd.textContent = Math.round(x) + 'px';
+      ky.innerHTML = kf ? (steps ? kbd('←') + ' 24px씩' : kbd('Tab') + ' 가름대에 초점') : !kb && ms > 2600 ? '키보드로는 못 바꿈' : '';
+      return ms < 500 ? '반반' : dragging ? (x <= lo + 0.5 ? (min ? '최소 폭에서 멈춤' : '왼쪽을 끝까지 접음') : '가름대를 끄는 중') : kb ? (steps ? '←키로 24px씩 줄임' : '가름대에 초점') : '마우스로만 바꿀 수 있음';
+    } };
+  };
+
+  S['overscroll-behavior'] = function (st, c) {
+    var contain = c.value === 'contain', MS = 3600;
+    st.innerHTML = '<div class="pg" style="position:absolute;left:0;right:0;top:0;padding:12px 16px;display:grid;gap:9px"><b style="font-size:14px">설정</b>' + fakes(2) +
+      '<div class="bx" style="position:relative;height:124px;border:1px solid var(--u-line);border-radius:10px;background:var(--u-panel);overflow:hidden"><div class="ls" style="position:absolute;left:0;right:0;top:0">' +
+        ISSUES.slice(0, 9).map(function (it) { return '<div style="padding:7px 12px;border-bottom:1px solid var(--u-line);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">#' + it.n + ' ' + esc(it.t) + '</div>'; }).join('') +
+      '</div><i class="eg" style="position:absolute;left:0;right:0;bottom:0;height:16px;background:linear-gradient(to top, var(--u-accent-soft), transparent);opacity:0"></i></div>' + fakes(10) + '</div>' + SBAR;
+    var pg = st.querySelector('.pg'), ls = st.querySelector('.ls'), bx = st.querySelector('.bx'), eg = st.querySelector('.eg'), cur = cursor(st);
+    return { ms: MS, rest: 0.75, at: function (t) {
+      var ms = t * MS, vh = st.clientHeight, maxIn = Math.max(0, ls.scrollHeight - bx.clientHeight), maxOut = Math.max(0, pg.scrollHeight - vh);
+      var yi = maxIn * ease.inOut(seg(ms, 400, 1500)), yo = contain ? 0 : Math.min(maxOut, 130) * ease.inOut(seg(ms, 1700, 2700));
+      ls.style.transform = 'translateY(' + (-yi) + 'px)'; pg.style.transform = 'translateY(' + (-yo) + 'px)';
+      scrollbar(st, yo, vh, pg.scrollHeight);
+      eg.style.opacity = contain && ms > 1700 && ms < 2800 ? 1 : 0;
+      var r = rel(st, bx); put(cur, r.x + r.w * 0.7, r.y + r.h / 2, ms > 400 && ms < 2700); cur.style.opacity = ms > 200 && ms < 3000 ? 1 : 0;
+      return ms < 1500 ? '안쪽 목록을 굴림' : ms < 1700 ? '안쪽 끝에 닿음' : contain ? '더 굴려도 뒤 페이지는 그대로' : '뒤 페이지가 이어서 스크롤됨';
+    } };
+  };
+
   /* ───── 움직임 › 화면 전환 (뷰 전환) ───── */
   function centerOf(st, el) { var r = rel(st, el); return [r.x + r.w / 2, r.y + r.h / 2]; }
 

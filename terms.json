@@ -761,6 +761,89 @@
     }
   },
   {
+    "id": "chip-group",
+    "name": "Chip Group",
+    "ko": "칩 묶음",
+    "path": [
+      "구조",
+      "화면과 입력",
+      "고르기"
+    ],
+    "one": "작은 알약 단추 여럿을 한 묶음으로 두고 켜고 끄며 거르거나 고른다",
+    "aka": [
+      "Filter Chips",
+      "Tag Group",
+      "Chip Set",
+      "필터 칩"
+    ],
+    "tags": {
+      "purpose": [
+        "입력"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "pick": [
+        "여러 개",
+        "하나만"
+      ],
+      "wrap": [
+        "넘치면 다음 줄",
+        "한 줄 가로 넘김"
+      ]
+    },
+    "control_ko": {
+      "pick": "고르기",
+      "wrap": "넘칠 때"
+    },
+    "defaults": {
+      "pick": "여러 개",
+      "wrap": "넘치면 다음 줄"
+    },
+    "phrases": {
+      "pick": {
+        "여러 개": "여러 개 켤 수 있게",
+        "하나만": "하나만 켜지게"
+      },
+      "wrap": {
+        "넘치면 다음 줄": "넘치면 다음 줄로",
+        "한 줄 가로 넘김": "한 줄에 두고 넘치면 가로로 넘기게"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Segmented Control",
+        "diff": "붙은 단추 2~5개 가운데 하나를 고른다"
+      },
+      {
+        "name": "Badge",
+        "diff": "누를 수 없는 표시"
+      },
+      {
+        "name": "Checkbox",
+        "diff": "같은 여러 고르기를 세로 목록으로"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "태그 버튼들 넣어줘",
+        "risk": "켜진 상태 표시가 없거나 색만 바뀌어 무엇이 켜졌는지 모른다"
+      }
+    ],
+    "right": "\"Chip Group: 알림 종류 칩 다섯 개, 여러 개 켤 수 있고 켜지면 ✓와 진한 바탕\"처럼 고르는 수와 켜진 모양을 말한다",
+    "prompt": {
+      "when": "알림 설정에서 받을 알림 종류를 고를 때",
+      "what": "Chip Group",
+      "how": "칩 다섯 개(결제·환불·정산·보안·소식)를 {wrap}, {pick}. 켜진 칩은 ✓와 진한 바탕, aria-pressed"
+    }
+  },
+  {
     "id": "file-drop-zone",
     "name": "File Drop Zone",
     "ko": "파일 끌어 놓기 칸",
@@ -843,6 +926,172 @@
       "when": "이슈 첨부 칸에",
       "what": "File Drop Zone",
       "how": "점선 테두리 영역, {multiple}, 파일을 끌어 올리면 테두리와 배경을 강조, 놓으면 파일마다 Progress Bar{limit}"
+    }
+  },
+  {
+    "id": "fieldset",
+    "name": "Fieldset",
+    "ko": "입력 묶음",
+    "path": [
+      "구조",
+      "화면과 입력",
+      "묶기"
+    ],
+    "one": "관련 입력칸 여럿을 이름(legend) 달린 틀로 묶어, 읽기 프로그램도 묶음 이름을 함께 읽게 한다",
+    "aka": [
+      "Group Box",
+      "Form Group",
+      "fieldset·legend",
+      "필드 묶음"
+    ],
+    "tags": {
+      "purpose": [
+        "입력"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "frame": [
+        "테두리 상자",
+        "제목과 간격만"
+      ],
+      "legend": [
+        "굵은 제목",
+        "작은 회색 제목"
+      ]
+    },
+    "control_ko": {
+      "frame": "틀",
+      "legend": "묶음 이름"
+    },
+    "defaults": {
+      "frame": "테두리 상자",
+      "legend": "굵은 제목"
+    },
+    "phrases": {
+      "frame": {
+        "테두리 상자": "1px 테두리 둥근 상자로 감싸고",
+        "제목과 간격만": "테두리 없이 제목 아래 간격으로만 묶고"
+      },
+      "legend": {
+        "굵은 제목": "굵은 글",
+        "작은 회색 제목": "작은 회색 글"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Radio Group",
+        "diff": "고르는 입력 하나. Fieldset은 여러 입력을 묶는 틀이고 Radio Group을 감싸기도 한다"
+      },
+      {
+        "name": "Accordion",
+        "diff": "묶음을 접었다 편다"
+      },
+      {
+        "name": "Grouped List",
+        "diff": "입력이 아니라 목록 항목을 구역 제목 아래로 묶는다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "주소 입력칸들 묶어줘",
+        "risk": "div로만 감싸 읽기 프로그램은 \"우편번호\"가 배송지 것인지 청구지 것인지 모른다"
+      }
+    ],
+    "right": "\"Fieldset: 청구지 칸 다섯 개를 fieldset으로 묶고 legend는 '청구지 주소'\"처럼 legend 글까지 말한다",
+    "prompt": {
+      "when": "결제 설정에서 청구지 주소 칸 여러 개를 받을 때",
+      "what": "Fieldset",
+      "how": "주소 칸 다섯 개를 fieldset으로 {frame}, legend \"청구지 주소\"는 {legend}. 읽기 프로그램이 칸마다 묶음 이름을 함께 읽게"
+    }
+  },
+  {
+    "id": "button-group",
+    "name": "Button Group",
+    "ko": "단추 묶음",
+    "path": [
+      "구조",
+      "화면과 입력",
+      "묶기"
+    ],
+    "one": "관련된 단추 여럿을 붙여 한 덩어리로 보이고, 키보드로는 묶음 안을 화살표로 옮겨 다닌다",
+    "aka": [
+      "Toolbar",
+      "Toggle Group",
+      "Split Button",
+      "도구 막대"
+    ],
+    "tags": {
+      "purpose": [
+        "입력"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "클릭 뒤"
+      ],
+      "build": "CSS + JS 조금"
+    },
+    "controls": {
+      "kind": [
+        "하나만 켜짐",
+        "따로 누르는 단추"
+      ],
+      "keys": [
+        "화살표 키로 이동",
+        "Tab으로 하나씩"
+      ]
+    },
+    "control_ko": {
+      "kind": "꼴",
+      "keys": "키보드"
+    },
+    "defaults": {
+      "kind": "하나만 켜짐",
+      "keys": "화살표 키로 이동"
+    },
+    "phrases": {
+      "kind": {
+        "하나만 켜짐": "하나만 켜지는 보기 전환(휴대폰·태블릿·PC)",
+        "따로 누르는 단추": "단추마다 따로 동작(되돌리기·다시 하기·초기화)"
+      },
+      "keys": {
+        "화살표 키로 이동": "Tab은 묶음에 한 번만 멈추고 안에서는 화살표 키로 옮겨 다니게",
+        "Tab으로 하나씩": "Tab으로 단추마다 멈추게"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Segmented Control",
+        "diff": "값 하나를 고르는 입력. 단추 묶음은 동작 단추를 모은 도구 막대도 된다"
+      },
+      {
+        "name": "Bulk Action Bar",
+        "diff": "목록에서 고른 뒤에 나타나는 단추 줄"
+      },
+      {
+        "name": "Dropdown Menu",
+        "diff": "단추 하나를 누르면 펼쳐지는 메뉴"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "편집 버튼들 위에 쭉 놔줘",
+        "risk": "단추가 띄엄띄엄 놓여 한 묶음으로 안 보이고, 키보드로는 Tab을 여러 번 눌러야 지나간다"
+      }
+    ],
+    "right": "\"Button Group: 휴대폰·태블릿·PC 단추를 붙여 하나만 켜지게, 묶음 안은 화살표 키로\"처럼 꼴과 키보드를 함께 말한다",
+    "prompt": {
+      "when": "설정 미리보기 위에 보기 도구를 둘 때",
+      "what": "Button Group",
+      "how": "단추를 붙여 한 덩어리로, {kind}, {keys}. 묶음에 role=\"toolbar\"와 이름"
     }
   },
   {
@@ -1700,6 +1949,89 @@
     }
   },
   {
+    "id": "split-view",
+    "name": "Split View",
+    "ko": "분할 보기",
+    "path": [
+      "구조",
+      "레이아웃",
+      "나누기"
+    ],
+    "one": "두 영역 사이의 가름대를 끌어 양쪽 폭을 바꾼다",
+    "aka": [
+      "Resizable Panels",
+      "Split Pane",
+      "Pane Divider",
+      "크기 조절 패널"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "끌 때"
+      ],
+      "build": "JS 많이"
+    },
+    "controls": {
+      "limit": [
+        "최소 폭 있음",
+        "끝까지 접기"
+      ],
+      "keys": [
+        "화살표 키로도",
+        "마우스만"
+      ]
+    },
+    "control_ko": {
+      "limit": "줄일 때",
+      "keys": "키보드"
+    },
+    "defaults": {
+      "limit": "최소 폭 있음",
+      "keys": "화살표 키로도"
+    },
+    "phrases": {
+      "limit": {
+        "최소 폭 있음": "양쪽 최소 240px 아래로는 안 줄게",
+        "끝까지 접기": "한쪽을 끝까지 접을 수 있게"
+      },
+      "keys": {
+        "화살표 키로도": "가름대는 role=\"separator\", 초점이 가면 좌우 화살표 키로도 움직이게",
+        "마우스만": "가름대는 마우스로만 끌게(키보드로 바꿀 수 없는지 보려고)"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Master-Detail",
+        "diff": "목록과 상세를 정해진 비율로 나눈다"
+      },
+      {
+        "name": "Drawer",
+        "diff": "옆에서 겹쳐 뜬다"
+      },
+      {
+        "name": "Sidebar Navigation",
+        "diff": "다른 화면으로 가는 메뉴 기둥"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "양쪽 크기 조절되게 해줘",
+        "risk": "가름대를 마우스로만 끌 수 있어 키보드로는 못 바꾸고, 한쪽이 0까지 줄어 사라진다"
+      }
+    ],
+    "right": "\"Split View: 설정과 미리보기 사이 가름대, 양쪽 최소 240px, 화살표 키로도\"처럼 줄일 수 있는 한계와 키보드를 말한다",
+    "prompt": {
+      "when": "설정 목록 옆에 미리보기를 둘 때",
+      "what": "Split View",
+      "how": "왼쪽 설정과 오른쪽 미리보기 사이 가름대를 끌어 폭을 바꾸게, {limit}. {keys}. 좁은 화면에서는 위아래 한 칸씩"
+    }
+  },
+  {
     "id": "data-table",
     "name": "Data Table",
     "ko": "데이터 표",
@@ -2097,6 +2429,172 @@
       "when": "표에서 행을 하나 이상 고르면",
       "what": "Bulk Action Bar",
       "how": "{position} {enter} \"N개 선택됨 · 상태 바꾸기 · 지우기 · 선택 해제\", 지우기는 Confirm Dialog 뒤에"
+    }
+  },
+  {
+    "id": "description-list",
+    "name": "Description List",
+    "ko": "이름·값 목록",
+    "path": [
+      "구조",
+      "컴포넌트",
+      "데이터"
+    ],
+    "one": "이름과 값 짝을 줄이나 격자로 나열해 대상 하나의 정보를 보여 준다",
+    "aka": [
+      "Key-Value List",
+      "Definition List",
+      "Property List",
+      "dl·dt·dd"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "layout": [
+        "이름 왼쪽 · 값 오른쪽",
+        "이름 위 · 값 아래 2열"
+      ],
+      "copy": [
+        "값 복사 단추",
+        "없음"
+      ]
+    },
+    "control_ko": {
+      "layout": "배치",
+      "copy": "복사"
+    },
+    "defaults": {
+      "layout": "이름 왼쪽 · 값 오른쪽",
+      "copy": "값 복사 단추"
+    },
+    "phrases": {
+      "layout": {
+        "이름 왼쪽 · 값 오른쪽": "이름은 왼쪽 회색 글, 값은 오른쪽에 한 줄씩",
+        "이름 위 · 값 아래 2열": "이름은 위 작은 회색 글, 값은 그 아래, 2열 격자로"
+      },
+      "copy": {
+        "값 복사 단추": ", 메일 주소 옆에 복사 단추",
+        "없음": ""
+      }
+    },
+    "pairs": [
+      {
+        "name": "Data Table",
+        "diff": "여러 대상을 행과 열로 견준다"
+      },
+      {
+        "name": "Master-Detail",
+        "diff": "목록과 상세로 나눈 화면. 오른쪽 상세에 이름·값 목록이 자주 들어간다"
+      },
+      {
+        "name": "Grouped List",
+        "diff": "누를 수 있는 항목을 구역별로 묶는다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "계정 정보 표로 보여줘",
+        "risk": "대상 하나의 정보인데 머리줄 있는 Data Table이 나와 칸이 비고 넓어진다"
+      }
+    ],
+    "right": "\"Description List: 이름은 왼쪽 회색, 값은 오른쪽, 줄마다 가는 선, dl/dt/dd로\"처럼 말한다",
+    "prompt": {
+      "when": "알림을 받는 계정 정보를 보일 때",
+      "what": "Description List",
+      "how": "이름·메일·휴대폰·마지막 변경을 {layout}, dl/dt/dd로 만들고{copy}"
+    }
+  },
+  {
+    "id": "grouped-list",
+    "name": "Grouped List",
+    "ko": "구역별 목록",
+    "path": [
+      "구조",
+      "컴포넌트",
+      "데이터"
+    ],
+    "one": "목록 항목을 구역 제목 아래로 묶어 늘 펼쳐 보인다",
+    "aka": [
+      "Sectioned List",
+      "List with Section Headers",
+      "Inset Grouped List",
+      "설정 목록"
+    ],
+    "tags": {
+      "purpose": [
+        "보여 주기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "항상"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "style": [
+        "둥근 상자 묶음",
+        "전폭 줄"
+      ],
+      "extra": [
+        "오른쪽에 지금 값",
+        "이름만"
+      ]
+    },
+    "control_ko": {
+      "style": "꼴",
+      "extra": "줄 오른쪽"
+    },
+    "defaults": {
+      "style": "둥근 상자 묶음",
+      "extra": "오른쪽에 지금 값"
+    },
+    "phrases": {
+      "style": {
+        "둥근 상자 묶음": "구역마다 둥근 상자",
+        "전폭 줄": "구역마다 화면 폭 전체 줄"
+      },
+      "extra": {
+        "오른쪽에 지금 값": "줄 오른쪽에 지금 값이나 스위치",
+        "이름만": "줄에는 이름만"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Accordion",
+        "diff": "구역을 접었다 편다. 구역별 목록은 늘 펼쳐 둔다"
+      },
+      {
+        "name": "Sticky Section Header",
+        "diff": "긴 목록에서 구역 제목이 위에 붙어 따라온다"
+      },
+      {
+        "name": "Description List",
+        "diff": "누를 수 없는 이름·값 짝"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "설정 메뉴 목록 만들어줘",
+        "risk": "구역 없이 항목 스무 개가 한 줄로 늘어서 찾기 어렵다"
+      }
+    ],
+    "right": "\"Grouped List: 받는 곳·방해 금지 구역 제목 아래 둥근 상자, 줄 오른쪽에 스위치\"처럼 구역 이름과 줄 꼴을 말한다",
+    "prompt": {
+      "when": "알림 설정 첫 화면에 항목 여러 개를 보일 때",
+      "what": "Grouped List",
+      "how": "\"받는 곳\"·\"방해 금지\" 구역 제목 아래 항목을 {style}로 묶고, {extra}. 구역 제목은 작은 회색 글"
     }
   },
   {
@@ -3829,6 +4327,75 @@
       "when": "고정 머리가 있는 문서에 목차 링크를 달 때",
       "what": "Scroll Margin",
       "how": "{gap}. 주소의 #링크로 바로 들어올 때도 같은 자리에 멈추는지 확인"
+    }
+  },
+  {
+    "id": "overscroll-behavior",
+    "name": "Overscroll Behavior",
+    "ko": "스크롤 번짐 막기",
+    "path": [
+      "구조",
+      "스크롤",
+      "이동·멈춤"
+    ],
+    "one": "안쪽 스크롤 영역 끝에 닿아도 바깥 페이지가 이어서 스크롤되지 않게 막는다",
+    "aka": [
+      "overscroll-behavior",
+      "Scroll Chaining",
+      "Overscroll Contain",
+      "스크롤 체이닝 막기"
+    ],
+    "tags": {
+      "purpose": [
+        "길찾기"
+      ],
+      "use": [
+        "업무 화면"
+      ],
+      "trigger": [
+        "스크롤"
+      ],
+      "build": "CSS"
+    },
+    "controls": {
+      "value": [
+        "contain",
+        "auto"
+      ]
+    },
+    "control_ko": {
+      "value": "값"
+    },
+    "defaults": {
+      "value": "contain"
+    },
+    "phrases": {
+      "value": {
+        "contain": "안쪽 영역에 overscroll-behavior: contain을 줘서 끝에 닿아도 뒤 페이지가 움직이지 않게",
+        "auto": "기본값 auto로 둬서(끝에 닿으면 뒤 페이지가 이어서 스크롤되는지 보려고)"
+      }
+    },
+    "pairs": [
+      {
+        "name": "Modal Dialog",
+        "diff": "뒤를 막고 뜨는 창. 안이 길면 스크롤 번짐 막기를 같이 쓴다"
+      },
+      {
+        "name": "Drawer",
+        "diff": "옆에서 뜨는 창. 같은 이유로 같이 쓴다"
+      }
+    ],
+    "wrong": [
+      {
+        "say": "모달 안에서 스크롤하면 뒤가 움직여요, 막아줘",
+        "risk": "body에 overflow: hidden을 걸어 스크롤바가 사라지며 화면이 옆으로 튀거나, 휴대폰에서는 안 먹는다"
+      }
+    ],
+    "right": "\"Overscroll Behavior: 안쪽 목록에 overscroll-behavior: contain\"처럼 안쪽 영역에 거는 CSS로 말한다",
+    "prompt": {
+      "when": "설정 화면 안쪽 패널을 끝까지 스크롤할 때",
+      "what": "Overscroll Behavior",
+      "how": "{value}"
     }
   },
   {
