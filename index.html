@@ -7,7 +7,7 @@
 <meta name="description" content="바이브코딩 때 사람과 AI가 화면을 같은 이름으로 부르게 하는 UI·모션 도감. 업무 화면 부품과 소개·랜딩 효과, 차트, 다이어그램과 슬라이드, 움직이는 예시, 헷갈리는 짝, 요청 문장.">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <link rel="stylesheet" href="parts.css">
 <style>
 /* 2단계 페이지 틀: terms.json을 읽어 격자 보기 / 목록 + 큰 미리보기, 검색과 태그 필터. 색 값은 시범과 같다 */
@@ -15,7 +15,7 @@
   --bg: #f4f5f2; --panel: #ffffff; --ink: #16181b; --muted: #5d636b; --line: #dfe2dc;
   --accent: #0b7a63; --accent-soft: #e0f1ec; --mark: #e2553f; --mark-soft: #fbe6e1;
   --when: #8a5a00; --when-soft: #fbf0d8; --stage: #eceee9; --shade: rgb(16 18 20 / 45%);
-  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-body: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) {
@@ -74,7 +74,7 @@ a { color: inherit; }
 .demo { position: relative; display: grid; justify-items: center; padding: 18px 18px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 22px 44px -30px rgb(16 18 20 / 45%); }
 .demo::before { content: ""; position: absolute; z-index: -1; inset: -30px 0 -20px 0; background: radial-gradient(closest-side at 50% 20%, var(--accent-soft), transparent); }
 .say { display: grid; justify-items: center; gap: 4px; }
-.say .q { font-size: clamp(17px, 2.4vw, 22px); font-weight: 700; padding: 8px 18px; border-radius: 16px; background: var(--stage); min-height: 1.6em; }
+.say .q { display: inline-block; font-size: clamp(17px, 2.4vw, 22px); line-height: 1.5; font-weight: 700; padding: 8px 18px; border-radius: 16px; background: var(--stage); min-height: calc(1.5em + 16px); box-sizing: border-box; }
 .say .q i { display: inline-block; width: 2px; height: 1.05em; margin-left: 2px; vertical-align: -0.15em; background: var(--ink); animation: blink 1s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 .say small { font-size: 12.5px; color: var(--muted); }
@@ -93,6 +93,7 @@ a { color: inherit; }
 .ans { display: grid; justify-items: center; gap: 4px; text-align: center; padding: 8px 12px 10px; border-radius: 12px; background: var(--accent-soft); opacity: 0; transform: translateY(8px); word-break: keep-all; }
 .ans .lab { font-size: 11.5px; font-weight: 700; color: var(--accent); letter-spacing: 0.02em; }
 .ans q { font-size: 14.5px; font-weight: 600; line-height: 1.45; quotes: "\201C" "\201D"; }
+@media (max-width: 600px) { .ans q { min-height: 2.9em; } }   /* 좁으면 요청 문장이 두 줄이 되기도 해 자리를 미리 잡는다 */
 .ans .row { justify-content: center; }
 .ans .cp { font: inherit; font-size: 12px; padding: 3px 10px; border-radius: 7px; border: 1px solid var(--accent); background: var(--panel); color: var(--accent); cursor: pointer; }
 .duo figcaption { font-size: 13px; color: var(--muted); text-align: center; line-height: 1.45; word-break: keep-all; }
@@ -160,7 +161,8 @@ a { color: inherit; }
 
 /* 격자 보기 */
 .groups { display: grid; gap: 28px; }
-.group { display: grid; gap: 12px; scroll-margin-top: calc(var(--barh, 0px) + 24px); }
+.group { display: grid; gap: 12px; scroll-margin-top: calc(var(--barh, 0px) + 24px); content-visibility: auto; contain-intrinsic-block-size: auto 900px; }   /* 화면 밖 묶음은 배치·그리기를 미룬다(첫 화면 긴 작업 줄이기) */
+.sized .group { content-visibility: visible; }
 .group h2 { display: flex; align-items: baseline; gap: 8px; font-size: 13px; font-weight: 500; color: var(--muted); font-family: var(--font-mono); letter-spacing: 0.02em; }
 .group h2::after { content: ""; flex: 1; align-self: center; border-top: 1px solid var(--line); margin-left: 6px; }
 .group h2 b { color: var(--ink); font-family: var(--font-body); font-size: 21px; letter-spacing: -0.02em; }
@@ -286,13 +288,13 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
   <header class="hero">
     <div class="pitch">
       <h1>같은 말, <em id="h1em" data-term="text-split-reveal">다른 화면</em></h1>
-      <p class="lead">"사이드 팝업 띄워줘"라고 하면 AI는 Drawer를 만들 수도, Modal Dialog를 만들 수도 있어요. 용어 <span id="n-terms">142</span>개를 움직이는 예시로 견주어 보고, 이름이 정확히 들어간 요청 문장을 가져가세요.</p>
+      <p class="lead">"사이드 팝업 띄워줘"라고 하면 AI는 Drawer를 만들 수도, Modal Dialog를 만들 수도 있어요. 용어 <span id="n-terms">200</span>개를 움직이는 예시로 견주어 보고, 이름이 정확히 들어간 요청 문장을 가져가세요.</p>
       <div class="cta"><button class="btn pri big" type="button" data-go="find">용어 찾기</button><button class="btn big" type="button" data-go="screens">조합 화면 보기</button></div>
     </div>
     <div class="demo" id="demo" role="group" aria-label="시연: 같은 말로 만들어질 수 있는 두 화면">
-      <div class="say" data-term="typewriter"><span class="q" id="say-q"></span><small>이 말 한 줄로 AI가 만들 수 있는 두 화면</small></div>
+      <div class="say" data-term="typewriter"><span class="q" id="say-q">&nbsp;</span><small>이 말 한 줄로 AI가 만들 수 있는 두 화면</small></div>
       <svg class="fork" id="fork" viewBox="0 0 900 40" preserveAspectRatio="none" aria-hidden="true" data-term="line-draw"><path class="trk" d="M450 0 V14 Q450 20 444 20 H230 Q224 20 224 26 V40"/><path class="trk" d="M450 0 V14 Q450 20 456 20 H670 Q676 20 676 26 V40"/><path class="drw" pathLength="1" d="M450 0 V14 Q450 20 444 20 H230 Q224 20 224 26 V40"/><path class="drw" pathLength="1" d="M450 0 V14 Q450 20 456 20 H670 Q676 20 676 26 V40"/></svg>
-      <div class="duo" id="duo"></div>
+      <div class="duo" id="duo"><figure aria-hidden="true"><p class="if">이걸 원했다면</p><div class="mini"></div><figcaption><a>&nbsp;</a></figcaption><div class="ans"><span class="lab">정확히 말하면</span><q>&nbsp;</q><div class="row"><span class="cp">전체 요청 문장 복사</span></div></div></figure><figure aria-hidden="true"><p class="if">이걸 원했다면</p><div class="mini"></div><figcaption><a>&nbsp;</a></figcaption><div class="ans"><span class="lab">정확히 말하면</span><q>&nbsp;</q><div class="row"><span class="cp">전체 요청 문장 복사</span></div></div></figure></div>
       <div class="picks" id="picks"></div>
       <label class="termtoggle"><input type="checkbox" id="demo-labels"> 이 예시의 용어 보기</label>
       <div class="scr-labels" id="demo-lab" hidden></div>
@@ -314,7 +316,7 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
     <nav class="secnav" id="secnav" aria-label="소묶음으로 가기" data-term="scroll-into-view"></nav>
   </div>
   <div class="statusline">
-    <span class="count" aria-hidden="true" data-term="number-ticker">142개 중 <b id="cnum">142</b>개</span><span class="sr" id="count" role="status"></span>
+    <span class="count" aria-hidden="true" data-term="number-ticker">200개 중 <b id="cnum">200</b>개</span><span class="sr" id="count" role="status"></span>
     <span class="actives" id="actives"></span><button class="linkbtn" id="reset" type="button" hidden>모두 지우기</button>
     <div class="views" role="group" aria-label="보기">
       <button type="button" data-view="grid" aria-pressed="true">격자</button>
@@ -340,25 +342,6 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
 </dialog>
 
 <script src="parts.js"></script>
-<script src="screen-issue-list.js"></script>
-<script src="screen-issue-detail.js"></script>
-<script src="screen-dashboard.js"></script>
-<script src="screen-work-board.js"></script>
-<script src="screen-request-form.js"></script>
-<script src="screen-landing.js"></script>
-<script src="screen-analytics.js"></script>
-<script src="screen-data-story.js"></script>
-<script src="screen-help-doc.js"></script>
-<script src="screen-settings.js"></script>
-<script src="screen-product-list.js"></script>
-<script src="screen-group-styles.js"></script>
-<script src="screen-code-viewer.js"></script>
-<script src="screen-contacts.js"></script>
-<script src="screen-chips.js"></script>
-<script src="slides.js"></script>
-<script src="slides-pptx.js"></script>
-<script src="slides-doc.js"></script>
-<script src="screen-deck.js"></script>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
@@ -592,8 +575,6 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
     var em = $('h1em'), txt = em.textContent;
     em.setAttribute('aria-label', txt);
     em.innerHTML = txt.split('').map(function (c, i) { return '<span aria-hidden="true" style="--i:' + i + '">' + (c === ' ' ? '&nbsp;' : esc(c)) + '</span>'; }).join('');
-    $('picks').innerHTML = PAIRS.map(function (P, i) { return '<button type="button" class="opt" data-pair="' + i + '" aria-pressed="false">' + esc(P[0]) + '</button>'; }).join('') +
-      (reduce.matches ? '' : '<button type="button" class="opt pz" id="demo-pz" aria-pressed="false">❚❚ 멈춤</button>');
     new IntersectionObserver(function (es) { D.seen = es[0].isIntersecting; if (D.seen) demoKick(); }).observe($('demo'));
     demoBuild(0);
   }
@@ -686,6 +667,8 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
       else c.animate([{ opacity: 0, transform: 'translateY(10px) scale(0.98)' }, { opacity: 1, transform: 'none' }], { duration: 320, delay: Math.min(k++, 8) * 30, easing: 'ease-out', fill: 'backwards' });
     });
   }
+  // 화면 밖 묶음은 content-visibility로 어림 높이만 잡혀 있어 먼 묶음으로 가면 빗나간다. 바로 가기를 처음 누를 때부터 모두 그린다
+  function sizeGroups() { $('grid').classList.add('sized'); }
   // 도구 막대 높이(소묶음 머리·목록이 막대 밑에 숨지 않게)와 붙었는지
   function barSize() { document.documentElement.style.setProperty('--barh', $('bar').offsetHeight + 'px'); }
   // 지금 읽는 소묶음을 바로 가기 줄에서 표시한다
@@ -824,7 +807,7 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
     if (e.target.closest('[data-clearq]')) { $('q').value = ''; render(); return; }
     if (e.target.closest('#fbtn')) { panel($('fpanel').hidden); return; }
     var sb = e.target.closest('[data-sec]');
-    if (sb) { var g = $('sec-' + sb.getAttribute('data-sec')); if (g) g.scrollIntoView({ block: 'start', behavior: reduce.matches ? 'auto' : 'smooth' }); return; }
+    if (sb) { var g = $('sec-' + sb.getAttribute('data-sec')); if (g) { sizeGroups(); g.scrollIntoView({ block: 'start', behavior: reduce.matches ? 'auto' : 'smooth' }); } return; }
     var tb = e.target.closest('[data-tab]');
     if (tb) { showTab(tb.getAttribute('data-tab')); setHash(tab === 'screens' ? 's-' + screenId : ''); return; }
     var vb = e.target.closest('[data-view]');
@@ -862,7 +845,7 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
   $('dlg').addEventListener('close', function () { setHash(tab === 'screens' ? 's-' + screenId : ''); if (live) { live.stop(); live = null; } });
   function route() {
     var h = location.hash.slice(1);
-    if (h.indexOf('s-') === 0) { if (UI.screens[h.slice(2)]) screenId = h.slice(2); showTab('screens'); } else if (h) openTerm(h);
+    if (h.indexOf('s-') === 0) { if (RECIPES.some(function (r) { return r.id === h.slice(2); })) screenId = h.slice(2); showTab('screens'); } else if (h) openTerm(h);
   }
   window.addEventListener('hashchange', route);
   var fitId = 0;
@@ -892,7 +875,16 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
     document.querySelectorAll('[data-tab]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-tab') === name)); });
     $('termsview').hidden = name !== 'terms';
     $('screensview').hidden = name !== 'screens';
-    if (name === 'screens') mountScreen();
+    if (name === 'screens') loadScreens().then(function () { if (tab === 'screens') mountScreen(); });
+  }
+  // 조합 화면 스크립트는 조합 화면 탭을 열 때 순서대로 불러온다(첫 화면 무게 줄이기). 한 번만
+  var SCREEN_JS = ["screen-issue-list.js", "screen-issue-detail.js", "screen-dashboard.js", "screen-work-board.js", "screen-request-form.js", "screen-landing.js", "screen-analytics.js", "screen-data-story.js", "screen-help-doc.js", "screen-settings.js", "screen-product-list.js", "screen-group-styles.js", "screen-code-viewer.js", "screen-contacts.js", "screen-chips.js", "slides.js", "slides-pptx.js", "slides-doc.js", "screen-deck.js"], scrP = null;
+  function loadScreens() {
+    if (scrP) return scrP;
+    scrP = SCREEN_JS.reduce(function (p, f) { return p.then(function () { return new Promise(function (ok, no) { var e = document.createElement('script'); e.src = f; e.onload = ok; e.onerror = function () { no(new Error(f)); }; document.body.appendChild(e); }); }); }, Promise.resolve())
+      .then(function () { UI.deckScreens(RECIPES); });
+    scrP.catch(function () { scrP = null; $('screensview').innerHTML = '<p class="lead">조합 화면을 불러오지 못했습니다. 페이지를 새로 고쳐 주세요.</p>'; });
+    return scrP;
   }
   // 조합 화면 하나를 붙인다. 다른 화면으로 바꾸면 앞 화면을 걷어 낸다
   function mountScreen() {
@@ -931,9 +923,11 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
   }
 
   function getJSON(u) { return fetch(u).then(function (r) { if (!r.ok) throw new Error(u + ' ' + r.status); return r.json(); }); }
+  // 시연 고르기 단추는 데이터를 기다리지 않고 바로 그린다(자리 흔들림 줄이기)
+  $('picks').innerHTML = PAIRS.map(function (P, i) { return '<button type="button" class="opt" data-pair="' + i + '" aria-pressed="false">' + esc(P[0]) + '</button>'; }).join('') +
+    (reduce.matches ? '' : '<button type="button" class="opt pz" id="demo-pz" aria-pressed="false">❚❚ 멈춤</button>');
   Promise.all([getJSON('terms.json'), getJSON('recipes.json')]).then(function (res) {
     var data = res[0]; RECIPES = res[1];
-    UI.deckScreens(RECIPES);
     TERMS = data;
     TERMS.forEach(function (t) { BY_ID[t.id] = t; BY_NAME[t.name] = t; });
     $('total').textContent = TERMS.length;
@@ -942,6 +936,8 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
     demoStart();
     setView('grid');
     if (location.hash.length > 1) route();
+    // 첫 화면을 그린 뒤 한가할 때 조합 화면 스크립트를 미리 받아 둔다(실행은 탭을 열 때)
+    (window.requestIdleCallback || setTimeout)(function () { SCREEN_JS.forEach(function (f) { var l = document.createElement('link'); l.rel = 'prefetch'; l.href = f; document.head.appendChild(l); }); }, { timeout: 4000 });
   }).catch(function (err) {
     $('grid').innerHTML = '<div class="empty"><b>용어 데이터를 읽지 못했습니다</b><span>terms.json을 불러오지 못했습니다 (' + esc(err.message) + '). 파일을 직접 열었다면 웹 서버로 열어 주세요.</span></div>';
   });

@@ -40,6 +40,8 @@
   }
 
   UI.screens['landing'] = function (root, opt) {
+    // 제목 글꼴 Space Grotesk는 이 화면에서만 쓰므로 이 화면을 열 때 부른다(도감 첫 화면 글꼴 줄이기)
+    if (!document.getElementById('font-landing')) { var fl = document.createElement('link'); fl.id = 'font-landing'; fl.rel = 'stylesheet'; fl.href = 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap'; document.head.appendChild(fl); }
     var mq = window.matchMedia('(prefers-reduced-motion: reduce)'), hover = window.matchMedia('(hover: hover)').matches;
     var st = { labels: false, calm: mq.matches, paused: false, step: 0, detail: -1 };
     var timers = [], offs = [], ios = [];
