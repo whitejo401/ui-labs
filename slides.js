@@ -1059,16 +1059,21 @@
       });
     } else if (o.rows) {
       // cols: 값 열 머리(첫 칸은 비움). 줄의 값이 둘 이상이면 남은 너비를 나눠 쓴다
-      var rows = o.cols ? [o.cols].concat(o.rows) : o.rows;
+      // boldKey: 이름 칸을 굵은 글로. rightVal: 값을 오른쪽 맞춤. from: 줄의 마지막 값은 칸 밖 오른쪽 글이고 화살표로 칸을 가리킨다
+      var rows = o.cols ? [o.cols].concat(o.rows) : o.rows, fw = o.from ? 104 : 0, ww = w - fw;
       var rh = Math.min(plain ? 46 : th.light ? 60 : 44, (bottom - y) / Math.max(1, rows.length)), kw = w * (o.split || 0.36);
       rows.forEach(function (r, i) {
         var ry = y + i * rh, sl = o.cols ? (i ? 'rows[' + (i - 1) + ']' : 'cols') : 'rows[' + i + ']', ch = rh, ci = 0, hd = o.cols && !i;
         // 밝은 테마는 줄마다 흰 칸(사이 8px), 아니면(plain 포함) 줄 위에 선
-        if (th.light && !plain) { ch = rh - 8; ci = 14; out.push({ k: 'rect', x: x, y: ry, w: w, h: ch, r: 4, fill: th.bg, stroke: th.line, sw: 1 }); }
-        else if (i || !plain) out.push({ k: 'line', x1: x, y1: ry, x2: x + w, y2: ry, stroke: th.line, sw: 1 });
-        out.push(S.textBox({ x: x + ci, y: ry, w: kw - 12 - ci, h: ch, text: r[0], size: 12, color: th.muted, valign: 'middle' }, th, e, sl + '[0]'));
-        var vw = (w - kw - ci) / (r.length - 1);
-        r.slice(1).forEach(function (t, j) { out.push(S.textBox({ x: x + kw + j * vw, y: ry, w: vw - (r.length > 2 ? 8 : 0), h: ch, text: t, size: plain && !hd ? 13.5 : 12, weight: o.boldVal && !hd ? 700 : 400, color: hd ? th.muted : th.ink, valign: 'middle', max: ch > (plain ? 56 : 40) ? 2 : 1 }, th, e, sl + '[' + (j + 1) + ']')); });
+        if (th.light && !plain) { ch = rh - 8; ci = 14; out.push({ k: 'rect', x: x, y: ry, w: ww, h: ch, r: 4, fill: th.bg, stroke: th.line, sw: 1 }); }
+        else if (i || !plain) out.push({ k: 'line', x1: x, y1: ry, x2: x + ww, y2: ry, stroke: th.line, sw: 1 });
+        out.push(S.textBox({ x: x + ci, y: ry, w: kw - 12 - ci, h: ch, text: r[0], size: o.boldKey ? 13.5 : 12, weight: o.boldKey ? 700 : 400, color: o.boldKey ? th.ink : th.muted, valign: 'middle' }, th, e, sl + '[0]'));
+        var vals = o.from ? r.slice(1, -1) : r.slice(1), vw = (ww - kw - ci - (o.rightVal ? ci : 0)) / vals.length;
+        if (o.from) {
+          out.push({ k: 'line', x1: x + ww + 40, y1: ry + ch / 2, x2: x + ww + 6, y2: ry + ch / 2, stroke: th.muted, sw: 1.5, arrow: 'end', head: th.head });
+          out.push(S.textBox({ x: x + ww + 48, y: ry, w: fw - 48, h: ch, text: r[r.length - 1], size: 12, color: th.ink, valign: 'middle' }, th, e, sl + '[' + (r.length - 1) + ']'));
+        }
+        vals.forEach(function (t, j) { out.push(S.textBox({ x: x + kw + j * vw, y: ry, w: vw - (vals.length > 1 ? 8 : 0), h: ch, align: o.rightVal ? 'right' : undefined, text: t, size: plain && !hd ? 13.5 : 12, weight: o.boldVal && !hd ? 700 : 400, color: hd ? th.muted : th.ink, valign: 'middle', max: ch > (plain ? 56 : 40) ? 2 : 1 }, th, e, sl + '[' + (j + 1) + ']')); });
       });
     }
     if (o.note) {
