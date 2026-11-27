@@ -7,6 +7,23 @@
 <meta name="description" content="바이브코딩 때 사람과 AI가 화면을 같은 이름으로 부르게 하는 UI·모션 도감. 업무 화면 부품과 소개·랜딩 효과, 차트, 다이어그램과 슬라이드, 움직이는 예시, 헷갈리는 짝, 요청 문장.">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="canonical" href="https://whitejo401.github.io/ui-labs/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#f4f5f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121416" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:site_name" content="UI 도감">
+<meta property="og:url" content="https://whitejo401.github.io/ui-labs/">
+<meta property="og:title" content="UI 도감 · 같은 말, 다른 화면">
+<meta property="og:description" content="바이브코딩 때 사람과 AI가 화면을 같은 이름으로 부르게 하는 UI·모션 도감. 용어 200개마다 움직이는 예시와 요청 문장.">
+<meta property="og:image" content="https://whitejo401.github.io/ui-labs/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="같은 말 &quot;사이드 팝업 띄워줘&quot;로 만들어질 수 있는 Drawer와 Modal Dialog 두 화면">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <link rel="stylesheet" href="parts.css">
 <style>
@@ -67,7 +84,7 @@ a { color: inherit; }
 .hero .pitch { display: grid; justify-items: center; text-align: center; gap: 14px; word-break: keep-all; }
 .hero h1 { font-size: clamp(32px, 5vw, 52px); line-height: 1.15; letter-spacing: -0.035em; }
 .hero h1 em { font-style: normal; color: var(--accent); background: linear-gradient(transparent 64%, var(--accent-soft) 64%); }
-.hero .lead { font-size: 16px; max-width: 70ch; }
+.hero .lead { font-size: 16px; max-width: 46em; }   /* 대체 글꼴로도 문장이 한 줄에 들어가게(글꼴이 도착할 때 줄 수가 바뀌어 흔들리지 않게) */
 .cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 4px; }
 .btn.big { font-size: 15px; padding: 10px 18px; border-radius: 10px; }
 .btn.pri { background: var(--accent); color: var(--bg); }
@@ -288,7 +305,7 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
   <header class="hero">
     <div class="pitch">
       <h1>같은 말, <em id="h1em" data-term="text-split-reveal">다른 화면</em></h1>
-      <p class="lead">"사이드 팝업 띄워줘"라고 하면 AI는 Drawer를 만들 수도, Modal Dialog를 만들 수도 있어요. 용어 <span id="n-terms">200</span>개를 움직이는 예시로 견주어 보고, 이름이 정확히 들어간 요청 문장을 가져가세요.</p>
+      <p class="lead">"사이드 팝업 띄워줘"라고 하면 AI는 Drawer를 만들 수도, Modal Dialog를 만들 수도 있어요.<br> 용어 <span id="n-terms">200</span>개를 움직이는 예시로 견주어 보고, 이름이 정확히 들어간 요청 문장을 가져가세요.</p>
       <div class="cta"><button class="btn pri big" type="button" data-go="find">용어 찾기</button><button class="btn big" type="button" data-go="screens">조합 화면 보기</button></div>
     </div>
     <div class="demo" id="demo" role="group" aria-label="시연: 같은 말로 만들어질 수 있는 두 화면">
