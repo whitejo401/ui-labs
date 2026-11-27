@@ -1263,3 +1263,59 @@
 .gs-add:hover, .gs-add:focus-visible { color: var(--u-accent); }
 .gs-add:focus-visible { outline: 2px solid var(--u-accent); outline-offset: 2px; }
 .gs-addrow input { flex: 1; min-width: 0; font: inherit; font-size: 12.5px; color: var(--u-ink); background: var(--u-bg); border: 1px solid var(--u-line); border-radius: 6px; padding: 4px 8px; }
+
+/* ───── 조합 화면: 칩 견주기 (screen-chips.js) ───── */
+.scr.cj-scr { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); --cj-h: 32px; }
+.cj-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding: 10px 16px; border-bottom: 1px solid var(--u-line); background: var(--u-panel); font-size: 12.5px; color: var(--u-muted); }
+.cj-tools label { display: inline-flex; align-items: center; gap: 6px; }
+.cj-tools select { font: inherit; font-size: 12.5px; color: var(--u-ink); background: var(--u-panel); border: 1px solid var(--u-line); border-radius: 6px; padding: 3px 6px; }
+.cj-w input { width: 160px; accent-color: var(--u-accent); }
+.cj-w b { min-width: 48px; color: var(--u-ink); font-variant-numeric: tabular-nums; }
+.cj-tools .u-switch { transform: scale(0.8); }
+.cj-stage { margin-left: auto; font-weight: 700; color: var(--u-accent); }
+.cj-stagebox { overflow: auto; padding: 16px; background: var(--u-side); display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; align-content: start; min-height: 0; }
+.cj-frame { position: relative; max-width: 100%; min-height: 100%; background: var(--u-bg); border: 1px solid var(--u-line); border-radius: 12px; box-shadow: var(--u-shadow-sm); overflow: hidden; box-sizing: border-box; }
+.cj-page { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 14px 16px 18px; }
+.cj-q { font: inherit; font-size: 14px; color: var(--u-ink); background: var(--u-panel); border: 1px solid var(--u-line); border-radius: 8px; padding: 8px 12px; }
+.cj-q:focus-visible { outline: 2px solid var(--u-accent); outline-offset: 1px; }
+.cj-sug { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; color: var(--u-muted); }
+.cj-chip { position: relative; display: inline-flex; align-items: center; gap: 5px; flex: none; height: var(--cj-h); padding: 0 calc(var(--cj-h) / 3); border: 1px solid var(--u-line); border-radius: 999px; background: var(--u-panel); color: var(--u-ink); font: inherit; font-size: 12.5px; white-space: nowrap; box-sizing: border-box; cursor: pointer; }
+.cj-chip:focus-visible { outline: 2px solid var(--u-accent); outline-offset: 2px; }
+.cj-chip .ck { display: none; color: var(--u-accent); }
+.cj-f[aria-pressed="true"] { border-color: var(--u-accent); background: var(--u-accent-soft); color: var(--u-accent); font-weight: 700; }
+.cj-f[aria-pressed="true"] .ck { display: inline; }
+.cj-more { border-style: dashed; border-color: var(--u-muted); font-weight: 700; }
+.cj-rowbox { container: cjrow / inline-size; }
+.cj-row { display: flex; gap: 6px; overflow: hidden; padding: 2px; }
+.cj-f .sh, .cj-fbtn { display: none; }
+@container cjrow (max-width: 779px) { .cj-f .lg { display: none; } .cj-f .sh { display: inline; } }
+@container cjrow (max-width: 639px) {
+  .cj-row[data-steps="icon"] .cj-f .sh { display: none; }
+  .cj-row[data-steps="icon"] .cj-f { padding: 0 calc(var(--cj-h) / 2 - 7px); }
+  .cj-row[data-steps="sheet"] .cj-f, .cj-row[data-steps="sheet"] .cj-more { display: none; }
+  .cj-row[data-steps="sheet"] .cj-fbtn { display: inline-flex; border-color: var(--u-accent); background: var(--u-accent-soft); color: var(--u-accent); font-weight: 700; }
+}
+.guide .cj-chip::after { content: ""; position: absolute; left: -2px; right: -2px; top: calc(50% - 22px); height: 44px; border: 1px dashed var(--u-accent); border-radius: 8px; pointer-events: none; opacity: 0.7; }
+.cj-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; }
+.cj-meta .grow { flex: 1; }
+.cj-assist { font-size: 12px; }
+.cj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+.cj-good { display: grid; gap: 3px; font-size: 12.5px; }
+.cj-good i { display: block; aspect-ratio: 1; border-radius: 8px; }
+.cj-good span { color: var(--u-muted); font-size: 12px; }
+.cj-share { display: grid; gap: 6px; font-size: 13px; }
+.cj-field { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 8px; border: 1px solid var(--u-line); border-radius: 8px; background: var(--u-panel); max-height: calc(var(--cj-h) + 14px); overflow: hidden; box-sizing: border-box; cursor: text; }
+.cj-field.open { max-height: none; outline: 2px solid var(--u-accent); outline-offset: 1px; }
+.cj-in { padding-left: 4px; cursor: default; }
+.cj-in i { width: calc(var(--cj-h) - 10px); height: calc(var(--cj-h) - 10px); border-radius: 50%; display: grid; place-items: center; font-style: normal; font-weight: 700; font-size: 11px; }
+.cj-x { width: 18px; height: 18px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--u-muted); font-size: 14px; line-height: 1; cursor: pointer; }
+.cj-x:hover, .cj-x:focus-visible { background: var(--u-hover); color: var(--u-ink); }
+.cj-field input { flex: 1; min-width: 110px; border: 0; outline: none; background: none; font: inherit; font-size: 13px; color: var(--u-ink); }
+.cj-sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; max-height: 60%; overflow: auto; display: grid; gap: 2px; padding: 12px 16px 16px; border-radius: 14px 14px 0 0; background: var(--u-panel); box-shadow: var(--u-shadow); }
+.cj-sh { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.cj-ck { display: flex; align-items: center; gap: 8px; min-height: 40px; font-size: 13px; cursor: pointer; }
+.cj-ck input { width: 18px; height: 18px; accent-color: var(--u-accent); }
+.cj-toast { position: absolute; left: 50%; bottom: 16px; z-index: 4; transform: translate(-50%, 10px); padding: 7px 14px; border-radius: 8px; background: var(--u-toast-bg); color: var(--u-toast-fg); font-size: 12.5px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 150ms ease-out, transform 150ms ease-out; }
+.cj-toast.on { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { .cj-toast { transition: none; } }
+@media (max-width: 760px) { .cj-stage { margin-left: 0; width: 100%; } .cj-stagebox { padding: 10px; } }

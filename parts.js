@@ -2521,6 +2521,147 @@
     } };
   };
 
+  /* ───── 구조 › 칩 (칩 견주기 묶음) ───── */
+  // 칩 아이콘(16px 선, currentColor)과 필터 칩 [키, 아이콘, 긴 문구, 짧은 문구]. 조합 화면 "칩 견주기"도 같이 쓴다
+  var CI = {
+    ship: '<path d="M1.5 4.5h8v6h-8zM9.5 7h3l2 2v1.5h-5"/><circle cx="4.5" cy="11.5" r="1.3"/><circle cx="11.5" cy="11.5" r="1.3"/>',
+    star: '<path d="M8 2l1.8 3.7 4 .6-2.9 2.8.7 4-3.6-1.9-3.6 1.9.7-4L2.2 6.3l4-.6z"/>',
+    spark: '<path d="M8 1.5v4M8 10.5v4M1.5 8h4M10.5 8h4M3.5 3.5l2.2 2.2M10.3 10.3l2.2 2.2M12.5 3.5l-2.2 2.2M5.7 10.3l-2.2 2.2"/>',
+    sale: '<path d="M3 13L13 3"/><circle cx="4.5" cy="4.5" r="1.8"/><circle cx="11.5" cy="11.5" r="1.8"/>',
+    bolt: '<path d="M9 1.5L3.5 9H8l-1 5.5L12.5 7H8z"/>',
+    ticket: '<path d="M1.5 4.5h13v2.2a1.5 1.5 0 0 0 0 2.6v2.2h-13V9.3a1.5 1.5 0 0 0 0-2.6z"/><path d="M10 4.5v7" stroke-dasharray="1.5 1.5"/>',
+    card: '<rect x="1.5" y="3.5" width="13" height="9" rx="1.5"/><path d="M1.5 6.5h13M4 10h3"/>',
+    badge: '<path d="M8 1.5l1.6 1.2 2-.1.6 1.9 1.6 1.2-.6 1.9.6 1.9-1.6 1.2-.6 1.9-2-.1L8 14.5l-1.6-1.2-2 .1-.6-1.9-1.6-1.2.6-1.9-.6-1.9 1.6-1.2.6-1.9 2 .1z"/><path d="M5.6 8l1.6 1.6 3.2-3.2"/>'
+  };
+  function chipIcon(k, px) { return '<svg viewBox="0 0 16 16" width="' + (px || 14) + '" height="' + (px || 14) + '" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none">' + CI[k] + '</svg>'; }
+  var FILTERS = [['ship', 'ship', '무료 배송', '배송'], ['star', 'star', '리뷰 4점 이상', '4점↑'], ['new', 'spark', '신상품', '신상'], ['sale', 'sale', '할인 중', '할인'], ['today', 'bolt', '당일 도착', '당일'], ['brand', 'badge', '브랜드 공식', '공식']];
+  UI.chipIcon = chipIcon; UI.FILTERS = FILTERS;
+  // 칩 한 개. mode: long(아이콘+긴 문구) short(아이콘+짧은 문구) icon(아이콘만) / sel 켜짐 / h 높이
+  function chipHTML(f, mode, sel, h, cls) {
+    var fs = h <= 24 ? 11 : h >= 40 ? 13.5 : 12;
+    return '<span class="' + (cls || 'cp') + '" style="display:inline-flex;align-items:center;gap:5px;flex:none;height:' + h + 'px;padding:0 ' + (mode === 'icon' ? Math.round(h / 2 - 7) : Math.round(h / 3)) + 'px;border-radius:999px;font-size:' + fs + 'px;white-space:nowrap;box-sizing:border-box;' +
+      'border:1px solid ' + (sel ? 'var(--u-accent)' : 'var(--u-line)') + ';background:' + (sel ? 'var(--u-accent-soft)' : 'var(--u-panel)') + ';color:' + (sel ? 'var(--u-accent)' : 'var(--u-ink)') + ';font-weight:' + (sel ? 700 : 400) + '">' +
+      chipIcon(f[1]) + (mode === 'icon' ? '' : '<span>' + (mode === 'short' ? f[3] : f[2]) + '</span>') + '</span>';
+  }
+
+  S['chip'] = function (st, c) {
+    var kind = c.kind, lead = c.leading, h = parseInt(c.size.replace(/[^0-9]/g, ''), 10) || 32, MS = 3800, fs = h <= 24 ? 11 : h >= 40 ? 13.5 : 12;
+    function chip(text, o) {
+      o = o || {};
+      var av = lead === '아바타' ? '<i style="width:' + (h - 10) + 'px;height:' + (h - 10) + 'px;border-radius:50%;background:' + ph(text.charCodeAt(0)) + ';display:grid;place-items:center;font-style:normal;font-size:' + (fs - 2) + 'px;font-weight:700;flex:none">' + text[0] + '</i>' : lead === '아이콘' ? chipIcon(o.icon || 'spark') : '';
+      return '<span class="' + (o.cls || 'cp') + '" style="display:inline-flex;align-items:center;gap:5px;flex:none;height:' + h + 'px;padding:0 ' + Math.round(h / 3) + 'px 0 ' + (lead === '아바타' ? 4 : Math.round(h / 3)) + 'px;border-radius:999px;font-size:' + fs + 'px;white-space:nowrap;box-sizing:border-box;border:1px solid var(--u-line);background:var(--u-panel);color:var(--u-ink)">' +
+        '<b class="ck" style="display:none;color:var(--u-accent)">✓</b>' + av + '<span>' + text + '</span>' + (o.x ? '<b class="x" style="margin-left:2px;width:' + (h - 12) + 'px;height:' + (h - 12) + 'px;border-radius:50%;display:grid;place-items:center;font-size:' + fs + 'px;color:var(--u-muted)">×</b>' : '') + '</span>';
+    }
+    var body;
+    if (kind === '선택') body = '<b style="font-size:12.5px">검색 결과 거르기</b><div class="row" style="display:flex;flex-wrap:wrap;gap:6px">' + FILTERS.slice(0, 4).map(function (f) { return chip(f[2], { icon: f[1] }); }).join('') + '</div>' + fakes(4);
+    else if (kind === '입력') body = '<b style="font-size:12.5px">받는 사람</b><div class="row" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-height:' + (h + 12) + 'px;padding:5px 8px;border:1px solid var(--u-line);border-radius:8px;background:var(--u-panel);box-sizing:border-box">' + ['민지', '준호', '서연'].map(function (n) { return chip(n, { x: true, icon: 'star' }); }).join('') + chip('도윤', { x: true, cls: 'cp nw', icon: 'star' }) + '<span class="ty" style="font-size:12px;color:var(--u-ink)"></span></div>' + fakes(3);
+    else if (kind === '제안') body = '<div class="in" style="height:34px;border:1px solid var(--u-line);border-radius:8px;background:var(--u-panel);display:flex;align-items:center;padding:0 10px;font-size:12.5px;color:var(--u-muted)">검색어를 입력하세요</div><span style="font-size:11.5px;color:var(--u-muted)">이런 말로 찾아보세요</span><div class="row" style="display:flex;flex-wrap:wrap;gap:6px">' + ['롱패딩', '경량 패딩', '숏패딩'].map(function (t) { return chip(t, { icon: 'spark' }); }).join('') + '</div>' + fakes(2);
+    else body = '<div style="display:grid;grid-template-columns:64px 1fr;gap:10px;align-items:center"><div style="height:64px;border-radius:8px;background:' + ph(2) + '"></div><div style="display:grid;gap:4px"><b style="font-size:13px">경량 패딩 남색</b><span style="font-size:12px;color:var(--u-muted)">59,000원</span></div></div><div class="row" style="display:flex;flex-wrap:wrap;gap:6px">' + chip('가격 알림 받기', { icon: 'bolt' }) + chip('비슷한 상품', { icon: 'spark' }) + '</div>' + fakes(3) +
+      '<div class="ts" style="position:absolute;left:50%;bottom:12px;transform:translateX(-50%);padding:6px 12px;border-radius:8px;background:var(--u-toast-bg);color:var(--u-toast-fg);font-size:12px;white-space:nowrap;opacity:0">가격이 내리면 알려 드릴게요</div>';
+    st.innerHTML = '<div class="u-pad" style="gap:10px">' + body + '</div>';
+    var cps = st.querySelectorAll('.cp'), cur = cursor(st), W = st.clientWidth;
+    function on(el, v) { el.style.background = v ? 'var(--u-accent-soft)' : 'var(--u-panel)'; el.style.borderColor = v ? 'var(--u-accent)' : 'var(--u-line)'; el.style.color = v ? 'var(--u-accent)' : 'var(--u-ink)'; el.style.fontWeight = v ? 700 : 400; el.querySelector('.ck').style.display = v && kind === '선택' ? '' : 'none'; }
+    return { ms: MS, rest: 0.9, at: function (t) {
+      var ms = t * MS, msg;
+      if (kind === '선택') {
+        var CL = [[900, 1], [2000, 3]];
+        cps.forEach(function (el, i) { on(el, CL.some(function (x) { return x[1] === i && ms >= x[0]; })); });
+        clickPath(st, cur, CL.map(function (x) { return [x[0], cps[x[1]]]; }), ms, [W * 0.6, 200]);
+        msg = ms < 900 ? '선택 칩 · 누르면 켜짐' : ms < 2000 ? '"리뷰 4점 이상" 켬 · ✓와 진한 바탕' : '두 개 켬 · 여러 개 고를 수 있음';
+      } else if (kind === '입력') {
+        var gone = ms >= 1100, typed = '도윤'.slice(0, Math.floor(seg(ms, 1600, 2300) * 2 + 0.001)), made = ms >= 2600;
+        cps[1].style.display = gone ? 'none' : 'inline-flex';
+        st.querySelector('.nw').style.display = made ? 'inline-flex' : 'none';
+        st.querySelector('.ty').textContent = made ? '' : typed + (ms > 1500 && ms < 2600 ? '|' : '');
+        clickPath(st, cur, [[1100, cps[1].querySelector('.x')]], ms, [W * 0.6, 200]);
+        msg = ms < 1100 ? '넣은 사람이 칩 · ×로 지움' : ms < 1600 ? '"준호" 지움' : !made ? '이름을 치는 중' : 'Enter → "도윤" 칩이 생김';
+      } else if (kind === '제안') {
+        var picked = ms >= 1300, inp = st.querySelector('.in');
+        inp.textContent = picked ? '경량 패딩' : '검색어를 입력하세요'; inp.style.color = picked ? 'var(--u-ink)' : 'var(--u-muted)';
+        on(cps[1], ms >= 1300 && ms < 1700);
+        clickPath(st, cur, [[1300, cps[1]]], ms, [W * 0.6, 200]);
+        msg = picked ? '누른 말이 입력칸에 들어감' : '추천 말을 칩으로 내밂';
+      } else {
+        var ts = st.querySelector('.ts'); ts.style.opacity = ms > 1400 && ms < 3200 ? 1 : 0;
+        on(cps[0], ms >= 1300 && ms < 1600);
+        clickPath(st, cur, [[1300, cps[0]]], ms, [W * 0.6, 200]);
+        msg = ms < 1300 ? '상품 옆 맥락 동작 칩' : '누르면 바로 실행 · 알림';
+      }
+      return msg + ' · 높이 ' + h + 'px' + (h < 24 ? '(터치 기준 미달)' : '');
+    } };
+  };
+
+  S['responsive-chip-row'] = function (st, c) {
+    var steps = c.steps, box = c.basis === '칸 폭(@container)', MS = 5200, GAP = 6, H = 30, FS = [0, 1, 3].map(function (i) { return FILTERS[i]; });   // 장면은 칩 셋(무대가 좁아 여섯이면 처음부터 아이콘만)
+    st.innerHTML = '<div class="fr" style="position:absolute;left:12px;top:12px;bottom:12px;border:1.5px solid var(--u-line);border-radius:10px;background:var(--u-bg);overflow:hidden;display:flex">' +
+        '<div class="sd" style="flex:none;width:0;background:var(--u-side);border-right:1px solid var(--u-line);display:grid;align-content:start;gap:6px;padding:10px 0;overflow:hidden">' + fakes(5) + '</div>' +
+        '<div class="mn" style="flex:1;min-width:0;padding:12px;display:grid;gap:10px;align-content:start"><b style="font-size:12.5px">겨울 패딩 · 128개</b><div class="row" style="position:relative;display:flex;gap:' + GAP + 'px;height:' + H + 'px;overflow:hidden"></div>' + fakes(4) + '</div></div>' +
+      '<div class="ms" style="position:absolute;visibility:hidden;left:0;top:0;display:flex;gap:' + GAP + 'px"></div>' +
+      '<div class="sh" style="position:absolute;left:24px;right:24px;bottom:12px;height:0;overflow:hidden;border-radius:12px 12px 0 0;background:var(--u-panel);box-shadow:var(--u-shadow);display:grid;align-content:start;gap:6px;padding:0 14px;box-sizing:border-box"><b style="font-size:12.5px;padding-top:10px">필터</b>' +
+        FS.map(function (f, i) { return '<div style="display:flex;align-items:center;gap:6px;font-size:12px">' + (i === 1 ? '☑' : '☐') + ' ' + chipIcon(f[1]) + f[2] + '</div>'; }).join('') + '</div>';
+    var fr = st.querySelector('.fr'), sd = st.querySelector('.sd'), row = st.querySelector('.row'), msr = st.querySelector('.ms'), sh = st.querySelector('.sh'), SEL = [1];
+    // 단계마다 칩 폭을 한 번 재 둔다
+    var wid = {};
+    ['long', 'short', 'icon'].forEach(function (m) { msr.innerHTML = FS.map(function (f, i) { return chipHTML(f, m, SEL.indexOf(i) >= 0, H); }).join(''); wid[m] = [].map.call(msr.children, function (e) { return e.offsetWidth; }); });
+    msr.innerHTML = ''; var plusW = 44;   // +N 칩 자리
+    function sum(a) { return a.reduce(function (x, y) { return x + y; }, 0) + GAP * (a.length - 1); }
+    return { ms: MS, rest: 0.55, at: function (t) {
+      var ms = t * MS, full = st.clientWidth - 24, p = ease.inOut(seg(ms, 400, 2600)) - ease.inOut(seg(ms, 3900, 4900));
+      // 칸 폭 기준: 화면(틀)은 그대로 두고 옆 사이드바가 커져 칸이 좁아진다. 화면 폭 기준: 틀이 좁아진다
+      var frameW = box ? full : lerp(full, Math.min(full, 128), p), sideW = box ? lerp(0, full - 112, p) : 0;   // 가장 좁을 때도 고른 칩 하나와 +N이 들어가게
+      fr.style.width = frameW + 'px'; sd.style.width = sideW + 'px';
+      var W = frameW - sideW - 24 - 3, stage, mode, k = FS.length;
+      if (W >= sum(wid.long)) { stage = '아이콘+긴 문구'; mode = 'long'; }
+      else if (W >= sum(wid.short)) { stage = '아이콘+짧은 문구'; mode = 'short'; }
+      else if (steps === '필터 단추와 시트로') { stage = '필터 단추'; mode = 'btn'; }
+      else if (steps === '짧은 문구 → 아이콘만 → +N' && W >= sum(wid.icon)) { stage = '아이콘만'; mode = 'icon'; }
+      else { mode = steps === '짧은 문구 → +N' ? 'short' : 'icon'; stage = '+N 접기'; }
+      var order = FS.map(function (f, i) { return i; });
+      order = SEL.concat(order.filter(function (i) { return SEL.indexOf(i) < 0; }));   // 고른 칩은 앞에
+      var html;
+      if (mode === 'btn') html = '<span class="cp" style="display:inline-flex;align-items:center;gap:6px;height:' + H + 'px;padding:0 12px;border-radius:999px;white-space:nowrap;border:1px solid var(--u-accent);background:var(--u-accent-soft);color:var(--u-accent);font-size:12px;font-weight:700">' + chipIcon('sale') + '필터 (' + SEL.length + ')</span>';
+      else if (stage === '+N 접기') {
+        var ws = wid[mode], used = 0; k = 0;
+        for (var j = 0; j < order.length; j++) { var need = used + (k ? GAP : 0) + ws[order[j]]; if (need + GAP + plusW <= W || (j === order.length - 1 && need <= W)) { used = need; k++; } else break; }
+        html = order.slice(0, k).map(function (i) { return chipHTML(FS[i], mode, SEL.indexOf(i) >= 0, H); }).join('') + (k < order.length ? '<span class="cp" style="display:inline-flex;align-items:center;height:' + H + 'px;padding:0 10px;border-radius:999px;border:1px dashed var(--u-muted);font-size:12px;font-weight:700;color:var(--u-ink)">+' + (order.length - k) + '</span>' : '');
+      } else html = FS.map(function (f, i) { return chipHTML(f, mode, SEL.indexOf(i) >= 0, H); }).join('');
+      if (row.innerHTML !== html) row.innerHTML = html;
+      var sheet = mode === 'btn' && ms > 2700 && ms < 3800;
+      sh.style.height = (sheet ? 120 * ease.out(seg(ms, 2700, 3000)) : 0) + 'px';
+      return (box ? '칸 폭 ' : '화면 폭 ') + Math.round(W) + 'px · ' + stage + (sheet ? ' · 누르면 시트' : '');
+    } };
+  };
+
+  S['overflow-chip'] = function (st, c) {
+    var menu = c.open === '누르면 메뉴', front = c.keep === '고른 칩은 앞에 남김', MS = 4200, GAP = 6, H = 30, SEL = [1, 4];
+    var order = FILTERS.map(function (f, i) { return i; });
+    if (front) order = SEL.concat(order.filter(function (i) { return SEL.indexOf(i) < 0; }));
+    st.innerHTML = '<div class="u-pad" style="gap:10px"><b style="font-size:12.5px">겨울 패딩 · 128개</b>' +
+      '<div class="row" style="display:flex;flex-wrap:wrap;gap:' + GAP + 'px;width:300px;max-width:100%;overflow:hidden;height:' + H + 'px">' + order.map(function (i) { return chipHTML(FILTERS[i], 'long', SEL.indexOf(i) >= 0, H, 'cp'); }).join('') +
+        '<span class="pl" style="display:inline-flex;align-items:center;height:' + H + 'px;padding:0 10px;border-radius:999px;border:1px dashed var(--u-muted);font-size:12px;font-weight:700;color:var(--u-ink);flex:none"></span></div>' + fakes(4) + '</div>' +
+      '<div class="mu" style="position:absolute;display:grid;gap:2px;padding:6px;min-width:150px;border-radius:10px;background:var(--u-panel);border:1px solid var(--u-line);box-shadow:var(--u-shadow);opacity:0"></div>';
+    var row = st.querySelector('.row'), cps = row.querySelectorAll('.cp'), pl = st.querySelector('.pl'), mu = st.querySelector('.mu'), cur = cursor(st), k = null;
+    return { ms: MS, rest: 0.9, at: function (t) {
+      var ms = t * MS, W = row.clientWidth, open = ms >= 1700;
+      if (k === null) {   // 한 줄에 들어가는 칩 수(+N 자리 44px 남김)
+        var used = 0; k = 0;
+        for (var j = 0; j < cps.length; j++) { var need = used + (k ? GAP : 0) + cps[j].offsetWidth; if (need + GAP + 44 <= W) { used = need; k++; } else break; }
+      }
+      var hidden = order.slice(k), selHidden = hidden.filter(function (i) { return SEL.indexOf(i) >= 0; });
+      var wrapAll = !menu && open;
+      cps.forEach(function (el, j) { el.style.display = j < k || wrapAll ? 'inline-flex' : 'none'; el.setAttribute('aria-hidden', String(j >= k && !wrapAll)); });
+      row.style.height = wrapAll ? 'auto' : H + 'px';
+      pl.textContent = wrapAll ? '접기' : '+' + hidden.length;
+      pl.style.order = '99';
+      mu.innerHTML = hidden.map(function (i) { return '<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;font-size:12px;' + (SEL.indexOf(i) >= 0 ? 'color:var(--u-accent);font-weight:700' : '') + '">' + (SEL.indexOf(i) >= 0 ? '✓' : '　') + chipIcon(FILTERS[i][1]) + FILTERS[i][2] + '</div>'; }).join('');
+      var r = rel(st, pl);
+      mu.style.left = Math.min(r.x, st.clientWidth - 170) + 'px'; mu.style.top = (r.y + r.h + 6) + 'px'; mu.style.opacity = menu && open ? 1 : 0;
+      clickPath(st, cur, [[1600, pl]], ms, [st.clientWidth * 0.5, 200]);
+      if (ms < 1600) return '한 줄에 ' + k + '개 · 나머지 ' + hidden.length + '개는 +' + hidden.length + (selHidden.length ? ' · 고른 "' + FILTERS[selHidden[0]][2] + '"이 숨음' : front ? ' · 고른 칩은 앞에 남김' : '');
+      return menu ? '+' + hidden.length + ' 누름 · 숨긴 칩을 메뉴로' : '+' + hidden.length + ' 누름 · 줄을 펼쳐 모두 보임';
+    } };
+  };
+
   /* ───── 움직임 › 화면 전환 (뷰 전환) ───── */
   function centerOf(st, el) { var r = rel(st, el); return [r.x + r.w / 2, r.y + r.h / 2]; }
 
