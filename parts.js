@@ -2142,6 +2142,140 @@
     } };
   };
 
+  /* ───── 구조 › 묶음 구분 표현 (그룹 구분 견주기 묶음) ───── */
+  // 묶음: [이름, 색, 아이콘]. 색은 밝은·어두운 테마 값이 모두 있는 변수만 쓴다. 주황은 밝은 테마에서 글자 대비 4.5:1이 안 돼 글자색을 조금 섞는다
+  var GRP = [['오늘 할 일', 'var(--p-rev)', '◆'], ['지연', 'var(--u-danger)', '▲'], ['빠른 메모', 'color-mix(in srgb, var(--p-hold) 80%, var(--u-ink))', '✎'], ['오늘 일정', 'var(--u-warn)', '▦'], ['요청', 'var(--u-accent)', '✉']];
+  UI.GROUPS = GRP;
+  function taskRow(w) { return '<div style="display:flex;align-items:center;gap:8px;height:18px;padding:0 8px;border-radius:5px;background:var(--u-panel);border:1px solid var(--u-line)"><i style="width:9px;height:9px;border-radius:50%;border:1.5px solid var(--u-muted)"></i><div class="u-fake" style="width:' + w + '%"></div></div>'; }
+
+  S['group-style'] = function (st, c) {
+    var way = c.way, sig = c.signal, MS = 4200, G3 = GRP.slice(0, 3);
+    st.innerHTML = '<div class="u-pad" style="gap:0"><div class="gw" style="display:grid">' + G3.map(function (g, i) {
+      return '<section class="gp" style="position:relative;display:grid;gap:4px;border-radius:8px;border:1px solid transparent">' +
+        '<i class="gb" style="position:absolute;left:0;top:22px;bottom:0;width:4px;border-radius:2px;background:' + g[1] + ';transform-origin:top"></i>' +
+        '<h4 class="gh" style="margin:0;display:flex;align-items:center;gap:6px;height:16px;font-size:12px;color:' + g[1] + '">' +
+          (sig === '색만' ? '<i style="width:9px;height:9px;border-radius:50%;background:' + g[1] + '"></i>' : '<span>' + g[2] + '</span>' + (sig === '색+글자 이름' ? '<span>' + g[0] + '</span>' : '')) + '</h4>' +
+        '<div class="gi" style="display:grid;gap:4px">' + taskRow([70, 55, 80][i]) + taskRow([50, 75, 60][i]) + '</div></section>';
+    }).join('') + '</div></div>';
+    var gw = st.querySelector('.gw'), gp = st.querySelectorAll('.gp'), gb = st.querySelectorAll('.gb'), gh = st.querySelectorAll('.gh'), gi = st.querySelectorAll('.gi');
+    return { ms: MS, rest: 0.6, at: function (t) {
+      var ms = t * MS, p = ease.inOut(seg(ms, 700, 1600)), gray = seg(ms, 2700, 3100);
+      gw.style.filter = gray ? 'grayscale(' + gray + ')' : '';
+      gp.forEach(function (g, i) {
+        var col = GRP[i][1];
+        g.style.marginTop = i ? lerp(4, way === '간격만' ? 20 : 10, p) + 'px' : '0';
+        g.style.padding = way === '옅은 배경' || way === '테두리 상자' ? lerp(0, 7, p) + 'px ' + lerp(0, 9, p) + 'px' : way === '왼쪽 막대' ? '0 0 0 ' + lerp(0, 12, p) + 'px' : way === '구분선' && i ? lerp(0, 8, p) + 'px 0 0' : '0';
+        g.style.background = way === '옅은 배경' ? 'color-mix(in srgb, ' + col + ' ' + Math.round(12 * p) + '%, transparent)' : 'transparent';
+        g.style.borderColor = way === '테두리 상자' ? 'color-mix(in srgb, var(--u-line) ' + Math.round(100 * p) + '%, transparent)' : 'transparent';
+        g.style.borderTopColor = way === '구분선' && i ? 'color-mix(in srgb, var(--u-line) ' + Math.round(100 * p) + '%, transparent)' : g.style.borderColor;
+        if (way === '구분선') { g.style.borderRadius = '0'; }
+        gb[i].style.display = way === '왼쪽 막대' ? '' : 'none'; gb[i].style.transform = 'scaleY(' + p + ')';
+        gh[i].style.opacity = p; gh[i].style.height = 16 * p + 'px'; gh[i].style.overflow = 'hidden';
+      });
+      if (ms < 700) return '구분 없음 · 어디서 끊기는지 모름';
+      if (ms < 2700) return way + (way === '간격만' ? ' · 선·색 없이 여백으로 묶임' : '으로 묶음을 가름');
+      return '흑백으로 보면 · ' + (sig === '색만' ? '묶음 이름이 사라짐(색만이라)' : sig === '색+아이콘' ? '아이콘 모양으로 구분됨' : '제목 글로 구분됨');
+    } };
+  };
+
+  S['accent-bar'] = function (st, c) {
+    var each = c.span === '항목마다', round = c.shape === '둥근 막대', MS = 3400, G3 = GRP.slice(0, 3);
+    st.innerHTML = '<div class="u-pad" style="gap:12px">' + G3.map(function (g, i) {
+      var bar = function (cls, top) { return '<i class="' + cls + '" style="position:absolute;left:0;top:' + top + ';bottom:0;width:4px;border-radius:' + (round ? '2px' : '0') + ';background:' + g[1] + ';transform-origin:top"></i>'; };
+      return '<section style="display:grid;gap:4px"><h4 style="margin:0;display:flex;gap:6px;font-size:12px;color:' + g[1] + '"><span>' + g[2] + '</span>' + g[0] + '</h4>' +
+        '<div style="position:relative;display:grid;gap:4px;padding-left:' + (each ? 0 : 10) + 'px">' + (each ? '' : bar('ab', '0')) +
+          [0, 1].map(function (k) { return '<div style="position:relative;' + (each ? 'padding-left:4px;border-radius:5px;overflow:hidden' : '') + '">' + (each ? bar('ab', '0') : '') + taskRow([70, 55, 80][(i + k) % 3]) + '</div>'; }).join('') + '</div></section>';
+    }).join('') + '</div>';
+    var ab = st.querySelectorAll('.ab');
+    return { ms: MS, rest: 0.8, at: function (t) {
+      var ms = t * MS;
+      ab.forEach(function (b, i) { b.style.transform = 'scaleY(' + ease.out(seg(ms, 300 + i * 220, 900 + i * 220)) + ')'; });
+      var done = ms > 900 + (ab.length - 1) * 220;
+      return !done ? '막대가 세워짐' : each ? '항목마다 막대 · 묶음보다 줄 하나하나가 강조됨' : '묶음 높이만큼 이어진 막대 · 제목 색과 같음';
+    } };
+  };
+
+  S['indent-guide'] = function (st, c) {
+    var line = c.line === '세로 안내선', fold = c.fold === '선을 눌러 접기', MS = 4000;
+    function cm(who, w, kids) {
+      return '<div class="ig-c" style="display:grid;gap:5px"><div style="display:flex;align-items:center;gap:6px;font-size:11.5px"><i style="width:18px;height:18px;border-radius:50%;background:' + ph(who.charCodeAt(0)) + ';display:grid;place-items:center;font-style:normal;font-size:10px;font-weight:700">' + who[0] + '</i><b>' + who + '</b></div>' +
+        '<div class="u-fake" style="width:' + w + '%;margin-left:24px"></div>' +
+        (kids ? '<div class="kd" style="position:relative;display:grid;gap:8px;margin-left:9px;padding-left:15px;overflow:hidden">' + (line ? '<i class="ln" style="position:absolute;left:0;top:0;bottom:0;width:2px;border-radius:1px;background:var(--u-line)"></i>' : '') + kids + '</div><button type="button" class="ig-x" style="justify-self:start;margin-left:24px;border:0;background:none;padding:0;font-size:11px;color:var(--u-accent);display:none">답글 2개 펼치기</button>' : '') + '</div>';
+    }
+    st.innerHTML = '<div class="u-pad" style="gap:10px">' + cm('민지', 70, cm('준호', 60, cm('민지', 45)) ) + cm('서연', 65, cm('도윤', 50)) + '</div>';
+    var kd = st.querySelectorAll('.kd'), ln = st.querySelectorAll('.ln'), cms = st.querySelectorAll('.ig-c'), ex = cms[0].querySelector(':scope > .ig-x'), cur = cursor(st), h0 = null;
+    return { ms: MS, rest: 0.85, at: function (t) {
+      var ms = t * MS;
+      [1, 2, 4].forEach(function (k, i) { show(cms[k], seg(ms, 200 + i * 350, 600 + i * 350), 6); });
+      if (h0 === null) h0 = kd[0].scrollHeight;
+      var hov = ms > 1800 && ms < 2500, shut = fold && ms >= 2500;
+      if (ln[0]) ln[0].style.background = hov || (ms >= 2500 && !fold) ? 'var(--u-accent)' : 'var(--u-line)';
+      kd[0].style.height = shut ? lerp(h0, 0, ease.out(seg(ms, 2500, 2900))) + 'px' : '';
+      ex.style.display = shut && ms > 2900 ? '' : 'none';
+      var r = rel(st, kd[0]);
+      put(cur, lerp(st.clientWidth * 0.7, r.x + 1, ease.inOut(seg(ms, 1300, 1800))), lerp(st.clientHeight - 20, r.y + Math.min(30, r.h / 2 || 30), ease.inOut(seg(ms, 1300, 1800))), ms > 2450 && ms < 2600);
+      cur.style.opacity = ms > 1200 && ms < 3300 ? 1 : 0;
+      if (ms < 1300) return '답글이 들여써지며 붙음' + (line ? ' · 세로 선이 부모에 이음' : '');
+      if (ms < 2500) return line ? '선에 마우스 · 이 묶음이 강조됨' : '들여쓰기만 · 어디까지가 한 묶음인지 흐림';
+      return fold ? '선을 눌러 답글 묶음을 접음' : '접기 없음 · 긴 답글 묶음을 지나 내려야 함';
+    } };
+  };
+
+  S['zebra-striping'] = function (st, c) {
+    var band = c.stripe === '한 줄씩 번갈아', hov = c.hover === '올린 줄 강조', MS = 3600;
+    var R = [['결제 화면 문구', '오늘 할 일', '민지', '11/20'], ['환불 표 열 추가', '요청', '준호', '11/21'], ['정산 메일 제목', '지연', '서연', '11/21'], ['카드 등록 쉼표', '빠른 메모', '도윤', '11/22'], ['영수증 다시 발행', '요청', '민지', '11/24'], ['간편결제 순서', '오늘 일정', '준호', '11/25'], ['예비 수단 둘', '오늘 할 일', '서연', '11/26']];
+    st.innerHTML = '<div class="u-pad"><div class="tb" style="display:grid;font-size:11.5px;border:1px solid var(--u-line);border-radius:8px;overflow:hidden;background:var(--u-panel)">' +
+      '<div style="display:grid;grid-template-columns:minmax(0,1.6fr) 1fr 0.7fr 0.6fr;gap:8px;padding:6px 10px;font-weight:700;border-bottom:1px solid var(--u-line);background:var(--u-side)"><span>할 일</span><span>묶음</span><span>담당</span><span>끝낸 날</span></div>' +
+      R.map(function (r) { return '<div class="tr" style="display:grid;grid-template-columns:minmax(0,1.6fr) 1fr 0.7fr 0.6fr;gap:8px;padding:5px 10px;white-space:nowrap"><span style="overflow:hidden;text-overflow:ellipsis">' + r[0] + '</span><span style="color:var(--u-muted)">' + r[1] + '</span><span>' + r[2] + '</span><span style="font-family:var(--u-mono)">' + r[3] + '</span></div>'; }).join('') + '</div></div>';
+    var tr = st.querySelectorAll('.tr'), cur = cursor(st);
+    return { ms: MS, rest: 0.3, at: function (t) {
+      var ms = t * MS, row = ms < 1000 ? -1 : ms < 2400 ? 3 : 5, W = st.clientWidth;
+      tr.forEach(function (r, i) {
+        r.style.borderTop = band || !i ? '' : '1px solid var(--u-line)';
+        r.style.background = hov && i === row ? 'var(--u-accent-soft)' : band && i % 2 ? 'var(--u-side)' : 'var(--u-panel)';
+      });
+      if (row >= 0) { var q = rel(st, tr[row]); put(cur, lerp(q.x + 20, q.x + q.w - 30, ease.inOut(seg(ms, row === 3 ? 1100 : 2500, row === 3 ? 2200 : 3400))), q.y + q.h / 2, false); }
+      cur.style.opacity = row >= 0 ? 1 : 0;
+      if (row < 0) return band ? '짝수 행에 옅은 바탕' : '가는 선만';
+      return '긴 행을 따라 읽음' + (hov ? ' · 올린 줄이 진해짐' : '') + (band ? ' · 번갈이 바탕이 줄을 붙잡음' : '');
+    } };
+  };
+
+  S['swimlane'] = function (st, c) {
+    var who = c.lane === '담당자별', cnt = c.head === '줄 제목과 개수', MS = 3800;
+    var L = who ? ['민지', '준호', '서연'] : ['급함', '보통', '나중'], COLS = ['할 일', '진행', '완료'];
+    // 카드 [줄, 열]. 0번 카드가 끌려 다닌다
+    var CARDS = [[0, 0], [0, 2], [1, 0], [1, 1], [2, 1], [2, 2]];
+    st.innerHTML = '<div class="u-pad" style="padding:12px"><div class="bd" style="position:relative;display:grid;grid-template-columns:62px repeat(3,minmax(0,1fr));grid-template-rows:20px repeat(3,62px);gap:0;font-size:11px">' +
+      '<span></span>' + COLS.map(function (x) { return '<b style="padding:2px 6px;color:var(--u-muted)">' + x + '</b>'; }).join('') +
+      L.map(function (l, i) { return '<div class="lh" style="grid-column:1;grid-row:' + (i + 2) + ';display:grid;align-content:center;gap:1px;padding:0 6px;border-top:1px solid var(--u-line);font-weight:700"><span>' + l + '</span><small style="color:var(--u-muted);font-weight:400"></small></div>' +
+        '<div style="grid-column:2 / 5;grid-row:' + (i + 2) + ';border-top:1px solid var(--u-line);background:' + (i % 2 ? 'var(--u-side)' : 'transparent') + '"></div>'; }).join('') +
+      CARDS.map(function () { return '<div class="cd" style="position:absolute;height:22px;border-radius:5px;border:1px solid var(--u-line);background:var(--u-panel);box-shadow:var(--u-shadow-sm);display:flex;align-items:center;padding:0 6px;box-sizing:border-box"><div class="u-fake" style="width:70%"></div></div>'; }).join('') + '</div></div>';
+    var bd = st.querySelector('.bd'), cd = st.querySelectorAll('.cd'), lh = st.querySelectorAll('.lh small'), cur = cursor(st);
+    return { ms: MS, rest: 0.92, at: function (t) {
+      var ms = t * MS, W = bd.clientWidth, cw = (W - 62) / 3, pos = CARDS.map(function (x) { return x.slice(); });
+      // 1단계: 민지 줄 안에서 할 일 → 진행, 2단계: 준호 줄의 할 일 카드를 민지 줄로
+      var m1 = ease.inOut(seg(ms, 700, 1500)), m2 = ease.inOut(seg(ms, 2100, 2900));
+      function xy(r, k) { return [62 + k * cw + 6, 20 + r * 62 + 20]; }
+      var counts = [0, 0, 0];
+      pos.forEach(function (p, i) {
+        var a = xy(p[0], p[1]), b = a;
+        if (i === 0) { b = xy(0, 1); a = [lerp(a[0], b[0], m1), lerp(a[1], b[1], m1)]; }
+        if (i === 2) { b = xy(0, 0); a = [lerp(a[0], b[0], m2), lerp(a[1], b[1], m2)]; }
+        cd[i].style.width = (cw - 12) + 'px'; cd[i].style.transform = 'translate(' + a[0] + 'px,' + a[1] + 'px)';
+        cd[i].style.zIndex = (i === 0 && ms > 700 && ms < 1500) || (i === 2 && ms > 2100 && ms < 2900) ? 2 : 1;
+        counts[i === 2 && ms >= 2900 ? 0 : p[0]]++;
+      });
+      lh.forEach(function (s, i) { s.textContent = cnt ? counts[i] + '장' : ''; });
+      var drag = ms > 700 && ms < 1500 ? 0 : ms > 2100 && ms < 2900 ? 2 : -1;
+      if (drag >= 0) { var q = rel(st, cd[drag]); put(cur, q.x + q.w * 0.6, q.y + 12, true); }
+      cur.style.opacity = drag >= 0 ? 1 : 0;
+      if (ms < 700) return '할 일·진행·완료 열 × ' + (who ? '담당자' : '우선순위') + ' 줄';
+      if (ms < 2100) return '같은 줄 안에서 열을 옮김';
+      return ms < 2900 ? '다른 줄로 옮김 · ' + (who ? '담당자가 바뀜' : '우선순위가 바뀜') : (cnt ? '줄 머리 카드 수가 바뀜' : '옮김 끝');
+    } };
+  };
+
   /* ───── 움직임 › 화면 전환 (뷰 전환) ───── */
   function centerOf(st, el) { var r = rel(st, el); return [r.x + r.w / 2, r.y + r.h / 2]; }
 

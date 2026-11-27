@@ -272,6 +272,22 @@
     "prompt": "겨울 옷 가게의 상품 목록 페이지를 만들어줘. 맨 위 기획전 다섯 장은 Carousel로 한 장씩 넘기되 자동으로 넘기지 말고 좌우 화살표·아래 점·←→ 키로만, 첫 장과 끝 장에서는 그쪽 화살표를 끄기. 그 아래 \"이번 주 추천\"은 Bento Grid 4열에 기획전 한 칸을 2×2로 크게, 나머지 네 칸은 1×1로 빈칸 없이, 좁은 폭에서는 중요한 순서대로 한 줄. \"최근 본 상품\"은 가로 줄에 Scroll Snap(x mandatory, 카드 앞머리)을 걸고 Peek으로 다음 카드가 32px 보이게, 제목 옆에 좌우 단추. 상품 120개는 Card Grid로 8개씩 보이고 끝에 Load More 단추(\"120개 중 8개를 봤어요\", 누르면 초점은 새로 붙은 첫 상품, 불러오는 동안 Skeleton). 견주기용으로 Infinite Scroll로 바꾸는 단추도 두되 세 번 불러온 뒤에는 더 보기 단추로 바꿔 푸터에 닿게. 사진 후기는 Masonry Grid로 가장 짧은 열 밑에 다음 카드를 넣어 읽기 순서가 왼쪽부터 가로로. 오른쪽 앱 미리보기에는 후기 12,480개를 Virtualized List(줄 높이 56px 고정, 위아래 5줄 여유, aria-setsize·aria-posinset)로, 맨 위에서 72px 넘게 당겼다 놓으면 Pull to Refresh로 새 후기를 위에 붙이고 ↻ 단추로도 되게, 목록에는 Overscroll Behavior: contain."
   },
   {
+    "id": "group-styles",
+    "name": "그룹 구분",
+    "ready": true,
+    "terms": [
+      "group-style",
+      "accent-bar",
+      "grouped-list",
+      "sticky-section-header",
+      "tabs",
+      "swimlane",
+      "zebra-striping",
+      "indent-guide"
+    ],
+    "prompt": "할 일 앱 화면을 만들어줘. 할 일을 오늘 할 일(보라)·지연(빨강)·빠른 메모(주황)·오늘 일정(노랑)·요청(파랑) 다섯 묶음의 Grouped List로 보이고, 목록 위 도구에서 Group Style을 바꿔 볼 수 있게: 방식은 간격만·옅은 배경·테두리 상자·왼쪽 막대·구분선, 색 신호는 색+글자 이름·색+아이콘·색만, 흑백 보기 스위치. 처음은 왼쪽 막대로, 묶음 높이만큼 4px 둥근 Accent Bar를 세우고 묶음 제목 아이콘과 글자도 같은 색. 묶음 제목은 Sticky Section Header로 목록을 내리는 동안 위에 붙게. 위쪽 Tabs로 목록·담당자별 보드·완료 기록을 바꾸고, 보드는 할 일·진행·완료 열에 담당자별 Swimlane 가로 줄(줄 머리에 이름과 카드 수, 줄 바탕 번갈아), 완료 기록 표는 Zebra Striping(짝수 행 옅은 바탕, 올린 줄 강조). 오른쪽에는 요청 하나의 댓글을 Indent Guide로: 단계마다 들여쓰고 부모 아래 세로 선, 선을 누르면 그 답글 묶음이 접히고 \"답글 n개 펼치기\"가 남게."
+  },
+  {
     "id": "deck-explainer",
     "name": "설명·발표 덱",
     "ready": true,
