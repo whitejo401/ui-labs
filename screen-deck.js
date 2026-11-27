@@ -45,7 +45,8 @@
         }).join('');
     }
     function stop() { cancelAnimationFrame(raf); clearTimeout(tm); raf = tm = null; }
-    // 장을 바꾸면 step 차례로 나타난다. 동작 줄이기거나 용어 보기를 켰으면 바로 다 보이고 이름표도 바로 다시 붙는다
+    // 장을 바꾸면 step 차례로 나타난다. 동작 줄이기면 바로 다 보인다
+    // 용어 보기 중에는 매 장면 이름표를 다시 붙여, 앞 장 이름표는 바로 지워지고 새 도형의 이름표는 나타날 때 붙는다
     function show(i, still) {
       stop();
       st.i = Math.max(0, Math.min(built.length - 1, i));
@@ -56,24 +57,25 @@
         t.setAttribute('aria-current', String(j === st.i));
         var cap = t.querySelector('span'); if (j === st.i) cap.setAttribute('data-term', 'slide-layout'); else cap.removeAttribute('data-term');
       });
-      if (still || mq.matches || st.labels) { el.innerHTML = S.svg(b.prims); drawLabels(); return; }
+      if (still || mq.matches) { el.innerHTML = S.svg(b.prims); drawLabels(); return; }
       var start = performance.now();
       (function step() {
         stop();
         if (!alive) return;
         var p = Math.min(1, (performance.now() - start) / 1400);
         el.innerHTML = S.svg(b.prims, p < 1 ? p : undefined);
-        if (p < 1) { raf = requestAnimationFrame(step); tm = setTimeout(step, 50); } else drawLabels();
+        if (p < 1) { if (st.labels) drawLabels(true); raf = requestAnimationFrame(step); tm = setTimeout(step, 50); } else drawLabels();
       })();
     }
 
     /* ── 용어 보기 ── */
-    function drawLabels() {
+    // moving: 장이 나타나는 중. 이름표만 다시 붙이고 "지금 화면에 없는 용어" 줄은 끝날 때 한 번만 바꾼다(깜빡임 방지)
+    function drawLabels(moving) {
       var L = $('dk-labels');
       L.hidden = !st.labels;
       if (!st.labels) return;
       var seen = UI.termLabels(scr, L, opt.termName, function (id) { return id === 'speaker-notes' || id === 'two-column-comparison' ? 'in-br' : ''; });
-      if (opt.onLabels) opt.onLabels(seen);
+      if (opt.onLabels && !moving) opt.onLabels(seen);
     }
 
     root.addEventListener('click', function (e) {
